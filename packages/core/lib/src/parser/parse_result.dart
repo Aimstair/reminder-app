@@ -1,13 +1,9 @@
 /// Output of the quick-capture parser — the shape defined in docs/parser-test-set.md §2.
 library;
 
-enum Kind { task, meeting, event, occasion }
+import '../model/enums.dart';
 
-enum ReminderContext { personal, work }
-
-enum TimingType { datetime, date }
-
-enum RepeatMode { fixed, afterCompletion }
+export '../model/enums.dart' show Kind, ReminderContext, RepeatMode, TimingType;
 
 /// Which preview chips to highlight (CAP-7, PRS-*).
 enum ParseFlag { ambiguousTime, ambiguousDate, pastDateRolled, timeInPast, titleMissing, dateMissing }
