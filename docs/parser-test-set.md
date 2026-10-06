@@ -255,7 +255,7 @@ Types: **T** Task · **M** Meeting · **E** Event · **O** Occasion. Context: **
 | I1 | Mom's birthday Oct 12 | Mom's birthday | Oct 12 (date) | O | P | `FREQ=YEARLY` · default −7d, −1d, 0 | |
 | I2 | our anniversary June 18 | Our anniversary | 2027-06-18 (date) | O | P | `FREQ=YEARLY` | |
 | I3 | Jake bday 3/14 | Jake bday | 2027-03-14 (date) | O | P | `FREQ=YEARLY` | en-US order |
-| I4 | Leap baby birthday Feb 29 | Leap baby birthday | 2027-02-28 (date) | O | P | `FREQ=YEARLY` (Feb 29) | REC-4: shown Feb 28 in non-leap years |
+| I4 | Leap baby birthday Feb 29 | Leap baby birthday | 2027-02-28 (date) | O | P | `FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=29` | REC-4: shown Feb 28 in non-leap years; rule keeps Feb 29 for leap years |
 | I5 | wedding anniversary today | Wedding anniversary | Oct 5 (date) | O | P | `FREQ=YEARLY` | All stages past today → no alerts this year |
 | I6 | Sam's birthday party Saturday 3pm | Sam's birthday party | Oct 10 15:00–16:00 | E | P | | "birthday party" → Event, no repeat |
 | I7 | Dad's birthday | Dad's birthday | *(none)* | O | P | `FREQ=YEARLY` | `date_missing` PRS-36 |

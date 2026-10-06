@@ -7,4 +7,7 @@ export 'src/model/ids.dart';
 export 'src/model/reminder.dart';
 export 'src/model/wall_time.dart';
 export 'src/parser/parse_result.dart';
+export 'src/recurrence/recurrence.dart';
+export 'src/time/calendar.dart';
+export 'src/time/zones.dart';
 export 'src/parser/parser.dart' show ReminderParser;

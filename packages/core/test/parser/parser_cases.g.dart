@@ -1327,7 +1327,7 @@ const parserCases = <ParserCase>[
     timing: ExpectedTiming(type: 'date', start: '2027-02-28', end: null, tz: null),
     kind: 'occasion',
     context: 'personal',
-    rrule: 'FREQ=YEARLY',
+    rrule: 'FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=29',
     afterCompletion: false,
     alerts: null,
     nag: null,

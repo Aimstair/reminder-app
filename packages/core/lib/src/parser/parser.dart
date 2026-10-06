@@ -5,27 +5,18 @@
 /// date/time with the CAP rules. Pure Dart; calendar math uses UTC DateTimes as wall-clock containers.
 library;
 
-import 'package:timezone/data/latest.dart' as tzdata;
-import 'package:timezone/timezone.dart' as tz;
-
+import '../time/zones.dart';
 import 'parse_result.dart';
 import 'vocab.dart';
 
 class ReminderParser {
   ReminderParser(this.context) {
-    _ensureTimeZones();
+    ensureTimeZones();
   }
 
   final ParseContext context;
 
   ParseResult parse(String input) => _Run(input, context).run();
-
-  static bool _tzReady = false;
-  static void _ensureTimeZones() {
-    if (_tzReady) return;
-    tzdata.initializeTimeZones();
-    _tzReady = true;
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -52,6 +43,7 @@ class _Recurrence {
   String freq = 'DAILY';
   int interval = 1;
   List<int> byDay = [];
+  int? byMonth;
   int? byMonthDay;
   int? bySetPos;
   DateTime? until;
@@ -62,6 +54,7 @@ class _Recurrence {
   String build() {
     final parts = ['FREQ=$freq'];
     if (interval > 1) parts.add('INTERVAL=$interval');
+    if (byMonth != null) parts.add('BYMONTH=$byMonth');
     if (byDay.isNotEmpty) parts.add('BYDAY=${byDay.map((d) => rruleDay[d]).join(',')}');
     if (byMonthDay != null) parts.add('BYMONTHDAY=$byMonthDay');
     if (bySetPos != null) parts.add('BYSETPOS=$bySetPos');
@@ -176,6 +169,12 @@ class _Run {
     }
     if (rec != null && rec!.freq == 'MONTHLY' && date?.kind == _DateKind.nth) {
       rec!.byMonthDay = date!.nth; // "on the 1st every month"
+    }
+    if (rec != null && rec!.freq == 'YEARLY' && _clamped != null) {
+      // REC-4: keep the real day (Feb 29) so leap years land on it; the first date shown is clamped
+      rec!
+        ..byMonth = _clamped!.month
+        ..byMonthDay = _clamped!.day;
     }
 
     final timing = _timing(kind);
@@ -563,10 +562,14 @@ class _Run {
     }
     final spec = _DateSpec(_DateKind.absolute, day: d);
     if (rolled) _rolled = true;
+    if (d.day != day) _clamped ??= (month: month, day: day);
     return spec;
   }
 
   bool _rolled = false;
+
+  /// Month/day the user wrote when it had to be clamped (e.g. Feb 29 in a non-leap year).
+  ({int month, int day})? _clamped;
 
   // ---- title, kind ----
 
@@ -632,7 +635,7 @@ class _Run {
     }
 
     var start = day.add(Duration(minutes: time!.minutes));
-    start = _normalizeWall(start, zoneName); // TIM-13/14
+    start = normalizeWall(start, zoneName); // TIM-13/14
     DateTime? end;
     if (endTime != null) {
       end = day.add(Duration(minutes: endTime!.minutes));
@@ -772,12 +775,3 @@ DateTime _lastOfMonth(DateTime d) => DateTime.utc(d.year, d.month + 1, 0);
 String _two(int n) => n.toString().padLeft(2, '0');
 String _ymd(DateTime d) => '${d.year}-${_two(d.month)}-${_two(d.day)}';
 String _ymdhm(DateTime d) => '${_ymd(d)}T${_two(d.hour)}:${_two(d.minute)}';
-
-/// TIM-13 (gap → shift forward) and TIM-14 (overlap → first occurrence) for a wall time in [zone].
-DateTime _normalizeWall(DateTime wall, String zone) {
-  final loc = tz.getLocation(zone);
-  final wallMs = wall.millisecondsSinceEpoch;
-  final offsetBefore = loc.timeZone(wallMs - const Duration(days: 1).inMilliseconds).offset.inMilliseconds;
-  final local = tz.TZDateTime.fromMillisecondsSinceEpoch(loc, wallMs - offsetBefore);
-  return DateTime.utc(local.year, local.month, local.day, local.hour, local.minute);
-}

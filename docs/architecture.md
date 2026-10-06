@@ -88,7 +88,7 @@ Versions checked on pub.dev on 2026-10-06; **re-verify at setup** and pin exact 
 | State | `flutter_riverpod` | 3.4.3 | App actions + UI state; data lives in SQLite |
 | Database | `drift` + `drift_flutter` | 2.35.1 / 0.3.1 | Typed schema, migrations, reactive queries. Don't use `sqlite3_flutter_libs` (end-of-life) |
 | Time zones | `timezone` + `flutter_timezone` | 0.11.1 / 5.1.1 | IANA database + device zone; DST-safe `TZDateTime` math |
-| Recurrence | `rrule` | 0.2.18 | Parse/serialize RRULE; our engine adds clamps (`REC-3`, `REC-4`), zones, after-completion |
+| Recurrence | **Our own** (in `core`) | — | RRULE subset (FREQ, INTERVAL, BYDAY, BYMONTH, BYMONTHDAY, BYSETPOS, UNTIL, COUNT). Not the `rrule` package: RFC 5545 skips short months / non-leap years where we clamp (`REC-3`, `REC-4`) |
 | Parser | **Our own** (in `core`) | — | No Dart equivalent of chrono-node; implement `PRS-*` test-first against `parser-test-set.md` |
 | IDs | `uuid` | 4.6.0 | UUID v7 |
 | Animation | Flutter built-ins (`AnimationController`, physics `SpringSimulation`, implicit animations, slivers) | — | Shared spring presets + `SpringCurve` in `ui/motion` (from the bake-off) |
