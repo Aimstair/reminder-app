@@ -152,13 +152,13 @@ class $RemindersTable extends Reminders with TableInfo<$RemindersTable, Reminder
     requiredDuringInsert: false,
   );
   @override
-  late final GeneratedColumnWithTypeConverter<RepeatMode, String> repeatMode = GeneratedColumn<String>(
+  late final GeneratedColumnWithTypeConverter<RecurrenceMode, String> repeatMode = GeneratedColumn<String>(
     'repeat_mode',
     aliasedName,
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-  ).withConverter<RepeatMode>($RemindersTable.$converterrepeatMode);
+  ).withConverter<RecurrenceMode>($RemindersTable.$converterrepeatMode);
   static const VerificationMeta _alertPlanMeta = const VerificationMeta('alertPlan');
   @override
   late final GeneratedColumn<String> alertPlan = GeneratedColumn<String>(
@@ -379,8 +379,8 @@ class $RemindersTable extends Reminders with TableInfo<$RemindersTable, Reminder
   static JsonTypeConverter2<TimingType, String, String> $convertertimingType = const EnumNameConverter<TimingType>(
     TimingType.values,
   );
-  static JsonTypeConverter2<RepeatMode, String, String> $converterrepeatMode = const EnumNameConverter<RepeatMode>(
-    RepeatMode.values,
+  static JsonTypeConverter2<RecurrenceMode, String, String> $converterrepeatMode = const EnumNameConverter<RecurrenceMode>(
+    RecurrenceMode.values,
   );
   static JsonTypeConverter2<ReminderStatus, String, String> $converterstatus = const EnumNameConverter<ReminderStatus>(
     ReminderStatus.values,
@@ -404,7 +404,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
   final String? tz;
   final bool tzSetManually;
   final String? rrule;
-  final RepeatMode repeatMode;
+  final RecurrenceMode repeatMode;
   final String alertPlan;
   final int? nagMinutes;
   final bool completable;
@@ -594,7 +594,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
     Value<String?> tz = const Value.absent(),
     bool? tzSetManually,
     Value<String?> rrule = const Value.absent(),
-    RepeatMode? repeatMode,
+    RecurrenceMode? repeatMode,
     String? alertPlan,
     Value<int?> nagMinutes = const Value.absent(),
     bool? completable,
@@ -756,7 +756,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
   final Value<String?> tz;
   final Value<bool> tzSetManually;
   final Value<String?> rrule;
-  final Value<RepeatMode> repeatMode;
+  final Value<RecurrenceMode> repeatMode;
   final Value<String> alertPlan;
   final Value<int?> nagMinutes;
   final Value<bool> completable;
@@ -807,7 +807,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
     this.tz = const Value.absent(),
     this.tzSetManually = const Value.absent(),
     this.rrule = const Value.absent(),
-    required RepeatMode repeatMode,
+    required RecurrenceMode repeatMode,
     required String alertPlan,
     this.nagMinutes = const Value.absent(),
     required bool completable,
@@ -900,7 +900,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
     Value<String?>? tz,
     Value<bool>? tzSetManually,
     Value<String?>? rrule,
-    Value<RepeatMode>? repeatMode,
+    Value<RecurrenceMode>? repeatMode,
     Value<String>? alertPlan,
     Value<int?>? nagMinutes,
     Value<bool>? completable,
@@ -2888,7 +2888,7 @@ typedef $$RemindersTableCreateCompanionBuilder = RemindersCompanion Function({
   Value<String?> tz,
   Value<bool> tzSetManually,
   Value<String?> rrule,
-  required RepeatMode repeatMode,
+  required RecurrenceMode repeatMode,
   required String alertPlan,
   Value<int?> nagMinutes,
   required bool completable,
@@ -2914,7 +2914,7 @@ typedef $$RemindersTableUpdateCompanionBuilder = RemindersCompanion Function({
   Value<String?> tz,
   Value<bool> tzSetManually,
   Value<String?> rrule,
-  Value<RepeatMode> repeatMode,
+  Value<RecurrenceMode> repeatMode,
   Value<String> alertPlan,
   Value<int?> nagMinutes,
   Value<bool> completable,
@@ -2995,7 +2995,7 @@ class $$RemindersTableFilterComposer extends Composer<_$AppDatabase, $RemindersT
   ColumnFilters<String> get rrule =>
       $composableBuilder(column: $table.rrule, builder: (column) => ColumnFilters(column));
 
-  ColumnWithTypeConverterFilters<RepeatMode, RepeatMode, String> get repeatMode =>
+  ColumnWithTypeConverterFilters<RecurrenceMode, RecurrenceMode, String> get repeatMode =>
       $composableBuilder(column: $table.repeatMode, builder: (column) => ColumnWithTypeConverterFilters(column));
 
   ColumnFilters<String> get alertPlan =>
@@ -3155,7 +3155,7 @@ class $$RemindersTableAnnotationComposer extends Composer<_$AppDatabase, $Remind
 
   GeneratedColumn<String> get rrule => $composableBuilder(column: $table.rrule, builder: (column) => column);
 
-  GeneratedColumnWithTypeConverter<RepeatMode, String> get repeatMode =>
+  GeneratedColumnWithTypeConverter<RecurrenceMode, String> get repeatMode =>
       $composableBuilder(column: $table.repeatMode, builder: (column) => column);
 
   GeneratedColumn<String> get alertPlan => $composableBuilder(column: $table.alertPlan, builder: (column) => column);
@@ -3231,7 +3231,7 @@ class $$RemindersTableTableManager
                 Value<String?> tz = const Value.absent(),
                 Value<bool> tzSetManually = const Value.absent(),
                 Value<String?> rrule = const Value.absent(),
-                Value<RepeatMode> repeatMode = const Value.absent(),
+                Value<RecurrenceMode> repeatMode = const Value.absent(),
                 Value<String> alertPlan = const Value.absent(),
                 Value<int?> nagMinutes = const Value.absent(),
                 Value<bool> completable = const Value.absent(),
@@ -3283,7 +3283,7 @@ class $$RemindersTableTableManager
                 Value<String?> tz = const Value.absent(),
                 Value<bool> tzSetManually = const Value.absent(),
                 Value<String?> rrule = const Value.absent(),
-                required RepeatMode repeatMode,
+                required RecurrenceMode repeatMode,
                 required String alertPlan,
                 Value<int?> nagMinutes = const Value.absent(),
                 required bool completable,

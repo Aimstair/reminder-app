@@ -82,7 +82,7 @@ ParseResult applyTemplate(Template t, ParseResult p, {required String input, req
     context: p.context,
     flags: flags,
     rrule: t.rrule ?? p.rrule,
-    repeatMode: t.rrule != null ? RepeatMode.fixed : p.repeatMode,
+    repeatMode: t.rrule != null ? RecurrenceMode.fixed : p.repeatMode,
     alerts: alerts,
     nag: t.nag ?? p.nag,
   );

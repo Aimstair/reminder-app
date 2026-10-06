@@ -3,7 +3,7 @@ library;
 
 import '../model/enums.dart';
 
-export '../model/enums.dart' show Kind, ReminderContext, RepeatMode, TimingType;
+export '../model/enums.dart' show Kind, ReminderContext, RecurrenceMode, TimingType;
 
 /// Which preview chips to highlight (CAP-7, PRS-*).
 enum ParseFlag { ambiguousTime, ambiguousDate, pastDateRolled, timeInPast, titleMissing, dateMissing }
@@ -47,7 +47,7 @@ class ParseResult {
 
   /// RFC 5545 RRULE, e.g. `FREQ=WEEKLY;BYDAY=FR`.
   final String? rrule;
-  final RepeatMode? repeatMode;
+  final RecurrenceMode? repeatMode;
 
   /// Only when the input states alerts, e.g. `['-14d', '0']` (PRS-24…28). Null = type defaults.
   final List<String>? alerts;

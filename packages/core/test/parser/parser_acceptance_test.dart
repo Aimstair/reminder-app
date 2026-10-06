@@ -40,7 +40,7 @@ List<String> check(ParserCase c, ParseResult r) {
   eq('kind', c.kind, r.kind.name);
   eq('context', c.context, r.context.name);
   eq('rrule', c.rrule, r.rrule);
-  eq('afterCompletion', c.afterCompletion, r.repeatMode == RepeatMode.afterCompletion);
+  eq('afterCompletion', c.afterCompletion, r.repeatMode == RecurrenceMode.afterCompletion);
   if (c.alerts != null) eq('alerts', c.alerts!.join(','), r.alerts?.join(','));
   eq('nag', c.nag, r.nag);
   eq('flags', (c.flags.toList()..sort()).join(','), (r.flags.map((f) => _flagNames[f]!).toList()..sort()).join(','));

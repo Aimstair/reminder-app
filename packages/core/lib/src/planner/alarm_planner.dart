@@ -108,7 +108,7 @@ class AlarmPlanner {
 
     // REC-6: after-completion reminders keep timing.start at the current due date (the app moves it
     // when an occurrence is completed), so they plan like one-time reminders.
-    if (r.rrule == null || r.repeatMode == RepeatMode.afterCompletion) {
+    if (r.rrule == null || r.repeatMode == RecurrenceMode.afterCompletion) {
       final s = r.timing.start;
       return (s.isBefore(from) && r.nagInterval == null) || s.isAfter(to) ? const [] : [s];
     }

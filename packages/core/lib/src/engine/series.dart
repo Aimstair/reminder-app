@@ -35,7 +35,7 @@ DateTime nextAfterCompletionStart(Reminder r, {required DateTime fromWall}) =>
 /// REC-9: does a fixed series have any occurrence after [occurrenceKey]?
 bool hasLaterOccurrence(Reminder r, DateTime occurrenceKey) {
   if (r.rrule == null) return false;
-  if (r.repeatMode == RepeatMode.afterCompletion) return true; // REC-6 continues until stopped
+  if (r.repeatMode == RecurrenceMode.afterCompletion) return true; // REC-6 continues until stopped
   final rule = RecurrenceRule.parse(r.rrule!);
   if (rule.until == null && rule.count == null) return true;
   final after = occurrenceKey.add(const Duration(minutes: 1));

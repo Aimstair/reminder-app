@@ -1,7 +1,8 @@
-/// User settings (behavior-spec §12 PRF-*) stored as JSON values in the `prefs` table.
-/// Unset keys fall back to the spec defaults in [UserPrefs].
+/// User settings (behavior-spec §12 PRF-*, screens.md VW-1/VW-6) stored as JSON values in the
+/// `prefs` table. Unset keys fall back to the spec defaults in [UserPrefs].
 library;
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:reminder_core/reminder_core.dart';
@@ -22,7 +23,30 @@ abstract final class PrefKeys {
   static const digestNotification = 'digest_notification';
   static const completionSounds = 'completion_sounds';
   static const autoAddBirthdays = 'auto_add_birthdays';
+  static const alertDefaults = 'alert_defaults'; // PRF-9: {kind: ["-7d", ...]}
   static const onboarded = 'onboarded';
+
+  // Views & appearance (S-56)
+  static const startIn = 'start_in'; // VW-1: last | schedule | day | month
+  static const lastView = 'last_view';
+  static const showCompleted = 'show_completed'; // VW-6
+  static const theme = 'theme'; // system | light | dark
+
+  // Drawer filters (VW-2): lists of hidden values
+  static const hiddenKinds = 'hidden_kinds';
+  static const hiddenContexts = 'hidden_contexts';
+  static const hiddenCalendars = 'hidden_calendars';
+
+  // Calendars & contacts (S-55)
+  static const selectedCalendars = 'selected_calendars'; // CAL-1
+  static const calendarConnected = 'calendar_connected';
+  static const contactsImport = 'contacts_import'; // CON-1
+  static const dismissedContacts = 'dismissed_contacts';
+
+  static const digestDismissedDay = 'digest_dismissed_day'; // DIG-1
+  static const firstDoneShown = 'first_done_shown';
+  static const lastTest = 'last_test_result'; // PRM-7
+  static const batteryTipDismissed = 'battery_tip_dismissed'; // PRM-4
 }
 
 class PrefsRepository {
@@ -32,6 +56,10 @@ class PrefsRepository {
   final Clock _now;
   Map<String, Object?> _values = {};
   String _deviceZone = 'UTC';
+  final _changes = StreamController<void>.broadcast();
+
+  /// Fires after every change (settings screens, filters) so the UI can rebuild.
+  Stream<void> get changes => _changes.stream;
 
   /// Loads stored values. [deviceTimeZone] is the phone's current zone; on first run it also becomes
   /// the default zone for new reminders (PRF-1).
@@ -43,18 +71,28 @@ class PrefsRepository {
   }
 
   /// The phone's zone changed (TIM-15) — date-only reminders follow it.
-  void setDeviceTimeZone(String zone) => _deviceZone = zone;
+  void setDeviceTimeZone(String zone) {
+    if (zone == _deviceZone) return;
+    _deviceZone = zone;
+    _changes.add(null);
+  }
+
+  String get deviceTimeZone => _deviceZone;
 
   Future<void> set(String key, Object? value) async {
     _values[key] = value;
     await _db
         .into(_db.prefs)
         .insertOnConflictUpdate(PrefsCompanion.insert(key: key, value: jsonEncode(value), updatedAt: _now()));
+    _changes.add(null);
   }
 
   Object? raw(String key) => _values[key];
+  bool flag(String key, {bool fallback = false}) => (_values[key] as bool?) ?? fallback;
+  String? string(String key) => _values[key] as String?;
+  Set<String> stringSet(String key) => {...((_values[key] as List?) ?? const []).cast<String>()};
 
-  bool get onboarded => _values[PrefKeys.onboarded] == true;
+  bool get onboarded => flag(PrefKeys.onboarded);
 
   UserPrefs get current {
     const d = UserPrefs(defaultTimeZone: 'UTC', deviceTimeZone: 'UTC');
@@ -79,7 +117,29 @@ class PrefsRepository {
       digestNotification: _bool(PrefKeys.digestNotification, d.digestNotification),
       completionSounds: _bool(PrefKeys.completionSounds, d.completionSounds),
       autoAddBirthdays: _bool(PrefKeys.autoAddBirthdays, d.autoAddBirthdays),
+      alertDefaults: _alertDefaults(),
     );
+  }
+
+  /// PRF-9: saves the default plan for [kind] (null = back to ALR-4).
+  Future<void> setAlertDefault(Kind kind, List<AlertStage>? plan) {
+    final map = {...((_values[PrefKeys.alertDefaults] as Map?) ?? const {})};
+    if (plan == null) {
+      map.remove(kind.name);
+    } else {
+      map[kind.name] = [for (final s in plan) s.offset.toString()];
+    }
+    return set(PrefKeys.alertDefaults, map);
+  }
+
+  Map<Kind, List<AlertStage>> _alertDefaults() {
+    final map = _values[PrefKeys.alertDefaults];
+    if (map is! Map) return const {};
+    return {
+      for (final k in Kind.values)
+        if (map[k.name] case final List offsets)
+          k: [for (final o in offsets.cast<String>()) AlertStage(AlertOffset.parse(o))],
+    };
   }
 
   /// Stores a time of day as "HH:mm".

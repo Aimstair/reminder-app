@@ -131,7 +131,7 @@ void main() {
       timing: Timing(type: TimingType.date, start: DateTime.utc(2026, 10, 1)),
       alertPlan: defaultAlertPlan(Kind.task, TimingType.date),
       rrule: 'FREQ=MONTHLY;INTERVAL=3',
-      repeatMode: RepeatMode.afterCompletion,
+      repeatMode: RecurrenceMode.afterCompletion,
     );
     await service.create(filter);
     gateway.journal.add(

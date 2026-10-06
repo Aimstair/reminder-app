@@ -106,7 +106,7 @@ void main() {
       timing: Timing(type: TimingType.date, start: DateTime.utc(2026, 10, 1)),
       alertPlan: const [],
       rrule: 'FREQ=MONTHLY;INTERVAL=3',
-      repeatMode: RepeatMode.afterCompletion,
+      repeatMode: RecurrenceMode.afterCompletion,
     );
     await service.create(r);
     final before = await service.act(r.id, r.timing.start, JournalActionType.skip);

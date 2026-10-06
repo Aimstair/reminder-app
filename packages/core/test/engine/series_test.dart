@@ -65,7 +65,7 @@ void main() {
       timing: Timing(type: TimingType.datetime, start: DateTime.utc(2026, 10, 1, 9), timeZone: 'UTC'),
       alertPlan: const [],
       rrule: 'FREQ=MONTHLY;INTERVAL=3',
-      repeatMode: RepeatMode.afterCompletion,
+      repeatMode: RecurrenceMode.afterCompletion,
     );
     expect(formatWallDateTime(nextAfterCompletionStart(r, fromWall: DateTime.utc(2026, 10, 10, 15))),
         '2027-01-10T09:00');

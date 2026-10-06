@@ -188,7 +188,7 @@ class _Run {
       kind: kind,
       context: context,
       rrule: rec?.build(),
-      repeatMode: rec == null ? null : (rec!.afterCompletion ? RepeatMode.afterCompletion : RepeatMode.fixed),
+      repeatMode: rec == null ? null : (rec!.afterCompletion ? RecurrenceMode.afterCompletion : RecurrenceMode.fixed),
       alerts: alerts,
       nag: untilDoneNag ? '2h' : null,
       flags: flags,

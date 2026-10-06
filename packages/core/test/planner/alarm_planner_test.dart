@@ -19,7 +19,7 @@ Reminder _r(
   Timing timing, {
   List<AlertStage>? plan,
   String? rrule,
-  RepeatMode repeatMode = RepeatMode.fixed,
+  RecurrenceMode repeatMode = RecurrenceMode.fixed,
   Duration? nag,
 }) => Reminder(
   meta: RecordMeta(id: id, createdAt: _now, updatedAt: _now, deviceId: 'd'),
@@ -177,7 +177,7 @@ void main() {
       Kind.task,
       _date(2026, 10, 8),
       rrule: 'FREQ=MONTHLY;INTERVAL=3',
-      repeatMode: RepeatMode.afterCompletion,
+      repeatMode: RecurrenceMode.afterCompletion,
     );
     final alarms = _planner().plan([filter], {}, _now);
     expect(alarms.map((a) => _local(a.fireAt)), ['2026-10-08T09:00']);

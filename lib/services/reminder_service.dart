@@ -135,7 +135,7 @@ class ReminderService {
         case JournalActionType.done:
           final next = transition(current, OccurrenceAction.done, r.kind);
           await occurrences.save(reminderId: reminderId, occurrenceKey: occKey, state: next, resolvedAt: actedAt);
-          if (r.repeatMode == RepeatMode.afterCompletion && r.rrule != null) {
+          if (r.repeatMode == RecurrenceMode.afterCompletion && r.rrule != null) {
             // REC-6: next due counts from the completion day
             final zone = r.timing.type == TimingType.date ? p.deviceTimeZone : (r.timing.timeZone ?? p.defaultTimeZone);
             await _advanceAfterCompletion(r, instantToWall(actedAt, zone));
@@ -143,7 +143,7 @@ class ReminderService {
         case JournalActionType.skip:
           final next = transition(current, OccurrenceAction.skip, r.kind);
           await occurrences.save(reminderId: reminderId, occurrenceKey: occKey, state: next, resolvedAt: actedAt);
-          if (r.repeatMode == RepeatMode.afterCompletion && r.rrule != null) {
+          if (r.repeatMode == RecurrenceMode.afterCompletion && r.rrule != null) {
             await _advanceAfterCompletion(r, occKey); // REC-7: from the skipped due date
           }
         case JournalActionType.prepared:
@@ -203,7 +203,7 @@ class ReminderService {
     final type = r.timing.type;
     final start = type == TimingType.date ? dateOnly(newStart) : newStart;
 
-    if (r.rrule == null || r.repeatMode == RepeatMode.afterCompletion) {
+    if (r.rrule == null || r.repeatMode == RecurrenceMode.afterCompletion) {
       await reminders.update(r.copyWith(
         timing: Timing(
           type: type,

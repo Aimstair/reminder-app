@@ -35,7 +35,7 @@ class Reminders extends Table with Synced {
   TextColumn get tz => text().nullable()();
   BoolColumn get tzSetManually => boolean().withDefault(const Constant(false))();
   TextColumn get rrule => text().nullable()();
-  TextColumn get repeatMode => textEnum<RepeatMode>()();
+  TextColumn get repeatMode => textEnum<RecurrenceMode>()();
   TextColumn get alertPlan => text()(); // JSON list of AlertStage
   IntColumn get nagMinutes => integer().nullable()();
   BoolColumn get completable => boolean()();

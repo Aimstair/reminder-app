@@ -1,6 +1,9 @@
 /// User settings the rules depend on (behavior-spec §12 PRF-*), with spec defaults.
 library;
 
+import 'alert.dart';
+import 'enums.dart';
+
 /// A time of day (wall clock).
 class TimeOfDay {
   const TimeOfDay(this.hour, this.minute);
@@ -30,6 +33,7 @@ class UserPrefs {
     this.digestNotification = true,
     this.completionSounds = true,
     this.autoAddBirthdays = true,
+    this.alertDefaults = const {},
   });
 
   /// PRF-1: zone for new timed reminders.
@@ -63,4 +67,9 @@ class UserPrefs {
 
   /// PRF-13
   final bool autoAddBirthdays;
+
+  /// PRF-9: user-set default alert plans; missing types use ALR-4.
+  final Map<Kind, List<AlertStage>> alertDefaults;
+
+  List<AlertStage> alertPlanFor(Kind kind, TimingType timing) => alertDefaults[kind] ?? defaultAlertPlan(kind, timing);
 }

@@ -101,7 +101,7 @@ class ScheduleView {
   Iterable<DateTime> _keys(Reminder r, DateTime now) {
     final zone = r.timing.type == TimingType.date ? prefs.deviceTimeZone : (r.timing.timeZone ?? prefs.defaultTimeZone);
     final nowWall = instantToWall(now, zone);
-    if (r.rrule == null || r.repeatMode == RepeatMode.afterCompletion) return [r.timing.start];
+    if (r.rrule == null || r.repeatMode == RecurrenceMode.afterCompletion) return [r.timing.start];
     // Overdue repeating tasks stay visible until resolved (OVD-2); look back 31 days.
     final from = r.completable ? addDays(nowWall, -31) : addDays(dateOnly(nowWall), -1);
     return RecurrenceRule.parse(r.rrule!).expand(r.timing.start, from: from, to: nowWall.add(horizon));

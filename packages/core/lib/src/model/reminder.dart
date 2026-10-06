@@ -130,7 +130,7 @@ class Reminder {
     this.notes,
     this.rawInput,
     this.rrule,
-    this.repeatMode = RepeatMode.fixed,
+    this.repeatMode = RecurrenceMode.fixed,
     this.nagInterval,
     this.source = const ManualSource(),
     this.templateId,
@@ -149,7 +149,7 @@ class Reminder {
 
   /// RFC 5545 RRULE (REC-1), null for one-time reminders.
   final String? rrule;
-  final RepeatMode repeatMode;
+  final RecurrenceMode repeatMode;
   final List<AlertStage> alertPlan;
 
   /// ALR-9: opt-in nag interval.
@@ -178,7 +178,7 @@ class Reminder {
     Timing? timing,
     List<AlertStage>? alertPlan,
     String? Function()? rrule,
-    RepeatMode? repeatMode,
+    RecurrenceMode? repeatMode,
     Duration? Function()? nagInterval,
     ReminderSource? source,
     String? Function()? templateId,

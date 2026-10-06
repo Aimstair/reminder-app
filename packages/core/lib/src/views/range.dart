@@ -46,7 +46,7 @@ class DayItem {
 /// Occurrence keys (series wall times) of [r] whose start falls within [fromWall]…[toWall]
 /// (wall times in the reminder's own zone). After-completion series only have their current one.
 Iterable<DateTime> occurrenceKeysBetween(Reminder r, DateTime fromWall, DateTime toWall) {
-  if (r.rrule == null || r.repeatMode == RepeatMode.afterCompletion) {
+  if (r.rrule == null || r.repeatMode == RecurrenceMode.afterCompletion) {
     final s = r.timing.start;
     return (s.isBefore(fromWall) || s.isAfter(toWall)) ? const [] : [s];
   }

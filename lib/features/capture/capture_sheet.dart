@@ -5,7 +5,7 @@ library;
 
 import 'dart:math';
 
-import 'package:flutter/material.dart' hide RepeatMode;
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:reminder_core/reminder_core.dart';
@@ -287,7 +287,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
             'YEARLY' => l10n.repeatYearly,
             _ => l10n.repeatCustom,
           };
-    return p.repeatMode == RepeatMode.afterCompletion ? l10n.repeatAfterDone(every) : every;
+    return p.repeatMode == RecurrenceMode.afterCompletion ? l10n.repeatAfterDone(every) : every;
   }
 
   String _alerts(ParseResult p, AppLocalizations l10n) {

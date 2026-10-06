@@ -11,7 +11,7 @@ enum ReminderContext { personal, work }
 enum TimingType { datetime, date }
 
 /// REC-1: fixed calendar repeats, or "N after completion".
-enum RepeatMode { fixed, afterCompletion }
+enum RecurrenceMode { fixed, afterCompletion }
 
 /// Occurrence lifecycle (OCC-*). `done`, `skipped`, `passed` are terminal.
 enum OccurrenceState {

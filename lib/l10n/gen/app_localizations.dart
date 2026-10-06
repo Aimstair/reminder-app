@@ -573,6 +573,1560 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Moved to next year ({absolute}).'**
   String hintPastDateRolled(String absolute);
+
+  /// No description provided for @actionPrepared.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'m prepared'**
+  String get actionPrepared;
+
+  /// No description provided for @actionReschedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Reschedule'**
+  String get actionReschedule;
+
+  /// No description provided for @actionSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get actionSkip;
+
+  /// No description provided for @actionEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get actionEdit;
+
+  /// No description provided for @actionDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get actionDelete;
+
+  /// No description provided for @actionMarkNotDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as not done'**
+  String get actionMarkNotDone;
+
+  /// No description provided for @actionRemindMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me'**
+  String get actionRemindMe;
+
+  /// No description provided for @actionMerge.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge'**
+  String get actionMerge;
+
+  /// No description provided for @actionKeepBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep both'**
+  String get actionKeepBoth;
+
+  /// No description provided for @actionClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get actionClose;
+
+  /// No description provided for @detailWhen.
+  ///
+  /// In en, this message translates to:
+  /// **'When'**
+  String get detailWhen;
+
+  /// No description provided for @detailNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get detailNotes;
+
+  /// No description provided for @detailStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get detailStatus;
+
+  /// No description provided for @detailTimeZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Time zone'**
+  String get detailTimeZone;
+
+  /// No description provided for @stateDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get stateDone;
+
+  /// No description provided for @stateSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped'**
+  String get stateSkipped;
+
+  /// No description provided for @statePrepared.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepared'**
+  String get statePrepared;
+
+  /// No description provided for @statePassed.
+  ///
+  /// In en, this message translates to:
+  /// **'Over'**
+  String get statePassed;
+
+  /// No description provided for @stateSnoozed.
+  ///
+  /// In en, this message translates to:
+  /// **'Snoozed'**
+  String get stateSnoozed;
+
+  /// No description provided for @statePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get statePending;
+
+  /// No description provided for @stateOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get stateOverdue;
+
+  /// No description provided for @contactRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact removed'**
+  String get contactRemoved;
+
+  /// No description provided for @dupBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'This looks like it\'s on your calendar.'**
+  String get dupBanner;
+
+  /// No description provided for @snackSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped'**
+  String get snackSkipped;
+
+  /// No description provided for @snackDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted'**
+  String get snackDeleted;
+
+  /// No description provided for @snackPrepared.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepared'**
+  String get snackPrepared;
+
+  /// No description provided for @occasionDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Hope it\'s a great one!'**
+  String get occasionDone;
+
+  /// No description provided for @firstDoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your first one!'**
+  String get firstDoneTitle;
+
+  /// No description provided for @firstDoneSub.
+  ///
+  /// In en, this message translates to:
+  /// **'That\'s how it\'s done.'**
+  String get firstDoneSub;
+
+  /// No description provided for @rescheduleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reschedule'**
+  String get rescheduleTitle;
+
+  /// No description provided for @reschedLaterToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Later today'**
+  String get reschedLaterToday;
+
+  /// No description provided for @reschedEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'This evening'**
+  String get reschedEvening;
+
+  /// No description provided for @reschedTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow'**
+  String get reschedTomorrow;
+
+  /// No description provided for @reschedNextWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Next week'**
+  String get reschedNextWeek;
+
+  /// No description provided for @reschedPick.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick date & time'**
+  String get reschedPick;
+
+  /// No description provided for @scopeEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change which reminders?'**
+  String get scopeEditTitle;
+
+  /// No description provided for @scopeDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete which reminders?'**
+  String get scopeDeleteTitle;
+
+  /// No description provided for @scopeRemindTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply to which events?'**
+  String get scopeRemindTitle;
+
+  /// No description provided for @scopeThisOne.
+  ///
+  /// In en, this message translates to:
+  /// **'This one'**
+  String get scopeThisOne;
+
+  /// No description provided for @scopeThisAndFuture.
+  ///
+  /// In en, this message translates to:
+  /// **'This and future'**
+  String get scopeThisAndFuture;
+
+  /// No description provided for @scopeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get scopeAll;
+
+  /// No description provided for @scopeThisEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'This event'**
+  String get scopeThisEvent;
+
+  /// No description provided for @scopeAllEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'All events in series'**
+  String get scopeAllEvents;
+
+  /// No description provided for @remind10m.
+  ///
+  /// In en, this message translates to:
+  /// **'10 min before'**
+  String get remind10m;
+
+  /// No description provided for @remind1h.
+  ///
+  /// In en, this message translates to:
+  /// **'1 hour before'**
+  String get remind1h;
+
+  /// No description provided for @remind1d.
+  ///
+  /// In en, this message translates to:
+  /// **'1 day before'**
+  String get remind1d;
+
+  /// No description provided for @remindCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom…'**
+  String get remindCustom;
+
+  /// No description provided for @remindAtStart.
+  ///
+  /// In en, this message translates to:
+  /// **'At start'**
+  String get remindAtStart;
+
+  /// No description provided for @editorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit reminder'**
+  String get editorTitle;
+
+  /// No description provided for @fieldTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get fieldTitle;
+
+  /// No description provided for @fieldNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get fieldNotes;
+
+  /// No description provided for @fieldStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts'**
+  String get fieldStart;
+
+  /// No description provided for @fieldEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends'**
+  String get fieldEnd;
+
+  /// No description provided for @fieldAllDay.
+  ///
+  /// In en, this message translates to:
+  /// **'All day'**
+  String get fieldAllDay;
+
+  /// No description provided for @fieldTimeZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Time zone'**
+  String get fieldTimeZone;
+
+  /// No description provided for @fieldType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get fieldType;
+
+  /// No description provided for @fieldContext.
+  ///
+  /// In en, this message translates to:
+  /// **'Context'**
+  String get fieldContext;
+
+  /// No description provided for @noEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get noEnd;
+
+  /// No description provided for @addAlert.
+  ///
+  /// In en, this message translates to:
+  /// **'Add alert'**
+  String get addAlert;
+
+  /// No description provided for @repeatAfterDoneToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Count from when it\'s done'**
+  String get repeatAfterDoneToggle;
+
+  /// No description provided for @repeatLastBusinessDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Last business day of the month'**
+  String get repeatLastBusinessDay;
+
+  /// No description provided for @nagOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get nagOff;
+
+  /// No description provided for @startBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Start by'**
+  String get startBy;
+
+  /// No description provided for @zoneSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search time zones'**
+  String get zoneSearch;
+
+  /// No description provided for @pickerDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get pickerDone;
+
+  /// No description provided for @drawerTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'Types'**
+  String get drawerTypes;
+
+  /// No description provided for @drawerContext.
+  ///
+  /// In en, this message translates to:
+  /// **'Context'**
+  String get drawerContext;
+
+  /// No description provided for @drawerCalendars.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendars'**
+  String get drawerCalendars;
+
+  /// No description provided for @searchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search reminders'**
+  String get searchHint;
+
+  /// No description provided for @completedEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing done yet'**
+  String get completedEmptyTitle;
+
+  /// No description provided for @completedEmptySub.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished reminders will show up here.'**
+  String get completedEmptySub;
+
+  /// No description provided for @filterEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No reminders match your filters'**
+  String get filterEmpty;
+
+  /// No description provided for @actionClearFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get actionClearFilters;
+
+  /// No description provided for @digestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your day'**
+  String get digestTitle;
+
+  /// No description provided for @actionDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get actionDismiss;
+
+  /// No description provided for @digestOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get digestOverdue;
+
+  /// No description provided for @digestMissed.
+  ///
+  /// In en, this message translates to:
+  /// **'Missed while you were away'**
+  String get digestMissed;
+
+  /// No description provided for @digestComingUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming up'**
+  String get digestComingUp;
+
+  /// No description provided for @digestRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from your calendar'**
+  String get digestRemoved;
+
+  /// No description provided for @digestStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue for a month. Still relevant?'**
+  String get digestStale;
+
+  /// No description provided for @actionKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep'**
+  String get actionKeep;
+
+  /// No description provided for @digestSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'New birthdays in your contacts'**
+  String get digestSuggestions;
+
+  /// No description provided for @actionAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get actionAdd;
+
+  /// No description provided for @bannerNotifOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are off — you won\'t be reminded.'**
+  String get bannerNotifOff;
+
+  /// No description provided for @actionTurnOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on'**
+  String get actionTurnOn;
+
+  /// No description provided for @bannerExact.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders may arrive up to 10 minutes late.'**
+  String get bannerExact;
+
+  /// No description provided for @actionFix.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix'**
+  String get actionFix;
+
+  /// No description provided for @bannerCalendarOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar access was turned off.'**
+  String get bannerCalendarOff;
+
+  /// No description provided for @actionReconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnect'**
+  String get actionReconnect;
+
+  /// No description provided for @bannerBattery.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone may be delaying reminders.'**
+  String get bannerBattery;
+
+  /// No description provided for @actionShowMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Show me how'**
+  String get actionShowMe;
+
+  /// No description provided for @obWelcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Never forget the things that matter.'**
+  String get obWelcomeTitle;
+
+  /// No description provided for @obWelcomeSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Birthdays, bills, meetings, errands — one place, gentle nudges.'**
+  String get obWelcomeSub;
+
+  /// No description provided for @actionGetStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Get started'**
+  String get actionGetStarted;
+
+  /// No description provided for @obTypeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Just type it.'**
+  String get obTypeTitle;
+
+  /// No description provided for @obTypeSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Write it like you\'d say it. We\'ll handle the rest.'**
+  String get obTypeSub;
+
+  /// No description provided for @obTypeDemo.
+  ///
+  /// In en, this message translates to:
+  /// **'Mom\'s birthday Oct 12'**
+  String get obTypeDemo;
+
+  /// No description provided for @obTryOwn.
+  ///
+  /// In en, this message translates to:
+  /// **'Try your own'**
+  String get obTryOwn;
+
+  /// No description provided for @obTypePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Pay rent on the 1st every month'**
+  String get obTypePlaceholder;
+
+  /// No description provided for @actionSaveThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Save this'**
+  String get actionSaveThis;
+
+  /// No description provided for @actionNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get actionNext;
+
+  /// No description provided for @actionSkipStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get actionSkipStep;
+
+  /// No description provided for @obBellBirthday.
+  ///
+  /// In en, this message translates to:
+  /// **'Ooh, a birthday. Got it.'**
+  String get obBellBirthday;
+
+  /// No description provided for @obNudgeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nudged before it matters.'**
+  String get obNudgeTitle;
+
+  /// No description provided for @obNudgeSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag through the week. For big days, you get a heads-up early — not just on the day.'**
+  String get obNudgeSub;
+
+  /// No description provided for @obDragHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag me →'**
+  String get obDragHint;
+
+  /// No description provided for @obPreparedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepared? We\'ll stop the early nudges.'**
+  String get obPreparedNote;
+
+  /// No description provided for @obScheduleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your schedule'**
+  String get obScheduleTitle;
+
+  /// No description provided for @obScheduleSub.
+  ///
+  /// In en, this message translates to:
+  /// **'We picked sensible defaults. Change anything you like.'**
+  String get obScheduleSub;
+
+  /// No description provided for @rowTimeZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Time zone'**
+  String get rowTimeZone;
+
+  /// No description provided for @rowDateOnlyAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Date-only reminders at'**
+  String get rowDateOnlyAt;
+
+  /// No description provided for @rowDateOnlyAtSub.
+  ///
+  /// In en, this message translates to:
+  /// **'For things without a time, like \"pay rent on the 1st\"'**
+  String get rowDateOnlyAtSub;
+
+  /// No description provided for @rowNagHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat reminders between'**
+  String get rowNagHours;
+
+  /// No description provided for @rowNagHoursSub.
+  ///
+  /// In en, this message translates to:
+  /// **'We only nag you during these hours'**
+  String get rowNagHoursSub;
+
+  /// No description provided for @rowTomorrowMeans.
+  ///
+  /// In en, this message translates to:
+  /// **'\"Tomorrow\" means'**
+  String get rowTomorrowMeans;
+
+  /// No description provided for @tomorrowSameTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Same time tomorrow'**
+  String get tomorrowSameTime;
+
+  /// No description provided for @actionLooksGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Looks good'**
+  String get actionLooksGood;
+
+  /// No description provided for @obCalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'See your calendar here too'**
+  String get obCalTitle;
+
+  /// No description provided for @obCalSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Your events show up next to your reminders. Read-only — we\'ll never change your calendar, and events won\'t ring unless you ask.'**
+  String get obCalSub;
+
+  /// No description provided for @actionConnectCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect calendar'**
+  String get actionConnectCalendar;
+
+  /// No description provided for @actionNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get actionNotNow;
+
+  /// No description provided for @obPickCalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Which calendars?'**
+  String get obPickCalTitle;
+
+  /// No description provided for @obPickCalSub.
+  ///
+  /// In en, this message translates to:
+  /// **'You can change this anytime in Settings.'**
+  String get obPickCalSub;
+
+  /// No description provided for @obContactsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Never miss a birthday'**
+  String get obContactsTitle;
+
+  /// No description provided for @obContactsSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Add birthdays and anniversaries from your contacts. Only the dates are used — nothing leaves your phone.'**
+  String get obContactsSub;
+
+  /// No description provided for @actionAddBirthdays.
+  ///
+  /// In en, this message translates to:
+  /// **'Add birthdays'**
+  String get actionAddBirthdays;
+
+  /// No description provided for @actionImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get actionImport;
+
+  /// No description provided for @obBellParty.
+  ///
+  /// In en, this message translates to:
+  /// **'Party planning starts now.'**
+  String get obBellParty;
+
+  /// No description provided for @testTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Want to make sure it works?'**
+  String get testTitle;
+
+  /// No description provided for @testSub.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll send a test reminder in 15 seconds. Lock your phone to try it for real.'**
+  String get testSub;
+
+  /// No description provided for @actionSendTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Send test reminder'**
+  String get actionSendTest;
+
+  /// No description provided for @testNotifTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Test reminder'**
+  String get testNotifTitle;
+
+  /// No description provided for @testNotifBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It works! 🔔'**
+  String get testNotifBody;
+
+  /// No description provided for @testOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders are working'**
+  String get testOk;
+
+  /// No description provided for @testFail.
+  ///
+  /// In en, this message translates to:
+  /// **'The test didn\'t arrive'**
+  String get testFail;
+
+  /// No description provided for @testWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Test reminder on its way…'**
+  String get testWaiting;
+
+  /// No description provided for @testFixExact.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on precise timing.'**
+  String get testFixExact;
+
+  /// No description provided for @testFixBattery.
+  ///
+  /// In en, this message translates to:
+  /// **'Let the app run in the background.'**
+  String get testFixBattery;
+
+  /// No description provided for @testSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'Let\'s fix it: check notifications, precise timing, battery optimization and Do Not Disturb.'**
+  String get testSteps;
+
+  /// No description provided for @notifTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Let us ring the bell'**
+  String get notifTitle;
+
+  /// No description provided for @notifSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow notifications so your reminders reach you on time.'**
+  String get notifSub;
+
+  /// No description provided for @actionContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get actionContinue;
+
+  /// No description provided for @exactTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Right on time'**
+  String get exactTitle;
+
+  /// No description provided for @exactSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow \"Alarms & reminders\" so alerts arrive on the minute, not up to 10 minutes late.'**
+  String get exactSub;
+
+  /// No description provided for @actionOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get actionOpenSettings;
+
+  /// No description provided for @batteryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep reminders reliable'**
+  String get batteryTitle;
+
+  /// No description provided for @actionLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get actionLater;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// No description provided for @secSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Your schedule'**
+  String get secSchedule;
+
+  /// No description provided for @secTimeZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Time zone'**
+  String get secTimeZone;
+
+  /// No description provided for @secDefaultAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Default alerts'**
+  String get secDefaultAlerts;
+
+  /// No description provided for @secNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications & digest'**
+  String get secNotifications;
+
+  /// No description provided for @secCalendars.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendars & contacts'**
+  String get secCalendars;
+
+  /// No description provided for @secViews.
+  ///
+  /// In en, this message translates to:
+  /// **'Views & appearance'**
+  String get secViews;
+
+  /// No description provided for @secReliability.
+  ///
+  /// In en, this message translates to:
+  /// **'Reliability'**
+  String get secReliability;
+
+  /// No description provided for @secBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup & about'**
+  String get secBackup;
+
+  /// No description provided for @setDefaultZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Default time zone'**
+  String get setDefaultZone;
+
+  /// No description provided for @setDefaultZoneDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'New reminders use this time zone.'**
+  String get setDefaultZoneDesc;
+
+  /// No description provided for @setAskTravel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask when I travel'**
+  String get setAskTravel;
+
+  /// No description provided for @setAskTravelDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer to switch time zones when you\'re somewhere new.'**
+  String get setAskTravelDesc;
+
+  /// No description provided for @setDayTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Date-only reminders at'**
+  String get setDayTime;
+
+  /// No description provided for @setDayTimeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Alert time for reminders without a time.'**
+  String get setDayTimeDesc;
+
+  /// No description provided for @setNagHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Nag hours'**
+  String get setNagHours;
+
+  /// No description provided for @setNagHoursDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat alerts only between these times.'**
+  String get setNagHoursDesc;
+
+  /// No description provided for @setTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'\"Tomorrow\" means'**
+  String get setTomorrow;
+
+  /// No description provided for @setTomorrowDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'When \"Tomorrow\" on a notification brings it back.'**
+  String get setTomorrowDesc;
+
+  /// No description provided for @setLateAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Late alerts'**
+  String get setLateAlerts;
+
+  /// No description provided for @setLateAlertsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'If your phone was off, still show alerts up to this late.'**
+  String get setLateAlertsDesc;
+
+  /// No description provided for @late30m.
+  ///
+  /// In en, this message translates to:
+  /// **'30 min'**
+  String get late30m;
+
+  /// No description provided for @late2h.
+  ///
+  /// In en, this message translates to:
+  /// **'2 hours'**
+  String get late2h;
+
+  /// No description provided for @late6h.
+  ///
+  /// In en, this message translates to:
+  /// **'6 hours'**
+  String get late6h;
+
+  /// No description provided for @lateAlways.
+  ///
+  /// In en, this message translates to:
+  /// **'Always'**
+  String get lateAlways;
+
+  /// No description provided for @setDigestTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Digest time'**
+  String get setDigestTime;
+
+  /// No description provided for @setDigestTimeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'When your daily summary arrives.'**
+  String get setDigestTimeDesc;
+
+  /// No description provided for @setDigestNotif.
+  ///
+  /// In en, this message translates to:
+  /// **'Digest notification'**
+  String get setDigestNotif;
+
+  /// No description provided for @setDigestNotifDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Get a notification when your digest is ready.'**
+  String get setDigestNotifDesc;
+
+  /// No description provided for @setDefaultAlertsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts new reminders start with, by type.'**
+  String get setDefaultAlertsDesc;
+
+  /// No description provided for @resetDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Use default'**
+  String get resetDefault;
+
+  /// No description provided for @setSounds.
+  ///
+  /// In en, this message translates to:
+  /// **'Completion sounds'**
+  String get setSounds;
+
+  /// No description provided for @setSoundsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Play a sound when you complete a reminder.'**
+  String get setSoundsDesc;
+
+  /// No description provided for @setStartIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Start in'**
+  String get setStartIn;
+
+  /// No description provided for @startLast.
+  ///
+  /// In en, this message translates to:
+  /// **'Last used'**
+  String get startLast;
+
+  /// No description provided for @setShowCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Show completed in calendar views'**
+  String get setShowCompleted;
+
+  /// No description provided for @setTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get setTheme;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
+  /// No description provided for @relNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get relNotifications;
+
+  /// No description provided for @relPrecise.
+  ///
+  /// In en, this message translates to:
+  /// **'Precise timing'**
+  String get relPrecise;
+
+  /// No description provided for @relBattery.
+  ///
+  /// In en, this message translates to:
+  /// **'Battery optimization'**
+  String get relBattery;
+
+  /// No description provided for @relOn.
+  ///
+  /// In en, this message translates to:
+  /// **'On'**
+  String get relOn;
+
+  /// No description provided for @relOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get relOff;
+
+  /// No description provided for @relBatteryOn.
+  ///
+  /// In en, this message translates to:
+  /// **'On (may delay reminders)'**
+  String get relBatteryOn;
+
+  /// No description provided for @zoneDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change default time zone?'**
+  String get zoneDialogTitle;
+
+  /// No description provided for @zoneOnlyNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Only new reminders'**
+  String get zoneOnlyNew;
+
+  /// No description provided for @zoneMoveUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Also move upcoming reminders'**
+  String get zoneMoveUpcoming;
+
+  /// No description provided for @actionConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get actionConfirm;
+
+  /// No description provided for @calDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect calendar'**
+  String get calDisconnect;
+
+  /// No description provided for @calPermissionOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar access is off'**
+  String get calPermissionOff;
+
+  /// No description provided for @contactsBirthdays.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact birthdays'**
+  String get contactsBirthdays;
+
+  /// No description provided for @setAutoAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-add new birthdays'**
+  String get setAutoAdd;
+
+  /// No description provided for @setAutoAddDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'New birthdays in your contacts are added automatically.'**
+  String get setAutoAddDesc;
+
+  /// No description provided for @contactsReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review birthdays'**
+  String get contactsReview;
+
+  /// No description provided for @backupExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export backup'**
+  String get backupExport;
+
+  /// No description provided for @backupImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import backup'**
+  String get backupImport;
+
+  /// No description provided for @backupBadFile.
+  ///
+  /// In en, this message translates to:
+  /// **'This file isn\'t a Reminder App backup.'**
+  String get backupBadFile;
+
+  /// No description provided for @backupExported.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup saved'**
+  String get backupExported;
+
+  /// No description provided for @aboutPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy policy'**
+  String get aboutPrivacy;
+
+  /// No description provided for @aboutFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Send feedback'**
+  String get aboutFeedback;
+
+  /// No description provided for @privacyText.
+  ///
+  /// In en, this message translates to:
+  /// **'Your reminders stay on this phone. Reminder App has no account and no server in this version: nothing you type, no calendar event and no contact leaves your device. Backups are files you save yourself.'**
+  String get privacyText;
+
+  /// No description provided for @errVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice input isn\'t available on this phone.'**
+  String get errVoice;
+
+  /// No description provided for @errSpeech.
+  ///
+  /// In en, this message translates to:
+  /// **'Didn\'t catch that. Try again?'**
+  String get errSpeech;
+
+  /// No description provided for @errSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save. Please try again.'**
+  String get errSave;
+
+  /// No description provided for @errCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your calendar. Pull to retry.'**
+  String get errCalendar;
+
+  /// No description provided for @errGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get errGeneric;
+
+  /// No description provided for @tplBirthday.
+  ///
+  /// In en, this message translates to:
+  /// **'Birthday'**
+  String get tplBirthday;
+
+  /// No description provided for @tplBill.
+  ///
+  /// In en, this message translates to:
+  /// **'Bill due'**
+  String get tplBill;
+
+  /// No description provided for @tplRenewal.
+  ///
+  /// In en, this message translates to:
+  /// **'Renewal'**
+  String get tplRenewal;
+
+  /// No description provided for @tplTrial.
+  ///
+  /// In en, this message translates to:
+  /// **'Free trial'**
+  String get tplTrial;
+
+  /// No description provided for @tplNightOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Night out'**
+  String get tplNightOut;
+
+  /// No description provided for @tplAppointment.
+  ///
+  /// In en, this message translates to:
+  /// **'Appointment'**
+  String get tplAppointment;
+
+  /// No description provided for @tplPhBirthday.
+  ///
+  /// In en, this message translates to:
+  /// **'Whose birthday? When?'**
+  String get tplPhBirthday;
+
+  /// No description provided for @tplPhBill.
+  ///
+  /// In en, this message translates to:
+  /// **'Which bill? Due on the…'**
+  String get tplPhBill;
+
+  /// No description provided for @tplPhRenewal.
+  ///
+  /// In en, this message translates to:
+  /// **'What renews? When?'**
+  String get tplPhRenewal;
+
+  /// No description provided for @tplPhTrial.
+  ///
+  /// In en, this message translates to:
+  /// **'Which trial?'**
+  String get tplPhTrial;
+
+  /// No description provided for @tplPhNightOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Where and when?'**
+  String get tplPhNightOut;
+
+  /// No description provided for @tplPhAppointment.
+  ///
+  /// In en, this message translates to:
+  /// **'What and when?'**
+  String get tplPhAppointment;
+
+  /// No description provided for @actionSpeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Speak'**
+  String get actionSpeak;
+
+  /// No description provided for @listening.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening…'**
+  String get listening;
+
+  /// No description provided for @sharedSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder saved'**
+  String get sharedSaved;
+
+  /// No description provided for @widgetEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing coming up'**
+  String get widgetEmpty;
+
+  /// No description provided for @moreOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'More options'**
+  String get moreOptions;
+
+  /// S-31 calendar event source
+  ///
+  /// In en, this message translates to:
+  /// **'From {calendar}'**
+  String detailFromCalendar(String calendar);
+
+  /// TIM-6 original zone
+  ///
+  /// In en, this message translates to:
+  /// **'{time} in {city}'**
+  String zoneNote(String time, String city);
+
+  /// copy.md snackbar
+  ///
+  /// In en, this message translates to:
+  /// **'Rescheduled to {when}'**
+  String snackRescheduled(String when);
+
+  /// FL-14
+  ///
+  /// In en, this message translates to:
+  /// **'Done · Next: {date}'**
+  String snackNext(String date);
+
+  /// FL-14
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped · Next: {date}'**
+  String snackSkippedNext(String date);
+
+  /// Repeat summary
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Every day} other{Every {count} days}}'**
+  String everyDays(int count);
+
+  /// Repeat summary
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Every week} other{Every {count} weeks}}'**
+  String everyWeeks(int count);
+
+  /// Repeat summary
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Every month} other{Every {count} months}}'**
+  String everyMonths(int count);
+
+  /// Repeat summary
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Every year} other{Every {count} years}}'**
+  String everyYears(int count);
+
+  /// Repeat summary, e.g. Every Monday
+  ///
+  /// In en, this message translates to:
+  /// **'Every {weekday}'**
+  String everyWeekday(String weekday);
+
+  /// Repeat summary
+  ///
+  /// In en, this message translates to:
+  /// **'Every month on the {nth}'**
+  String monthlyOnDay(String nth);
+
+  /// Nag interval, e.g. Every 2 hours
+  ///
+  /// In en, this message translates to:
+  /// **'Every {interval}'**
+  String nagEvery(String interval);
+
+  /// Day view (copy.md §5)
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue ({count})'**
+  String overdueCount(int count);
+
+  /// Month view
+  ///
+  /// In en, this message translates to:
+  /// **'+{count} more'**
+  String moreCount(int count);
+
+  /// G7
+  ///
+  /// In en, this message translates to:
+  /// **'No matches for \"{query}\"'**
+  String searchEmpty(String query);
+
+  /// G7 button
+  ///
+  /// In en, this message translates to:
+  /// **'Create \"{query}\"'**
+  String searchCreate(String query);
+
+  /// DIG-2
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 alert wasn\'t shown} other{{count} alerts weren\'t shown}}'**
+  String digestMissedCount(int count);
+
+  /// PRF-5 option
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow at {time}'**
+  String tomorrowAtTime(String time);
+
+  /// CON-3
+  ///
+  /// In en, this message translates to:
+  /// **'{birthdays} birthdays, {anniversaries} anniversaries found'**
+  String contactsFound(int birthdays, int anniversaries);
+
+  /// PRM-7
+  ///
+  /// In en, this message translates to:
+  /// **'Arrived {seconds} seconds late'**
+  String testLate(int seconds);
+
+  /// S-07
+  ///
+  /// In en, this message translates to:
+  /// **'Your {brand} phone may pause apps to save battery. One quick setting keeps your reminders on time.'**
+  String batterySub(String brand);
+
+  /// S-57
+  ///
+  /// In en, this message translates to:
+  /// **'Last test: {result}'**
+  String relLastTest(String result);
+
+  /// FL-16
+  ///
+  /// In en, this message translates to:
+  /// **'{count} upcoming reminders will keep their clock time in {zone}.'**
+  String zoneConfirm(int count, String zone);
+
+  /// FL-17
+  ///
+  /// In en, this message translates to:
+  /// **'{total} reminders found · {newer} newer than yours · {same} already here'**
+  String backupSummary(int total, int newer, int same);
+
+  /// FL-17
+  ///
+  /// In en, this message translates to:
+  /// **'Imported {count} reminders.'**
+  String backupImported(int count);
+
+  /// S-58
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String aboutVersion(String version);
+
+  /// Time range
+  ///
+  /// In en, this message translates to:
+  /// **'{start} – {end}'**
+  String timeRange(String start, String end);
 }
 
 class _AppLocalizationsDelegate
