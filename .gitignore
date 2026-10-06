@@ -36,3 +36,6 @@ pubspec_overrides.yaml
 
 # AI tool config from the Expo template (not project code)
 spikes/rn-animation/.claude/
+
+# IDE module files
+*.iml
