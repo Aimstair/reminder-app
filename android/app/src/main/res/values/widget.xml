@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Home-screen widget, Quick Settings tile and share target (S-61…S-63). Colors follow
+     design-direction.md §3 tokens. -->
+<resources>
+    <string name="widget_title">Reminder App</string>
+    <string name="widget_add">New reminder</string>
+    <string name="widget_empty">Nothing coming up</string>
+    <string name="widget_description">Quick add and your next reminders</string>
+    <string name="tile_label">+ Reminder</string>
+    <string name="share_label">Reminder App</string>
+
+    <color name="widget_surface">#FFFFFFFF</color>
+    <color name="widget_text">#FF000000</color>
+    <color name="widget_text_secondary">#993C3C43</color>
+    <color name="widget_accent">#FF007AFF</color>
+
+    <style name="WidgetRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="WidgetRowTitle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:textColor">@color/widget_text</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="WidgetRowWhen">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textColor">@color/widget_text_secondary</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+</resources>

@@ -8,6 +8,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import app.aimstair.reminder_app.MainActivity
+import app.aimstair.reminder_app.platform.PendingLaunch
 
 /** Builds and posts reminder notifications (NTF-*). Channels per docs/copy.md §2. */
 object Notifications {
@@ -49,9 +51,15 @@ object Notifications {
         )
     }
 
-    private fun openAppIntent(context: Context): PendingIntent? {
-        val launch = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return null
-        return PendingIntent.getActivity(context, 0, launch, PendingIntent.FLAG_IMMUTABLE)
+    /** NTF-3: tapping the body opens that occurrence's detail screen (Dart reads `open:<alarmKey>`). */
+    private fun openAppIntent(context: Context, key: String): PendingIntent {
+        val intent = Intent(context, MainActivity::class.java)
+            .setData(Uri.parse("reminder://open/" + Uri.encode(key)))
+            .putExtra(PendingLaunch.EXTRA_LAUNCH_ACTION, "open:$key")
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        return PendingIntent.getActivity(
+            context, idFor(key), intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
     }
 
     private fun builder(context: Context, channel: String): Notification.Builder =
@@ -81,7 +89,7 @@ object Notifications {
             .setWhen(alarm.fireAtUtcMs)
             .setShowWhen(true)
             .setAutoCancel(true)
-            .setContentIntent(openAppIntent(context))
+            .setContentIntent(openAppIntent(context, alarm.key))
         actionsFor(alarm.kind).forEach { (label, action) ->
             b.addAction(Notification.Action.Builder(null, label, actionIntent(context, alarm, action)).build())
         }
