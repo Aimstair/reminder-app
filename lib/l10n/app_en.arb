@@ -397,5 +397,15 @@
   "aboutVersion": "Version {version}",
   "@aboutVersion": { "description": "S-58", "placeholders": { "version": { "type": "String" } } },
   "timeRange": "{start} – {end}",
-  "@timeRange": { "description": "Time range", "placeholders": { "start": { "type": "String" }, "end": { "type": "String" } } }
+  "@timeRange": { "description": "Time range", "placeholders": { "start": { "type": "String" }, "end": { "type": "String" } } },
+  "digestPartOverdue": "{count} overdue",
+  "@digestPartOverdue": { "description": "copy.md notif.digest part", "placeholders": { "count": { "type": "int" } } },
+  "digestPartComing": "{count} coming up",
+  "@digestPartComing": { "description": "copy.md notif.digest part", "placeholders": { "count": { "type": "int" } } },
+  "travelTitle": "You're in {city}",
+  "@travelTitle": { "description": "copy.md notif.travel (TIM-8)", "placeholders": { "city": { "type": "String" } } },
+  "travelBody": "Switch your default time zone?",
+  "actionSwitch": "Switch",
+  "actionKeepCity": "Keep {city}",
+  "@actionKeepCity": { "placeholders": { "city": { "type": "String" } } }
 }

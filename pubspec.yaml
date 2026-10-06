@@ -73,6 +73,8 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   generate: true # gen-l10n from lib/l10n (copy.md keys)
+  assets:
+    - assets/sounds/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

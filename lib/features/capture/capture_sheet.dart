@@ -1,29 +1,44 @@
-/// S-20 Capture sheet (FL-2): iOS-form layout — Cancel · New reminder · Save, input card, Details rows
-/// parsed live from the text, Nag switch, Type and Personal/Work segmented controls.
-/// Chip pickers (S-21), voice and templates come later.
+/// S-20 Capture sheet (FL-2…5): iOS-form layout — Cancel · New reminder · Save, input card with voice
+/// and template tag, template chips when empty (TPL-1), Details rows parsed live (tap → S-21 picker,
+/// which locks that field, CAP-11), Nag switch, Type and Personal/Work segmented controls, a
+/// one-line "first alert" summary. Opened from [+], Day/Month taps, the tile, widget and share sheet.
 library;
 
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:reminder_core/reminder_core.dart';
 
 import '../../app/providers.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../../ui/format.dart';
 import '../../ui/tokens.dart';
+import '../../ui/widgets.dart';
+import '../actions/occurrence_actions.dart';
+import '../pickers/pickers.dart';
+import '../setup/permission_flow.dart';
 
-Future<void> showCaptureSheet(BuildContext context) => showModalBottomSheet<void>(
-  context: context,
-  isScrollControlled: true,
-  useSafeArea: true,
-  showDragHandle: false,
-  builder: (_) => const CaptureSheet(),
-);
+/// [at]: a time slot (Day view, VW-8) — date and time locked. [day]: a date (Month long-press).
+/// [text]: shared text (S-63, CAP-12).
+Future<void> showCaptureSheet(BuildContext context, {DateTime? at, DateTime? day, String? text}) async {
+  var withAlerts = false;
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    showDragHandle: false,
+    builder: (_) => CaptureSheet(at: at, day: day, text: text, onSavedWithAlerts: () => withAlerts = true),
+  );
+  if (withAlerts && context.mounted) await runPermissionFlowOnce(context);
+}
 
 class CaptureSheet extends ConsumerStatefulWidget {
-  const CaptureSheet({super.key});
+  const CaptureSheet({super.key, this.at, this.day, this.text, this.onSavedWithAlerts});
+  final VoidCallback? onSavedWithAlerts;
+  final DateTime? at;
+  final DateTime? day;
+  final String? text;
 
   @override
   ConsumerState<CaptureSheet> createState() => _CaptureSheetState();
@@ -31,60 +46,129 @@ class CaptureSheet extends ConsumerStatefulWidget {
 
 class _CaptureSheetState extends ConsumerState<CaptureSheet> {
   final _input = TextEditingController();
+  final _focus = FocusNode();
   final _example = Random().nextInt(5);
   ParseResult? _parsed;
-
-  // Manual overrides (CAP-11: a field the user set stays as set while typing).
-  Kind? _kind;
-  ReminderContext? _context;
-  bool? _nag;
+  String? _notes;
+  Template? _template;
   bool _saving = false;
+  bool _listening = false;
+
+  // CAP-11 locks: a field set by hand stays as set while typing.
+  DateTime? _lockDate;
+  ClockTime? _lockTime;
+  bool? _lockAllDay;
+  String? _lockZone;
+  Kind? _lockKind;
+  ReminderContext? _lockContext;
+  RepeatChoice? _lockRepeat;
+  List<AlertStage>? _lockAlerts;
+  bool? _lockNag;
 
   @override
   void initState() {
     super.initState();
     _input.addListener(_reparse);
+    if (widget.at case final at?) {
+      _lockDate = dateOnly(at);
+      _lockTime = ClockTime(at.hour, at.minute);
+      _lockAllDay = false;
+    } else if (widget.day case final d?) {
+      _lockDate = dateOnly(d);
+    }
+    if (widget.text case final shared?) {
+      // CAP-12: long shared text → first sentence parsed, the full text and links go to notes.
+      final t = shared.trim();
+      if (t.length > 120) {
+        final m = RegExp(r'^(.{1,120}?[.!?])(\s|$)').firstMatch(t);
+        _input.text = (m?.group(1) ?? t.substring(0, 120)).trim();
+        _notes = t;
+      } else {
+        _input.text = t;
+      }
+    }
   }
 
   @override
   void dispose() {
     _input.dispose();
+    _focus.dispose();
     super.dispose();
   }
+
+  DateTime get _nowWall => instantToWall(DateTime.now().toUtc(), ref.read(prefsProvider).defaultTimeZone);
 
   void _reparse() {
     final text = _input.text.trim();
     if (text.isEmpty) return setState(() => _parsed = null);
     final prefs = ref.read(prefsProvider);
-    final now = instantToWall(DateTime.now().toUtc(), prefs.defaultTimeZone);
-    final locale = Localizations.localeOf(context).toLanguageTag();
     final parser = ReminderParser(
       ParseContext(
-        now: now,
+        now: _nowWall,
         defaultTimeZone: prefs.defaultTimeZone,
-        locale: locale,
+        locale: Localizations.localeOf(context).toLanguageTag(),
         dayTimeHour: prefs.dayTime.hour,
         dayTimeMinute: prefs.dayTime.minute,
       ),
     );
-    setState(() => _parsed = parser.parse(text));
+    var p = parser.parse(text);
+    if (_template case final t?) p = applyTemplate(t, p, input: text, now: _nowWall);
+    setState(() => _parsed = p);
   }
 
-  /// The parse result with the user's manual choices applied.
+  /// The parse result with templates and the user's locks applied.
   ParseResult? get _effective {
     final p = _parsed;
     if (p == null) return null;
-    final kind = _kind ?? p.kind;
+    var timing = p.timing;
+    final flags = {...p.flags};
+    if (_lockDate != null || _lockTime != null || _lockAllDay != null || _lockZone != null) {
+      final base = timing ?? ParsedTiming(type: TimingType.date, start: formatWallDate(addDays(dateOnly(_nowWall), 1)));
+      final parsedStart = parseWall(base.start);
+      final date = _lockDate ?? dateOnly(parsedStart);
+      final allDay = _lockAllDay ?? (_lockTime == null && base.type == TimingType.date);
+      if (allDay) {
+        timing = ParsedTiming(type: TimingType.date, start: formatWallDate(date));
+      } else {
+        final t = _lockTime ??
+            (base.type == TimingType.datetime
+                ? ClockTime(parsedStart.hour, parsedStart.minute)
+                : ref.read(prefsProvider).dayTime);
+        final start = DateTime.utc(date.year, date.month, date.day, t.hour, t.minute);
+        final duration = base.end == null ? null : parseWall(base.end!).difference(parsedStart);
+        timing = ParsedTiming(
+          type: TimingType.datetime,
+          start: formatWallDateTime(start),
+          end: duration == null ? null : formatWallDateTime(start.add(duration)),
+          tz: _lockZone ?? base.tz,
+        );
+      }
+      if (_lockDate != null) {
+        flags
+          ..remove(ParseFlag.dateMissing)
+          ..remove(ParseFlag.ambiguousDate)
+          ..remove(ParseFlag.pastDateRolled);
+      }
+      if (_lockTime != null) flags.remove(ParseFlag.ambiguousTime);
+    }
+    final kind = _lockKind ?? p.kind;
     return ParseResult(
       title: p.title,
-      timing: p.timing,
+      timing: timing,
       kind: kind,
-      context: _context ?? p.context,
-      flags: p.flags,
-      rrule: p.rrule,
-      repeatMode: p.repeatMode,
-      alerts: _kind != null && _kind != p.kind ? null : p.alerts, // new type → its default plan
-      nag: (_nag ?? (p.nag != null)) ? (p.nag ?? '2h') : null, // PRS-27 default interval
+      context: _lockContext ?? p.context,
+      flags: flags,
+      rrule: _lockRepeat != null ? _lockRepeat!.rrule : p.rrule,
+      repeatMode: _lockRepeat?.mode ?? p.repeatMode,
+      // A type chosen by hand brings its own default plan, unless alerts were set too.
+      alerts: _lockAlerts != null
+          ? [for (final s in _lockAlerts!) s.offset.toString()]
+          : (_lockKind != null && _lockKind != p.kind ? null : p.alerts),
+      nag: switch (_lockNag) {
+        true => p.nag ?? '2h',
+        false => null,
+        null => p.nag,
+      },
     );
   }
 
@@ -96,38 +180,113 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
-    final r = reminderFromParse(
-      p,
-      meta: await services.reminders.newMeta(),
-      prefs: ref.read(prefsProvider),
-      rawInput: _input.text.trim(),
-    );
-    await services.service.create(r);
-    navigator.pop();
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(l10n.snackSaved(_whenText(r, l10n))),
-          action: SnackBarAction(label: l10n.actionUndo, onPressed: () => services.service.delete(r.id)),
-        ),
+    final f = Fmt.of(context);
+    try {
+      var r = reminderFromParse(
+        p,
+        meta: await services.reminders.newMeta(),
+        prefs: ref.read(prefsProvider),
+        rawInput: _input.text.trim(), // CAP-8
       );
+      r = r.copyWith(notes: () => _notes, templateId: () => _template?.id);
+      if (!r.completable && r.repeatMode == RecurrenceMode.afterCompletion) {
+        r = r.copyWith(repeatMode: RecurrenceMode.fixed); // REC-10
+      }
+      await services.service.create(r);
+      navigator.pop();
+      final when = r.timing.type == TimingType.date ? f.date(r.timing.start) : f.when(r.timing.start, allDay: false);
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(l10n.snackSaved(when)),
+            action: SnackBarAction(label: l10n.actionUndo, onPressed: () => services.service.delete(r.id)),
+          ),
+        );
+      // PRM-6: permissions on the first save with alerts — on the screen below the sheet.
+      if (r.alertPlan.isNotEmpty) widget.onSavedWithAlerts?.call();
+    } catch (_) {
+      if (mounted) setState(() => _saving = false);
+      messenger.showSnackBar(SnackBar(content: Text(l10n.errSave)));
+    }
   }
 
-  String _whenText(Reminder r, AppLocalizations l10n) {
-    final locale = Localizations.localeOf(context).toString();
-    final date = DateFormat.MMMEd(locale).format(r.timing.start);
-    return r.timing.type == TimingType.date ? date : '$date, ${DateFormat.jm(locale).format(r.timing.start)}';
+  /// TPL-2/TPL-4: a template locks type, repeat and alerts; another replaces them.
+  void _setTemplate(Template t) {
+    setState(() {
+      _template = t;
+      _lockKind = null;
+      _lockRepeat = null;
+      _lockAlerts = null;
+      _lockNag = null;
+    });
+    _reparse();
+    _focus.requestFocus();
   }
+
+  Future<void> _voice() async {
+    final s = ref.read(servicesProvider);
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    if (_listening) {
+      await s.voice.stop();
+      setState(() => _listening = false);
+      return;
+    }
+    setState(() => _listening = true);
+    final ok = await s.voice.listen(
+      onText: (t) {
+        if (mounted && t.isNotEmpty) _input.text = t;
+      },
+      onDone: (t) {
+        if (!mounted) return;
+        setState(() => _listening = false);
+        if (t.trim().isEmpty) messenger.showSnackBar(SnackBar(content: Text(l10n.errSpeech)));
+        // CAP-7: voice never saves directly — the preview stays for review.
+      },
+    );
+    if (!ok && mounted) {
+      setState(() => _listening = false);
+      messenger.showSnackBar(SnackBar(content: Text(l10n.errVoice)));
+    }
+  }
+
+  String _placeholder(AppLocalizations l10n) => switch (_template) {
+    Template.birthday => l10n.tplPhBirthday,
+    Template.billDue => l10n.tplPhBill,
+    Template.renewal => l10n.tplPhRenewal,
+    Template.freeTrial => l10n.tplPhTrial,
+    Template.nightOut => l10n.tplPhNightOut,
+    Template.appointment => l10n.tplPhAppointment,
+    null => [l10n.captureEx1, l10n.captureEx2, l10n.captureEx3, l10n.captureEx4, l10n.captureEx5][_example],
+  };
+
+  static String templateLabel(AppLocalizations l10n, Template t) => switch (t) {
+    Template.birthday => l10n.tplBirthday,
+    Template.billDue => l10n.tplBill,
+    Template.renewal => l10n.tplRenewal,
+    Template.freeTrial => l10n.tplTrial,
+    Template.nightOut => l10n.tplNightOut,
+    Template.appointment => l10n.tplAppointment,
+  };
+
+  static IconData templateIcon(Template t) => switch (t) {
+    Template.birthday => Icons.cake_outlined,
+    Template.billDue => Icons.receipt_long_outlined,
+    Template.renewal => Icons.autorenew_rounded,
+    Template.freeTrial => Icons.timer_outlined,
+    Template.nightOut => Icons.local_bar_outlined,
+    Template.appointment => Icons.medical_services_outlined,
+  };
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final c = AppColors.of(context);
+    final f = Fmt.of(context);
     final text = Theme.of(context).textTheme;
     final p = _effective;
     final savable = p != null && canSave(p) && !_saving;
-    final examples = [l10n.captureEx1, l10n.captureEx2, l10n.captureEx3, l10n.captureEx4, l10n.captureEx5];
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
@@ -137,107 +296,186 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Cancel · New reminder · Save
-            Row(
-              children: [
-                TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.actionCancel)),
-                Expanded(child: Text(l10n.newReminder, style: text.titleMedium, textAlign: TextAlign.center)),
-                TextButton(
-                  onPressed: savable ? _save : null,
-                  child: Text(l10n.actionSave, style: const TextStyle(fontWeight: FontWeight.w600)),
-                ),
-              ],
-            ),
-            const SizedBox(height: Space.s),
-            _Card(
-              child: TextField(
-                controller: _input,
-                autofocus: true,
-                minLines: 1,
-                maxLines: 4,
-                textInputAction: TextInputAction.done,
-                onSubmitted: (_) => _save(),
-                style: text.bodyLarge,
-                decoration: InputDecoration(
-                  hintText: examples[_example],
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.all(Space.l),
-                ),
+            SheetBar(
+              title: l10n.newReminder,
+              left: TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.actionCancel)),
+              right: TextButton(
+                onPressed: savable ? _save : null,
+                child: Text(l10n.actionSave, style: const TextStyle(fontWeight: FontWeight.w600)),
               ),
             ),
+            const SizedBox(height: Space.s),
+            // Input card: text + voice + removable template tag
+            Material(
+              color: c.bgGrouped,
+              borderRadius: BorderRadius.circular(Radii.row),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_template case final t?)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(Space.m, Space.m, Space.m, 0),
+                      child: InputChip(
+                        avatar: Icon(templateIcon(t), size: 18),
+                        label: Text(templateLabel(l10n, t)),
+                        onDeleted: () {
+                          setState(() => _template = null);
+                          _reparse();
+                        },
+                      ),
+                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _input,
+                          focusNode: _focus,
+                          autofocus: widget.text == null,
+                          minLines: 1,
+                          maxLines: 4,
+                          textCapitalization: TextCapitalization.sentences,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _save(),
+                          style: text.bodyLarge,
+                          decoration: InputDecoration(
+                            hintText: _placeholder(l10n),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.all(Space.l),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: l10n.actionSpeak,
+                        onPressed: _voice,
+                        icon: Icon(
+                          _listening ? Icons.stop_circle_rounded : Icons.mic_none_rounded,
+                          color: _listening ? c.danger : c.accent,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            if (_listening)
+              Padding(
+                padding: const EdgeInsets.only(top: Space.s),
+                child: Text(l10n.listening, style: text.bodySmall, textAlign: TextAlign.center),
+              ),
+            // TPL-1: template chips while the input is empty.
+            if (p == null && _template == null) ...[
+              const SizedBox(height: Space.l),
+              Wrap(
+                spacing: Space.s,
+                runSpacing: Space.s,
+                children: [
+                  for (final t in Template.values)
+                    ActionChip(
+                      avatar: Icon(templateIcon(t), size: 18),
+                      label: Text(templateLabel(l10n, t)),
+                      onPressed: () => _setTemplate(t),
+                    ),
+                ],
+              ),
+            ],
             if (p != null) ...[
-              if (_hint(p, l10n) case final hint?)
+              if (_hint(p, l10n, f) case final hint?)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(Space.l, Space.s, Space.l, 0),
                   child: Text(hint, style: text.bodySmall?.copyWith(color: c.warning)),
                 ),
               const SizedBox(height: Space.l),
-              _Card(
-                child: Column(
-                  children: [
-                    _DetailRow(
-                      icon: Icons.calendar_today_rounded,
-                      color: c.danger,
-                      label: l10n.rowDate,
-                      value: _date(p),
-                      flagged: p.flags.contains(ParseFlag.dateMissing) || p.flags.contains(ParseFlag.ambiguousDate),
-                    ),
-                    const Divider(indent: 56),
-                    _DetailRow(
-                      icon: Icons.schedule_rounded,
-                      color: c.accent,
-                      label: l10n.rowTime,
-                      value: _time(p, l10n),
-                      flagged: p.flags.contains(ParseFlag.ambiguousTime) || p.flags.contains(ParseFlag.timeInPast),
-                    ),
-                    const Divider(indent: 56),
-                    _DetailRow(
-                      icon: Icons.repeat_rounded,
+              InsetGroup(
+                margin: EdgeInsets.zero,
+                indent: 56,
+                color: c.bgGrouped,
+                children: [
+                  FormRow(
+                    icon: Icons.calendar_today_rounded,
+                    color: c.danger,
+                    label: l10n.rowDate,
+                    value: _date(p, f),
+                    flagged: p.flags.contains(ParseFlag.dateMissing) || p.flags.contains(ParseFlag.ambiguousDate),
+                    onTap: () async {
+                      final start = p.timing == null ? _nowWall : parseWall(p.timing!.start);
+                      final d = await pickDateTime(context, start, withTime: false);
+                      if (d != null) setState(() => _lockDate = d);
+                    },
+                  ),
+                  FormRow(
+                    icon: Icons.schedule_rounded,
+                    color: c.accent,
+                    label: l10n.rowTime,
+                    value: _time(p, l10n, f),
+                    flagged: p.flags.contains(ParseFlag.ambiguousTime) || p.flags.contains(ParseFlag.timeInPast),
+                    onTap: () => _pickTime(p),
+                  ),
+                  if (p.timing?.type == TimingType.datetime)
+                    FormRow(
+                      icon: Icons.public_rounded,
                       color: c.meeting,
-                      label: l10n.rowRepeat,
-                      value: _repeat(p, l10n),
+                      label: l10n.rowTimeZone,
+                      value: Fmt.city(p.timing!.tz ?? ref.read(prefsProvider).defaultTimeZone),
+                      onTap: () async {
+                        final z = await pickTimeZone(context, p.timing!.tz ?? ref.read(prefsProvider).defaultTimeZone);
+                        if (z != null) setState(() => _lockZone = z);
+                      },
                     ),
-                    const Divider(indent: 56),
-                    _DetailRow(
-                      icon: Icons.notifications_active_outlined,
-                      color: c.warning,
-                      label: l10n.rowAlerts,
-                      value: _alerts(p, l10n),
+                  FormRow(
+                    icon: Icons.repeat_rounded,
+                    color: c.meeting,
+                    label: l10n.rowRepeat,
+                    value: f.repeat(p.rrule, p.repeatMode ?? RecurrenceMode.fixed),
+                    onTap: () async {
+                      final start = p.timing == null ? _nowWall : parseWall(p.timing!.start);
+                      final v = await pickRepeat(
+                        context,
+                        current: p.rrule,
+                        mode: p.repeatMode ?? RecurrenceMode.fixed,
+                        start: start,
+                        completable: p.kind == Kind.task || p.kind == Kind.occasion,
+                      );
+                      if (v != null) setState(() => _lockRepeat = v);
+                    },
+                  ),
+                  FormRow(
+                    icon: Icons.notifications_active_outlined,
+                    color: c.warning,
+                    label: l10n.rowAlerts,
+                    value: f.alerts(_plan(p)),
+                    onTap: () async {
+                      final v = await pickAlerts(context, _plan(p));
+                      if (v != null) setState(() => _lockAlerts = v);
+                    },
+                  ),
+                  if (p.kind == Kind.task || p.kind == Kind.occasion)
+                    SwitchRow(
+                      icon: Icons.replay_rounded,
+                      color: c.success,
+                      label: l10n.rowNag,
+                      value: p.nag != null,
+                      onChanged: (v) => setState(() => _lockNag = v),
                     ),
-                    if (p.kind == Kind.task) ...[
-                      const Divider(indent: 56),
-                      SwitchListTile.adaptive(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: Space.m),
-                        secondary: _IconTile(icon: Icons.replay_rounded, color: c.success),
-                        title: Text(l10n.rowNag, style: text.bodyLarge),
-                        value: p.nag != null,
-                        onChanged: (v) => setState(() => _nag = v),
-                      ),
-                    ],
-                  ],
-                ),
+                ],
               ),
+              if (_firstAlert(p, f) case final first?)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(Space.l, Space.s, Space.l, 0),
+                  child: Text(first, style: text.bodySmall),
+                ),
               const SizedBox(height: Space.l),
               SegmentedButton<Kind>(
                 showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(value: Kind.task, label: Text(l10n.typeTask)),
-                  ButtonSegment(value: Kind.meeting, label: Text(l10n.typeMeeting)),
-                  ButtonSegment(value: Kind.event, label: Text(l10n.typeEvent)),
-                  ButtonSegment(value: Kind.occasion, label: Text(l10n.typeOccasion)),
-                ],
+                segments: [for (final k in Kind.values) ButtonSegment(value: k, label: Text(f.kind(k)))],
                 selected: {p.kind},
-                onSelectionChanged: (s) => setState(() => _kind = s.first),
+                onSelectionChanged: (s) => setState(() => _lockKind = s.first),
               ),
               const SizedBox(height: Space.m),
               SegmentedButton<ReminderContext>(
                 showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(value: ReminderContext.personal, label: Text(l10n.ctxPersonal)),
-                  ButtonSegment(value: ReminderContext.work, label: Text(l10n.ctxWork)),
-                ],
+                segments: [for (final x in ReminderContext.values) ButtonSegment(value: x, label: Text(f.context(x)))],
                 selected: {p.context},
-                onSelectionChanged: (s) => setState(() => _context = s.first),
+                onSelectionChanged: (s) => setState(() => _lockContext = s.first),
               ),
             ],
           ],
@@ -246,132 +484,66 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
     );
   }
 
-  String? _hint(ParseResult p, AppLocalizations l10n) {
+  Future<void> _pickTime(ParseResult p) async {
+    final t = p.timing;
+    final start = t == null ? _nowWall : parseWall(t.start);
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: t?.type == TimingType.datetime ? start.hour : 9, minute: start.minute),
+    );
+    if (picked != null) {
+      setState(() {
+        _lockTime = ClockTime(picked.hour, picked.minute);
+        _lockAllDay = false;
+      });
+    }
+  }
+
+  List<AlertStage> _plan(ParseResult p) =>
+      p.alerts?.map((o) => AlertStage(AlertOffset.parse(o))).toList() ??
+      ref.read(prefsProvider).alertPlanFor(p.kind, p.timing?.type ?? TimingType.date);
+
+  /// One-line "first alert" summary.
+  String? _firstAlert(ParseResult p, Fmt f) {
+    if (p.timing == null || !canSave(p)) return null;
+    final prefs = ref.read(prefsProvider);
+    final now = DateTime.now().toUtc();
+    final r = reminderFromParse(
+      p,
+      meta: RecordMeta(id: 'preview', createdAt: now, updatedAt: now, deviceId: ''),
+      prefs: prefs,
+    );
+    final alarms = AlarmPlanner(prefs: prefs, text: (_) => (title: '', body: ''))
+        .plan([r], const {}, now)
+        .where((a) => !a.key.contains(':nag'))
+        .toList();
+    if (alarms.isEmpty) return null;
+    final first = instantToWall(alarms.first.fireAt, prefs.deviceTimeZone);
+    return '${f.l10n.rowAlerts}: ${f.when(first, allDay: false, today: dateOnly(instantToWall(now, prefs.deviceTimeZone)))}';
+  }
+
+  String? _hint(ParseResult p, AppLocalizations l10n, Fmt f) {
     if (p.flags.contains(ParseFlag.titleMissing) || p.title.trim().isEmpty) return l10n.hintTitleMissing;
     if (p.flags.contains(ParseFlag.dateMissing) || p.timing == null) return l10n.hintDateMissing;
     if (p.flags.contains(ParseFlag.timeInPast)) return l10n.hintTimeInPast;
-    if (p.flags.contains(ParseFlag.ambiguousTime)) return l10n.hintAmbiguousTime(_time(p, l10n));
-    if (p.flags.contains(ParseFlag.ambiguousDate)) return l10n.hintAmbiguousDate(_date(p));
-    if (p.flags.contains(ParseFlag.pastDateRolled)) return l10n.hintPastDateRolled(_date(p));
+    if (p.flags.contains(ParseFlag.ambiguousTime)) return l10n.hintAmbiguousTime(_time(p, l10n, f));
+    if (p.flags.contains(ParseFlag.ambiguousDate)) return l10n.hintAmbiguousDate(_date(p, f));
+    if (p.flags.contains(ParseFlag.pastDateRolled)) return l10n.hintPastDateRolled(_date(p, f));
     return null;
   }
 
-  String _date(ParseResult p) {
+  String _date(ParseResult p, Fmt f) {
     final t = p.timing;
-    if (t == null) return '—';
-    return DateFormat.yMMMEd(Localizations.localeOf(context).toString()).format(parseWall(t.start));
+    if (t == null || p.flags.contains(ParseFlag.dateMissing)) return '—';
+    return f.date(parseWall(t.start));
   }
 
-  String _time(ParseResult p, AppLocalizations l10n) {
+  String _time(ParseResult p, AppLocalizations l10n, Fmt f) {
     final t = p.timing;
     if (t == null) return '—';
     if (t.type == TimingType.date) return l10n.allDay;
-    final locale = Localizations.localeOf(context).toString();
-    final start = DateFormat.jm(locale).format(parseWall(t.start));
-    final end = t.end == null ? '' : ' – ${DateFormat.jm(locale).format(parseWall(t.end!))}';
-    return '$start$end${t.tz != null ? ' (${t.tz!.split('/').last.replaceAll('_', ' ')})' : ''}';
-  }
-
-  String _repeat(ParseResult p, AppLocalizations l10n) {
-    final rule = p.rrule;
-    if (rule == null) return l10n.repeatNever;
-    final parts = {for (final kv in rule.split(';').map((e) => e.split('='))) kv[0]: kv.length > 1 ? kv[1] : ''};
-    final interval = int.tryParse(parts['INTERVAL'] ?? '1') ?? 1;
-    final every = interval != 1
-        ? l10n.repeatCustom
-        : switch (parts['FREQ']) {
-            'DAILY' => l10n.repeatDaily,
-            'WEEKLY' when parts['BYDAY'] == 'MO,TU,WE,TH,FR' => l10n.repeatWeekdays,
-            'WEEKLY' => l10n.repeatWeekly,
-            'MONTHLY' => l10n.repeatMonthly,
-            'YEARLY' => l10n.repeatYearly,
-            _ => l10n.repeatCustom,
-          };
-    return p.repeatMode == RecurrenceMode.afterCompletion ? l10n.repeatAfterDone(every) : every;
-  }
-
-  String _alerts(ParseResult p, AppLocalizations l10n) {
-    final t = p.timing;
-    final plan = p.alerts?.map(AlertOffset.parse).toList() ??
-        defaultAlertPlan(p.kind, t?.type ?? TimingType.date).map((s) => s.offset).toList();
-    if (plan.isEmpty) return l10n.alertNone;
-    String one(AlertOffset o) {
-      if (o.amount == 0) return l10n.alertAtTime;
-      final n = o.amount.abs();
-      final rel = switch (o.unit) {
-        OffsetUnit.minutes => l10n.relMinutes(n),
-        OffsetUnit.hours => l10n.relHours(n),
-        OffsetUnit.days => l10n.relDays(n),
-        OffsetUnit.weeks => l10n.relWeeks(n),
-        OffsetUnit.months => l10n.relMonths(n),
-      };
-      return o.amount < 0 ? l10n.alertBefore(rel) : rel;
-    }
-
-    return plan.map(one).join(', ');
-  }
-}
-
-class _Card extends StatelessWidget {
-  const _Card({required this.child});
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) => ClipRRect(
-    borderRadius: BorderRadius.circular(Radii.row),
-    child: Material(color: AppColors.of(context).bgGrouped, child: child),
-  );
-}
-
-class _IconTile extends StatelessWidget {
-  const _IconTile({required this.icon, required this.color});
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 30,
-    height: 30,
-    decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(7)),
-    child: Icon(icon, color: Colors.white, size: 18),
-  );
-}
-
-class _DetailRow extends StatelessWidget {
-  const _DetailRow({
-    required this.icon,
-    required this.color,
-    required this.label,
-    required this.value,
-    this.flagged = false,
-  });
-  final IconData icon;
-  final Color color;
-  final String label, value;
-  final bool flagged;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppColors.of(context);
-    final text = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: Space.m, vertical: Space.m),
-      child: Row(
-        children: [
-          _IconTile(icon: icon, color: color),
-          const SizedBox(width: Space.m),
-          Text(label, style: text.bodyLarge),
-          const SizedBox(width: Space.m),
-          Expanded(
-            child: Text(
-              value,
-              textAlign: TextAlign.end,
-              overflow: TextOverflow.ellipsis,
-              style: text.bodyMedium?.copyWith(color: flagged ? c.warning : null),
-            ),
-          ),
-        ],
-      ),
-    );
+    final start = f.time(parseWall(t.start));
+    final end = t.end == null ? '' : ' – ${f.time(parseWall(t.end!))}';
+    return '$start$end';
   }
 }

@@ -28,6 +28,10 @@ class ReminderService {
   /// Imported calendar events (CAL-*), in memory; set by the calendar service.
   List<Reminder> Function() calendarReminders = () => const [];
 
+  /// Extra alarms computed from the same data (DIG-3 digest notification); set by AppServices.
+  List<PlannedAlarm> Function(List<Reminder> active, Map<String, Occurrence> saved, DateTime now) extraAlarms =
+      (_, _, _) => const [];
+
   /// PRM-7: a pending test alarm, included in every sync until it has fired.
   PlannedAlarm? _testAlarm;
 
@@ -60,7 +64,7 @@ class ReminderService {
     final active = [...await reminders.watchActive().first, ...calendarReminders()];
     final saved = await occurrences.byPlannerId();
     final now = _now();
-    final alarms = planner.plan(active, saved, now);
+    final alarms = [...planner.plan(active, saved, now), ...extraAlarms(active, saved, now)];
     final test = _testAlarm;
     if (test != null) {
       if (now.isAfter(test.fireAt.add(const Duration(minutes: 5)))) {
@@ -279,6 +283,31 @@ class ReminderService {
     } else {
       await delete(r.id);
     }
+  }
+
+  /// TIM-7 / FL-16: upcoming timed reminders in [from] that weren't set to a zone by hand.
+  Future<List<Reminder>> upcomingInZone(String from) async {
+    final now = _now();
+    return [
+      for (final r in await reminders.watchActive().first)
+        if (r.timing.type == TimingType.datetime &&
+            r.timing.timeZone == from &&
+            !r.timing.timeZoneSetManually &&
+            (r.rrule != null || wallToInstant(r.timing.start, from).isAfter(now)))
+          r,
+    ];
+  }
+
+  /// TIM-7 "Also move upcoming reminders": they keep their clock time in the new zone.
+  Future<int> moveUpcomingToZone(String from, String to) async {
+    final list = await upcomingInZone(from);
+    for (final r in list) {
+      await reminders.update(r.copyWith(
+        timing: Timing(type: r.timing.type, start: r.timing.start, end: r.timing.end, timeZone: to),
+      ));
+    }
+    await resync();
+    return list.length;
   }
 
   /// PRM-7: a real alarm 15 s ahead through the normal path. Returns when it was scheduled.

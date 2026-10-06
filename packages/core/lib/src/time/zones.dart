@@ -54,3 +54,9 @@ tz.Location location(String zone) {
   ensureTimeZones();
   return zone == 'UTC' ? tz.UTC : tz.getLocation(zone);
 }
+
+/// All IANA zone names (S-21c picker), sorted, plus "UTC".
+List<String> timeZoneNames() {
+  ensureTimeZones();
+  return [...tz.timeZoneDatabase.locations.keys.where((z) => z.contains('/') && !z.startsWith('Etc/')), 'UTC']..sort();
+}

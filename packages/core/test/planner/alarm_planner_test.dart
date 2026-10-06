@@ -162,8 +162,8 @@ void main() {
       const late = UserPrefs(
         defaultTimeZone: _ny,
         deviceTimeZone: _ny,
-        nagStart: TimeOfDay(10, 0),
-        nagEnd: TimeOfDay(18, 0),
+        nagStart: ClockTime(10, 0),
+        nagEnd: ClockTime(18, 0),
       );
       final alarms = _planner(late).plan([rent], {}, _now);
       final times = alarms.map((a) => _local(a.fireAt).substring(11)).toSet();

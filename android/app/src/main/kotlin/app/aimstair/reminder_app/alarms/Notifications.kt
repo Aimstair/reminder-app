@@ -16,6 +16,7 @@ object Notifications {
     const val CHANNEL_REMINDERS = "reminders"
     const val CHANNEL_NAG = "nag"
     const val CHANNEL_SYSTEM = "system"
+    const val CHANNEL_DIGEST = "digest"
     private const val UNDO_VISIBLE_MS = 5_000L // NTF-9
 
     fun ensureChannels(context: Context) {
@@ -27,6 +28,8 @@ object Notifications {
                     .apply { description = "Alerts for your reminders" },
                 NotificationChannel(CHANNEL_NAG, "Nagging reminders", NotificationManager.IMPORTANCE_HIGH)
                     .apply { description = "Repeat alerts until you mark something done" },
+                NotificationChannel(CHANNEL_DIGEST, "Daily digest", NotificationManager.IMPORTANCE_DEFAULT)
+                    .apply { description = "Your morning summary of overdue and upcoming items" },
                 NotificationChannel(CHANNEL_SYSTEM, "App status", NotificationManager.IMPORTANCE_LOW)
                     .apply { description = "Late alerts, time zone changes, reliability tips" },
             )
@@ -72,6 +75,7 @@ object Notifications {
             "I'm prepared" to ActionReceiver.PREPARED, "Done" to ActionReceiver.DONE)
         "occasion_day" -> listOf("Snooze 1h" to ActionReceiver.SNOOZE, "Done" to ActionReceiver.DONE)
         "meeting" -> listOf("Snooze 5m" to ActionReceiver.SNOOZE)
+        "digest" -> emptyList() // DIG-3: tap opens the app
         "test" -> listOf("Snooze 1m" to ActionReceiver.SNOOZE, "Done" to ActionReceiver.DONE)
         else -> listOf("Snooze 1h" to ActionReceiver.SNOOZE,
             "Tomorrow" to ActionReceiver.TOMORROW, "Done" to ActionReceiver.DONE)
@@ -79,7 +83,11 @@ object Notifications {
 
     fun showAlarm(context: Context, alarm: NativeDb.Alarm, late: Boolean) {
         ensureChannels(context)
-        val channel = if (alarm.key.contains(":nag")) CHANNEL_NAG else CHANNEL_REMINDERS
+        val channel = when {
+            alarm.kind == "digest" -> CHANNEL_DIGEST
+            alarm.key.contains(":nag") -> CHANNEL_NAG
+            else -> CHANNEL_REMINDERS
+        }
         val body = if (late) alarm.body + " · late" else alarm.body
         val b = builder(context, channel)
             .setSmallIcon(android.R.drawable.ic_popup_reminder)

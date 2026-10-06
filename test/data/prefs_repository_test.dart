@@ -25,7 +25,7 @@ void main() {
   test('saved values survive a reload; travel keeps the default zone (TIM-15)', () async {
     final prefs = PrefsRepository(db);
     await prefs.load(deviceTimeZone: 'America/New_York');
-    await prefs.set(PrefKeys.dayTime, PrefsRepository.encodeTime(const TimeOfDay(7, 30)));
+    await prefs.set(PrefKeys.dayTime, PrefsRepository.encodeTime(const ClockTime(7, 30)));
     await prefs.set(PrefKeys.tomorrowMode, TomorrowMode.sameTime.name);
     await prefs.set(PrefKeys.lateAlertCutoffMin, null); // "Always"
     await prefs.set(PrefKeys.completionSounds, false);

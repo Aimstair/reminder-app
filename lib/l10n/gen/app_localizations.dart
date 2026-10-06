@@ -2127,6 +2127,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{start} – {end}'**
   String timeRange(String start, String end);
+
+  /// copy.md notif.digest part
+  ///
+  /// In en, this message translates to:
+  /// **'{count} overdue'**
+  String digestPartOverdue(int count);
+
+  /// copy.md notif.digest part
+  ///
+  /// In en, this message translates to:
+  /// **'{count} coming up'**
+  String digestPartComing(int count);
+
+  /// copy.md notif.travel (TIM-8)
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re in {city}'**
+  String travelTitle(String city);
+
+  /// No description provided for @travelBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch your default time zone?'**
+  String get travelBody;
+
+  /// No description provided for @actionSwitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch'**
+  String get actionSwitch;
+
+  /// No description provided for @actionKeepCity.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep {city}'**
+  String actionKeepCity(String city);
 }
 
 class _AppLocalizationsDelegate

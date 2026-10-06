@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:reminder_app/app/app_services.dart';
 import 'package:reminder_app/app/providers.dart';
 import 'package:reminder_app/data/app_database.dart';
+import 'package:reminder_app/data/prefs_repository.dart';
 import 'package:reminder_app/main.dart';
 
 import '../services/reminder_service_test.dart' show FakeGateway;
@@ -16,9 +17,13 @@ Future<void> settleUntil(WidgetTester tester, bool Function() done) async {
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 20)));
     await tester.pump(const Duration(milliseconds: 50));
   }
-  for (var i = 0; i < 40; i++) {
+  await pumpFor(tester);
+}
+
+/// The bell mascot animates forever, so pumpAndSettle never settles; pump a bounded time instead.
+Future<void> pumpFor(WidgetTester tester, [int frames = 12]) async {
+  for (var i = 0; i < frames; i++) {
     await tester.pump(const Duration(milliseconds: 100));
-    if (!tester.binding.hasScheduledFrame) break;
   }
 }
 
@@ -26,7 +31,13 @@ void main() {
   testWidgets('FL-2: type a reminder, save, see it on Schedule; swipe right = Done', (tester) async {
     final db = AppDatabase(NativeDatabase.memory());
     final gateway = FakeGateway();
-    final services = (await tester.runAsync(() => AppServices.start(db: db, gateway: gateway)))!;
+    final services = (await tester.runAsync(() async {
+      final s = await AppServices.start(db: db, gateway: gateway);
+      await s.prefs.set(PrefKeys.onboarded, true);
+      await s.prefs.set('first_done_shown', true);
+      await s.prefs.set('notif_asked', true); // skip the PRM-6 flow here
+      return s;
+    }))!;
 
     await tester.pumpWidget(
       ProviderScope(overrides: [servicesProvider.overrideWithValue(services)], child: const ReminderApp()),
@@ -35,9 +46,9 @@ void main() {
     expect(find.text('Nothing to remember… yet'), findsOneWidget);
 
     await tester.tap(find.byTooltip('New reminder'));
-    await tester.pumpAndSettle();
+    await pumpFor(tester);
     await tester.enterText(find.byType(TextField), 'Call mom tomorrow at 6pm');
-    await tester.pumpAndSettle();
+    await pumpFor(tester);
     expect(find.text('Date'), findsOneWidget);
 
     await tester.tap(find.text('Save'));

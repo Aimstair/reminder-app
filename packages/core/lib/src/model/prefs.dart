@@ -5,8 +5,8 @@ import 'alert.dart';
 import 'enums.dart';
 
 /// A time of day (wall clock).
-class TimeOfDay {
-  const TimeOfDay(this.hour, this.minute);
+class ClockTime {
+  const ClockTime(this.hour, this.minute);
   final int hour;
   final int minute;
 
@@ -24,12 +24,12 @@ class UserPrefs {
     required this.defaultTimeZone,
     required this.deviceTimeZone,
     this.askOnTravel = true,
-    this.dayTime = const TimeOfDay(9, 0),
-    this.nagStart = const TimeOfDay(8, 0),
-    this.nagEnd = const TimeOfDay(22, 0),
+    this.dayTime = const ClockTime(9, 0),
+    this.nagStart = const ClockTime(8, 0),
+    this.nagEnd = const ClockTime(22, 0),
     this.tomorrowMode = TomorrowMode.dayTime,
     this.lateAlertCutoff = const Duration(hours: 2),
-    this.digestTime = const TimeOfDay(8, 0),
+    this.digestTime = const ClockTime(8, 0),
     this.digestNotification = true,
     this.completionSounds = true,
     this.autoAddBirthdays = true,
@@ -46,11 +46,11 @@ class UserPrefs {
   final bool askOnTravel;
 
   /// PRF-3: time used for date-only reminders.
-  final TimeOfDay dayTime;
+  final ClockTime dayTime;
 
   /// PRF-4: nagging only between these (device local time).
-  final TimeOfDay nagStart;
-  final TimeOfDay nagEnd;
+  final ClockTime nagStart;
+  final ClockTime nagEnd;
 
   /// PRF-5
   final TomorrowMode tomorrowMode;
@@ -59,7 +59,7 @@ class UserPrefs {
   final Duration? lateAlertCutoff;
 
   /// PRF-7 / PRF-8
-  final TimeOfDay digestTime;
+  final ClockTime digestTime;
   final bool digestNotification;
 
   /// PRF-12

@@ -43,4 +43,9 @@ void main() {
     expect(instantToWall(i, 'UTC'), i);
     expect(wallToInstant(i, 'UTC'), i);
   });
+
+  test('S-21c zone list has common zones and UTC', () {
+    final names = timeZoneNames();
+    expect(names, containsAll(['America/New_York', 'Asia/Manila', 'Europe/London', 'UTC']));
+  });
 }

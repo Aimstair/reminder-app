@@ -1190,4 +1190,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String timeRange(String start, String end) {
     return '$start – $end';
   }
+
+  @override
+  String digestPartOverdue(int count) {
+    return '$count overdue';
+  }
+
+  @override
+  String digestPartComing(int count) {
+    return '$count coming up';
+  }
+
+  @override
+  String travelTitle(String city) {
+    return 'You\'re in $city';
+  }
+
+  @override
+  String get travelBody => 'Switch your default time zone?';
+
+  @override
+  String get actionSwitch => 'Switch';
+
+  @override
+  String actionKeepCity(String city) {
+    return 'Keep $city';
+  }
 }

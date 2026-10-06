@@ -143,16 +143,16 @@ class PrefsRepository {
   }
 
   /// Stores a time of day as "HH:mm".
-  static String encodeTime(TimeOfDay t) => t.toString();
+  static String encodeTime(ClockTime t) => t.toString();
 
   bool _bool(String key, bool fallback) => (_values[key] as bool?) ?? fallback;
 
-  TimeOfDay _time(String key, TimeOfDay fallback) {
+  ClockTime _time(String key, ClockTime fallback) {
     final s = _values[key];
     if (s is! String) return fallback;
     final parts = s.split(':');
     if (parts.length != 2) return fallback;
     final h = int.tryParse(parts[0]), m = int.tryParse(parts[1]);
-    return h == null || m == null ? fallback : TimeOfDay(h, m);
+    return h == null || m == null ? fallback : ClockTime(h, m);
   }
 }
