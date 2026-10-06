@@ -90,6 +90,23 @@ class ReminderRepository {
     return q.watch().map((rows) => rows.map(_fromRow).toList());
   }
 
+  /// Active and archived, not deleted (search S-40, Completed S-42).
+  Stream<List<Reminder>> watchAll() {
+    final q = _db.select(_db.reminders)..where((t) => t.deletedAt.isNull());
+    return q.watch().map((rows) => rows.map(_fromRow).toList());
+  }
+
+  /// Every row incl. soft-deleted ones (backup, DAT-5).
+  Future<List<Reminder>> everything() async => (await _db.select(_db.reminders).get()).map(_fromRow).toList();
+
+  /// DAT-5 import: insert, or replace when the incoming row is newer.
+  Future<bool> mergeIn(Reminder r) async {
+    final existing = await (_db.select(_db.reminders)..where((t) => t.id.equals(r.id))).getSingleOrNull();
+    if (existing != null && !r.meta.updatedAt.isAfter(existing.updatedAt)) return false;
+    await _db.into(_db.reminders).insertOnConflictUpdate(_toRow(r));
+    return true;
+  }
+
   // ---- mapping ----
 
   static Reminder _withMeta(Reminder r, RecordMeta meta) => Reminder(

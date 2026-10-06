@@ -12,7 +12,7 @@ import 'package:reminder_core/reminder_core.dart';
 const _ny = 'America/New_York';
 const _prefs = UserPrefs(defaultTimeZone: _ny, deviceTimeZone: _ny);
 
-class FakeGateway implements AlarmGateway {
+class FakeGateway extends AlarmGateway {
   List<PlannedAlarm> synced = [];
   final journal = <JournalAction>[];
   final applied = <int>[];

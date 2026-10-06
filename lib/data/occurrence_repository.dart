@@ -29,6 +29,24 @@ class OccurrenceRepository {
         (rows) => {for (final r in rows) _plannerId(r): _fromRow(r)},
       );
 
+  /// All saved occurrences of one reminder, newest key first.
+  Future<List<Occurrence>> forReminder(String reminderId) async {
+    final rows = await (_db.select(_db.occurrences)
+          ..where((o) => o.reminderId.equals(reminderId) & o.deletedAt.isNull())
+          ..orderBy([(o) => OrderingTerm.desc(o.occurrenceKey)]))
+        .get();
+    return rows.map(_fromRow).toList();
+  }
+
+  /// Resolved occurrences (S-42 Completed), newest first.
+  Stream<List<Occurrence>> watchResolved() => (_db.select(_db.occurrences)
+        ..where((o) =>
+            o.deletedAt.isNull() &
+            o.state.isIn([OccurrenceState.done.name, OccurrenceState.skipped.name]))
+        ..orderBy([(o) => OrderingTerm.desc(o.resolvedAt)]))
+      .watch()
+      .map((rows) => rows.map(_fromRow).toList());
+
   Future<Occurrence?> find(String reminderId, DateTime occurrenceKey) async {
     final row =
         await (_db.select(_db.occurrences)..where(
@@ -38,13 +56,18 @@ class OccurrenceRepository {
     return row == null ? null : _fromRow(row);
   }
 
-  /// Insert or update (unique on reminder + occurrence key).
+  /// Insert or update (unique on reminder + occurrence key). Overrides (REC-12) are kept unless
+  /// [overrideStart]/[overrideEnd]/[overrideAlertPlan] are given; pass [clearOverrides] to drop them.
   Future<Occurrence> save({
     required String reminderId,
     required DateTime occurrenceKey,
     required OccurrenceState state,
     DateTime? snoozedUntil,
     DateTime? resolvedAt,
+    DateTime? overrideStart,
+    DateTime? overrideEnd,
+    List<AlertStage>? overrideAlertPlan,
+    bool clearOverrides = false,
   }) async {
     final existing = await find(reminderId, occurrenceKey);
     final now = _now();
@@ -54,9 +77,9 @@ class OccurrenceRepository {
       reminderId: reminderId,
       occurrenceKey: occurrenceKey,
       state: state,
-      overrideStart: existing?.overrideStart,
-      overrideEnd: existing?.overrideEnd,
-      overrideAlertPlan: existing?.overrideAlertPlan,
+      overrideStart: clearOverrides ? null : (overrideStart ?? existing?.overrideStart),
+      overrideEnd: clearOverrides ? null : (overrideEnd ?? existing?.overrideEnd),
+      overrideAlertPlan: clearOverrides ? null : (overrideAlertPlan ?? existing?.overrideAlertPlan),
       snoozedUntil: snoozedUntil,
       resolvedAt: resolvedAt,
       alertsSent: existing?.alertsSent ?? const {},
