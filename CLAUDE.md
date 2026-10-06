@@ -3,7 +3,7 @@
 Reminder app (working name "Reminder App", part of the Aimstair platform). Android first, then iOS, then web. Built entirely with AI assistance — **the specs in `docs/` are the source of truth; code follows them.**
 
 ## Status
-v0 in progress in `C:\dev\reminder-app`: ✅ Flutter app + `packages/core` scaffold · ✅ exact-alarm spike passed on Samsung (`docs/spikes/alarm-reliability.md`) · ✅ parser spike: 133/133 cases pass (`packages/core/lib/src/parser/`). **v0 risk spikes done** — next: v1.0 foundations (data model + Drift, core engine, planner). The app currently boots into the temporary alarm test screen (`lib/spike/`).
+v0 done (scaffold, Samsung alarm spike, parser 133/133). **v1.0 in progress:** ✅ Drift DB + repositories · ✅ recurrence, occurrence engine, time rules · ✅ alarm planner wired to native alarms (journal, notification text) · ✅ app startup (prefs, device zone, resync on resume) · ✅ app shell (Riverpod + go_router, Apple-style theme tokens) · ✅ Schedule view (S-12) · ✅ first capture sheet (S-20, parser → Details rows → Save). Next: reminder detail (S-30) + reschedule (S-33), chip pickers (S-21), Day/Month views, onboarding, settings. The v0 alarm test screen lives on as Drawer → Alarm diagnostics (`/diagnostics`).
 
 ## Read before working
 | File | Use it for |

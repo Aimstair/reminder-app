@@ -177,6 +177,402 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'today'**
   String get dayToday;
+
+  /// No description provided for @groupOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get groupOverdue;
+
+  /// No description provided for @groupToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get groupToday;
+
+  /// No description provided for @groupTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow'**
+  String get groupTomorrow;
+
+  /// No description provided for @groupThisWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get groupThisWeek;
+
+  /// No description provided for @groupLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get groupLater;
+
+  /// No description provided for @viewSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get viewSchedule;
+
+  /// No description provided for @viewDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day'**
+  String get viewDay;
+
+  /// No description provided for @viewMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get viewMonth;
+
+  /// No description provided for @topToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get topToday;
+
+  /// No description provided for @topSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get topSearch;
+
+  /// No description provided for @drawerCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get drawerCompleted;
+
+  /// No description provided for @drawerSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get drawerSettings;
+
+  /// No description provided for @drawerHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Help & feedback'**
+  String get drawerHelp;
+
+  /// No description provided for @drawerDiagnostics.
+  ///
+  /// In en, this message translates to:
+  /// **'Alarm diagnostics'**
+  String get drawerDiagnostics;
+
+  /// No description provided for @greetingMorning.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning'**
+  String get greetingMorning;
+
+  /// No description provided for @greetingAfternoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Good afternoon'**
+  String get greetingAfternoon;
+
+  /// No description provided for @greetingEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'Good evening'**
+  String get greetingEvening;
+
+  /// No description provided for @allDay.
+  ///
+  /// In en, this message translates to:
+  /// **'All day'**
+  String get allDay;
+
+  /// No description provided for @emptyNoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to remember… yet'**
+  String get emptyNoneTitle;
+
+  /// No description provided for @emptyNoneSub.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s on your mind?'**
+  String get emptyNoneSub;
+
+  /// No description provided for @emptyTodayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing due today'**
+  String get emptyTodayTitle;
+
+  /// No description provided for @emptyTodaySub.
+  ///
+  /// In en, this message translates to:
+  /// **'Enjoy the quiet.'**
+  String get emptyTodaySub;
+
+  /// No description provided for @allClearTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'All clear!'**
+  String get allClearTitle;
+
+  /// No description provided for @allClearSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing left for today.'**
+  String get allClearSub;
+
+  /// No description provided for @snackDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get snackDone;
+
+  /// No description provided for @actionUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get actionUndo;
+
+  /// No description provided for @actionDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get actionDone;
+
+  /// No description provided for @newReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'New reminder'**
+  String get newReminder;
+
+  /// No description provided for @comingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get comingSoon;
+
+  /// Daily progress ring label (S-12)
+  ///
+  /// In en, this message translates to:
+  /// **'{done}/{total} done'**
+  String progressDone(int done, int total);
+
+  /// No description provided for @actionCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get actionCancel;
+
+  /// No description provided for @actionSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get actionSave;
+
+  /// No description provided for @rowDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get rowDate;
+
+  /// No description provided for @rowTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get rowTime;
+
+  /// No description provided for @rowRepeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat'**
+  String get rowRepeat;
+
+  /// No description provided for @rowAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts'**
+  String get rowAlerts;
+
+  /// No description provided for @rowNag.
+  ///
+  /// In en, this message translates to:
+  /// **'Nag until done'**
+  String get rowNag;
+
+  /// No description provided for @repeatNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get repeatNever;
+
+  /// No description provided for @repeatDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Every day'**
+  String get repeatDaily;
+
+  /// No description provided for @repeatWeekdays.
+  ///
+  /// In en, this message translates to:
+  /// **'Every weekday'**
+  String get repeatWeekdays;
+
+  /// No description provided for @repeatWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Every week'**
+  String get repeatWeekly;
+
+  /// No description provided for @repeatMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Every month'**
+  String get repeatMonthly;
+
+  /// No description provided for @repeatYearly.
+  ///
+  /// In en, this message translates to:
+  /// **'Every year'**
+  String get repeatYearly;
+
+  /// No description provided for @repeatCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get repeatCustom;
+
+  /// No description provided for @alertAtTime.
+  ///
+  /// In en, this message translates to:
+  /// **'At time'**
+  String get alertAtTime;
+
+  /// No description provided for @alertNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No alerts'**
+  String get alertNone;
+
+  /// No description provided for @typeTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Task'**
+  String get typeTask;
+
+  /// No description provided for @typeMeeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Meeting'**
+  String get typeMeeting;
+
+  /// No description provided for @typeEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Event'**
+  String get typeEvent;
+
+  /// No description provided for @typeOccasion.
+  ///
+  /// In en, this message translates to:
+  /// **'Occasion'**
+  String get typeOccasion;
+
+  /// No description provided for @ctxPersonal.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal'**
+  String get ctxPersonal;
+
+  /// No description provided for @ctxWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Work'**
+  String get ctxWork;
+
+  /// No description provided for @captureEx1.
+  ///
+  /// In en, this message translates to:
+  /// **'Call mom Sunday 6pm'**
+  String get captureEx1;
+
+  /// No description provided for @captureEx2.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay rent on the 1st every month'**
+  String get captureEx2;
+
+  /// No description provided for @captureEx3.
+  ///
+  /// In en, this message translates to:
+  /// **'Mom\'s birthday Oct 12'**
+  String get captureEx3;
+
+  /// No description provided for @captureEx4.
+  ///
+  /// In en, this message translates to:
+  /// **'Dentist Friday 2:30pm'**
+  String get captureEx4;
+
+  /// No description provided for @captureEx5.
+  ///
+  /// In en, this message translates to:
+  /// **'Change AC filter every 3 months after done'**
+  String get captureEx5;
+
+  /// No description provided for @hintTimeInPast.
+  ///
+  /// In en, this message translates to:
+  /// **'This time has already passed.'**
+  String get hintTimeInPast;
+
+  /// No description provided for @hintTitleMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a title'**
+  String get hintTitleMissing;
+
+  /// No description provided for @hintDateMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'When is it?'**
+  String get hintDateMissing;
+
+  /// copy.md Saved snackbar
+  ///
+  /// In en, this message translates to:
+  /// **'Saved · {when}'**
+  String snackSaved(String when);
+
+  /// REC-6 summary, e.g. Every 3 months after done
+  ///
+  /// In en, this message translates to:
+  /// **'{every} after done'**
+  String repeatAfterDone(String every);
+
+  /// Alert summary, e.g. 10 min before
+  ///
+  /// In en, this message translates to:
+  /// **'{relative} before'**
+  String alertBefore(String relative);
+
+  /// copy.md ambiguous_time
+  ///
+  /// In en, this message translates to:
+  /// **'Did you mean {time}? Tap to change.'**
+  String hintAmbiguousTime(String time);
+
+  /// copy.md ambiguous_date
+  ///
+  /// In en, this message translates to:
+  /// **'That\'s {absolute}. Tap to change.'**
+  String hintAmbiguousDate(String absolute);
+
+  /// copy.md past_date_rolled
+  ///
+  /// In en, this message translates to:
+  /// **'Moved to next year ({absolute}).'**
+  String hintPastDateRolled(String absolute);
 }
 
 class _AppLocalizationsDelegate

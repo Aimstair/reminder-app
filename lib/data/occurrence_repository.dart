@@ -23,6 +23,12 @@ class OccurrenceRepository {
     return {for (final r in rows) _plannerId(r): _fromRow(r)};
   }
 
+  /// Live view of [byPlannerId] for the UI.
+  Stream<Map<String, Occurrence>> watchByPlannerId() =>
+      (_db.select(_db.occurrences)..where((o) => o.deletedAt.isNull())).watch().map(
+        (rows) => {for (final r in rows) _plannerId(r): _fromRow(r)},
+      );
+
   Future<Occurrence?> find(String reminderId, DateTime occurrenceKey) async {
     final row =
         await (_db.select(_db.occurrences)..where(

@@ -79,20 +79,30 @@ class ReminderService {
     final occId = e.alarmKey.split(':').first;
     final tilde = occId.lastIndexOf('~');
     if (tilde < 0) return; // e.g. the PRM-7 test reminder
-    final reminderId = occId.substring(0, tilde);
     final occKey = _parseKey(occId.substring(tilde + 1));
+    if (occKey == null) return;
+    await _act(occId.substring(0, tilde), occKey, e.type, e.actedAt);
+  }
+
+  /// In-app action on one occurrence (e.g. swipe to Done on Schedule), then resync alarms.
+  Future<void> act(String reminderId, DateTime occurrenceKey, JournalActionType type) async {
+    await _act(reminderId, occurrenceKey, type, _now());
+    await resync();
+  }
+
+  Future<void> _act(String reminderId, DateTime occKey, JournalActionType type, DateTime actedAt) async {
     final r = await reminders.byId(reminderId);
-    if (r == null || occKey == null) return;
+    if (r == null) return;
     final current = (await occurrences.find(reminderId, occKey))?.state ?? OccurrenceState.pending;
     final p = prefs();
 
     try {
-      switch (e.type) {
+      switch (type) {
         case JournalActionType.done:
           final next = transition(current, OccurrenceAction.done, r.kind);
-          await occurrences.save(reminderId: reminderId, occurrenceKey: occKey, state: next, resolvedAt: e.actedAt);
+          await occurrences.save(reminderId: reminderId, occurrenceKey: occKey, state: next, resolvedAt: actedAt);
           if (r.repeatMode == RepeatMode.afterCompletion && r.rrule != null) {
-            await _advanceAfterCompletion(r, e.actedAt, p); // REC-6
+            await _advanceAfterCompletion(r, actedAt, p); // REC-6
           }
         case JournalActionType.prepared:
           final next = transition(current, OccurrenceAction.prepared, r.kind); // OCC-3
@@ -105,14 +115,14 @@ class ReminderService {
             reminderId: reminderId,
             occurrenceKey: occKey,
             state: transition(current, OccurrenceAction.snooze, r.kind),
-            snoozedUntil: e.actedAt.add(delay),
+            snoozedUntil: actedAt.add(delay),
           );
         case JournalActionType.tomorrow:
           await occurrences.save(
             reminderId: reminderId,
             occurrenceKey: occKey,
             state: transition(current, OccurrenceAction.snooze, r.kind),
-            snoozedUntil: _tomorrow(e.actedAt, p), // PRF-5
+            snoozedUntil: _tomorrow(actedAt, p), // PRF-5
           );
         case JournalActionType.undo:
           // OCC-5: back to open

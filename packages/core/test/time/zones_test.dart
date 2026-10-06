@@ -37,4 +37,10 @@ void main() {
       wall = wall.add(const Duration(hours: 1));
     }
   });
+
+  test('"UTC" works as a zone (device fallback)', () {
+    final i = DateTime.utc(2026, 10, 5, 14);
+    expect(instantToWall(i, 'UTC'), i);
+    expect(wallToInstant(i, 'UTC'), i);
+  });
 }

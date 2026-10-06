@@ -17,7 +17,7 @@ void ensureTimeZones() {
 /// TIM-13: a time inside a DST gap shifts forward by the gap; TIM-14: in an overlap, the first occurrence.
 DateTime wallToInstant(DateTime wall, String zone) {
   ensureTimeZones();
-  final loc = tz.getLocation(zone);
+  final loc = location(zone);
   final clean = DateTime.utc(wall.year, wall.month, wall.day, wall.hour, wall.minute, wall.second);
   final wallMs = clean.millisecondsSinceEpoch;
   const day = 24 * 60 * 60 * 1000;
@@ -41,9 +41,16 @@ DateTime _wallOf(tz.Location loc, int instantMs) {
 /// The wall time (UTC container) of [instant] in [zone].
 DateTime instantToWall(DateTime instant, String zone) {
   ensureTimeZones();
-  final local = tz.TZDateTime.from(instant.toUtc(), tz.getLocation(zone));
+  final local = tz.TZDateTime.from(instant.toUtc(), location(zone));
   return DateTime.utc(local.year, local.month, local.day, local.hour, local.minute);
 }
 
 /// A wall time after applying TIM-13/14 (e.g. 02:30 on spring-forward day → 03:30).
 DateTime normalizeWall(DateTime wall, String zone) => instantToWall(wallToInstant(wall, zone), zone);
+
+/// IANA location for [zone]. "UTC" (reported by some devices) isn't in the tz database's location
+/// list, so it maps to tz.UTC.
+tz.Location location(String zone) {
+  ensureTimeZones();
+  return zone == 'UTC' ? tz.UTC : tz.getLocation(zone);
+}
