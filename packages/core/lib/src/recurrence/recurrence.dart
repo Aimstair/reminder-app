@@ -50,8 +50,9 @@ class RecurrenceRule {
     };
     DateTime? until;
     final u = parts['UNTIL'];
-    if (u != null)
+    if (u != null) {
       until = DateTime.utc(int.parse(u.substring(0, 4)), int.parse(u.substring(4, 6)), int.parse(u.substring(6, 8)));
+    }
     return RecurrenceRule(
       freq: freq,
       interval: int.tryParse(parts['INTERVAL'] ?? '') ?? 1,

@@ -4,6 +4,8 @@ library;
 export 'src/model/alert.dart';
 export 'src/model/enums.dart';
 export 'src/model/ids.dart';
+export 'src/engine/occurrence_engine.dart';
+export 'src/model/prefs.dart';
 export 'src/model/reminder.dart';
 export 'src/model/wall_time.dart';
 export 'src/parser/parse_result.dart';
