@@ -47,3 +47,8 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Pigeon @async host methods are generated as Kotlin suspend functions.
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+}

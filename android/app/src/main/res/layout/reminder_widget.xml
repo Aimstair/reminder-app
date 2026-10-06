@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- S-61 home-screen widget: [+] quick add and the next 3 reminders. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:orientation="vertical"
+    android:padding="14dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/widget_title"
+            android:textColor="@color/widget_text"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/widget_add"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/widget_add_background"
+            android:contentDescription="@string/widget_add"
+            android:src="@drawable/ic_add" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/widget_empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="@string/widget_empty"
+        android:textColor="@color/widget_text_secondary"
+        android:textSize="13sp" />
+
+    <LinearLayout
+        android:id="@+id/widget_row1"
+        style="@style/WidgetRow">
+        <TextView android:id="@+id/widget_row1_title" style="@style/WidgetRowTitle" />
+        <TextView android:id="@+id/widget_row1_when" style="@style/WidgetRowWhen" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/widget_row2"
+        style="@style/WidgetRow">
+        <TextView android:id="@+id/widget_row2_title" style="@style/WidgetRowTitle" />
+        <TextView android:id="@+id/widget_row2_when" style="@style/WidgetRowWhen" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/widget_row3"
+        style="@style/WidgetRow">
+        <TextView android:id="@+id/widget_row3_title" style="@style/WidgetRowTitle" />
+        <TextView android:id="@+id/widget_row3_when" style="@style/WidgetRowWhen" />
+    </LinearLayout>
+</LinearLayout>
