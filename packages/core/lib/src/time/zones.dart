@@ -18,9 +18,24 @@ void ensureTimeZones() {
 DateTime wallToInstant(DateTime wall, String zone) {
   ensureTimeZones();
   final loc = tz.getLocation(zone);
-  final wallMs = DateTime.utc(wall.year, wall.month, wall.day, wall.hour, wall.minute).millisecondsSinceEpoch;
-  final offsetBefore = loc.timeZone(wallMs - const Duration(days: 1).inMilliseconds).offset.inMilliseconds;
-  return DateTime.fromMillisecondsSinceEpoch(wallMs - offsetBefore, isUtc: true);
+  final clean = DateTime.utc(wall.year, wall.month, wall.day, wall.hour, wall.minute, wall.second);
+  final wallMs = clean.millisecondsSinceEpoch;
+  const day = 24 * 60 * 60 * 1000;
+  // Offsets on either side of this date; at most one DST change lies between them.
+  final offEarly = loc.timeZone(wallMs - day).offset.inMilliseconds;
+  final offLate = loc.timeZone(wallMs + day).offset.inMilliseconds;
+  final valid = <int>[
+    for (final off in {offEarly, offLate})
+      if (_wallOf(loc, wallMs - off) == clean) wallMs - off,
+  ]..sort();
+  // Normal: one match. TIM-14 overlap: two → the first. TIM-13 gap: none → earlier offset shifts forward.
+  final instant = valid.isNotEmpty ? valid.first : wallMs - offEarly;
+  return DateTime.fromMillisecondsSinceEpoch(instant, isUtc: true);
+}
+
+DateTime _wallOf(tz.Location loc, int instantMs) {
+  final l = tz.TZDateTime.fromMillisecondsSinceEpoch(loc, instantMs);
+  return DateTime.utc(l.year, l.month, l.day, l.hour, l.minute, l.second);
 }
 
 /// The wall time (UTC container) of [instant] in [zone].

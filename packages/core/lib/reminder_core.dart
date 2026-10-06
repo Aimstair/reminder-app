@@ -13,3 +13,4 @@ export 'src/recurrence/recurrence.dart';
 export 'src/time/calendar.dart';
 export 'src/time/zones.dart';
 export 'src/parser/parser.dart' show ReminderParser;
+export 'src/planner/alarm_planner.dart';
