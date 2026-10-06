@@ -3,7 +3,7 @@
 Reminder app (working name "Reminder App", part of the Aimstair platform). Android first, then iOS, then web. Built entirely with AI assistance — **the specs in `docs/` are the source of truth; code follows them.**
 
 ## Status
-Planning complete; framework chosen (**Flutter**, by the animation bake-off — `docs/spikes/animation-bakeoff.md`). Next: **v0** project setup in `C:\dev\reminder-app` + alarm and parser spikes — see `ROADMAP.md`. Update the Commands section once the app exists.
+v0 in progress in `C:\dev\reminder-app`: ✅ Flutter app + `packages/core` scaffold · ✅ exact-alarm spike passed on Samsung (`docs/spikes/alarm-reliability.md`) · next: **parser spike** in `packages/core`. The app currently boots into the temporary alarm test screen (`lib/spike/`).
 
 ## Read before working
 | File | Use it for |
@@ -46,7 +46,7 @@ Don't add a package that isn't in `docs/architecture.md` §3 without asking and 
 3. A real-world parser miss becomes a new row in `docs/parser-test-set.md` before it's fixed.
 
 ## Commands
-*(confirm during v0 setup)*
+*(confirmed during v0; Flutter SDK at C:/src/flutter)*
 - Run on phone (hot reload): `flutter run` · performance and alarms: `flutter run --release`
 - Release APK / Play bundle: `flutter build apk --release` · `flutter build appbundle`
 - Core tests: `cd packages/core && dart test` · app tests: `flutter test` · `flutter test integration_test`
