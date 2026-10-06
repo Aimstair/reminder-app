@@ -8,7 +8,8 @@ import '../model/wall_time.dart';
 import '../parser/parse_result.dart';
 
 /// Whether [p] can be saved as is (CAP-7: a title and, for occasions, a date are required).
-bool canSave(ParseResult p) => p.title.trim().isNotEmpty && p.timing != null;
+bool canSave(ParseResult p) =>
+    p.title.trim().isNotEmpty && p.timing != null && !p.flags.contains(ParseFlag.dateMissing);
 
 /// Builds the reminder for a parse result. Unstated alerts use the type defaults (ALR-4); timed
 /// reminders take the stated zone or the default zone (PRF-1, TIM-2).

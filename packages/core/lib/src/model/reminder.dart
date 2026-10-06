@@ -160,10 +160,45 @@ class Reminder {
 
   String get id => meta.id;
 
-  /// Completable types (Terms §0): Task always, Occasion per occurrence.
-  bool get completable => kind == Kind.task || kind == Kind.occasion;
+  /// Completable types (Terms §0): Task always, Occasion per occurrence. CAL-3: imported calendar
+  /// events never are.
+  bool get completable => (kind == Kind.task || kind == Kind.occasion) && source is! DeviceCalendarSource;
 
   bool get repeats => rrule != null;
+
+  /// Imported from the device calendar (read-only, CAL-3).
+  bool get isCalendarEvent => source is DeviceCalendarSource;
+
+  Reminder copyWith({
+    RecordMeta? meta,
+    String? title,
+    String? Function()? notes,
+    Kind? kind,
+    ReminderContext? context,
+    Timing? timing,
+    List<AlertStage>? alertPlan,
+    String? Function()? rrule,
+    RepeatMode? repeatMode,
+    Duration? Function()? nagInterval,
+    ReminderSource? source,
+    String? Function()? templateId,
+    ReminderStatus? status,
+  }) => Reminder(
+    meta: meta ?? this.meta,
+    title: title ?? this.title,
+    notes: notes != null ? notes() : this.notes,
+    rawInput: rawInput,
+    kind: kind ?? this.kind,
+    context: context ?? this.context,
+    timing: timing ?? this.timing,
+    alertPlan: alertPlan ?? this.alertPlan,
+    rrule: rrule != null ? rrule() : this.rrule,
+    repeatMode: repeatMode ?? this.repeatMode,
+    nagInterval: nagInterval != null ? nagInterval() : this.nagInterval,
+    source: source ?? this.source,
+    templateId: templateId != null ? templateId() : this.templateId,
+    status: status ?? this.status,
+  );
 }
 
 /// One instance of a reminder (OCC-*). Saved only when inside the 14-day window or changed (OCC-6).
