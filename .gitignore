@@ -1,0 +1,38 @@
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
+
+# Node / Expo / React Native
+node_modules/
+.expo/
+dist/
+web-build/
+*.jks
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+.env*.local
+
+# Android native builds
+android/.gradle/
+**/android/app/build/
+**/android/build/
+local.properties
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+**/build/
+pubspec_overrides.yaml
+
+# Release artifacts
+*.apk
+*.aab
+
+# AI tool config from the Expo template (not project code)
+spikes/rn-animation/.claude/

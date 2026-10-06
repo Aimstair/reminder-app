@@ -1,0 +1,17 @@
+app,run,scenario,frames,dropped_gt20ms,dropped_pct,stutter_gt33ms,stutter_pct
+rn,1,B1-scroll,1528,35,2.3,4,0.3
+rn,1,B2-rapid-complete,547,32,5.9,10,1.8
+rn,1,C-capture,939,2,0.2,2,0.2
+rn,1,A-nudges,1150,6,0.5,2,0.2
+flutter,1,B1-scroll,1960,0,0.0,0,0.0
+flutter,1,B2-rapid-complete,895,0,0.0,0,0.0
+flutter,1,C-capture,978,1,0.1,0,0.0
+flutter,1,A-nudges,1648,1,0.1,0,0.0
+rn,2,B1-scroll,1523,37,2.4,3,0.2
+rn,2,B2-rapid-complete,554,27,4.9,10,1.8
+rn,2,C-capture,930,3,0.3,3,0.3
+rn,2,A-nudges,1164,7,0.6,2,0.2
+flutter,2,B1-scroll,1910,0,0.0,0,0.0
+flutter,2,B2-rapid-complete,896,0,0.0,0,0.0
+flutter,2,C-capture,975,0,0.0,0,0.0
+flutter,2,A-nudges,1646,0,0.0,0,0.0
