@@ -3,7 +3,7 @@
 Reminder app (working name "Reminder App", part of the Aimstair platform). Android first, then iOS, then web. Built entirely with AI assistance — **the specs in `docs/` are the source of truth; code follows them.**
 
 ## Status
-v0 in progress in `C:\dev\reminder-app`: ✅ Flutter app + `packages/core` scaffold · ✅ exact-alarm spike passed on Samsung (`docs/spikes/alarm-reliability.md`) · next: **parser spike** in `packages/core`. The app currently boots into the temporary alarm test screen (`lib/spike/`).
+v0 in progress in `C:\dev\reminder-app`: ✅ Flutter app + `packages/core` scaffold · ✅ exact-alarm spike passed on Samsung (`docs/spikes/alarm-reliability.md`) · ✅ parser spike: 133/133 cases pass (`packages/core/lib/src/parser/`). **v0 risk spikes done** — next: v1.0 foundations (data model + Drift, core engine, planner). The app currently boots into the temporary alarm test screen (`lib/spike/`).
 
 ## Read before working
 | File | Use it for |

@@ -29,7 +29,7 @@ Sizing: **S** = small, **M** = medium, **L** = large. No calendar dates — each
 | ✅ Project setup: Flutter app in `C:\dev\reminder-app` (no spaces in path), `packages/core` Dart package, Pigeon bridge skeleton, test runners | S | App runs on the Galaxy A73 via `flutter run`; `dart test` runs in `packages/core` |
 | ✅ **Exact-alarm spike** — custom Kotlin native module: schedule, fire, notification actions, reboot reschedule (`docs/spikes/alarm-reliability.md`) | M | **Samsung passed 2026-10-06** (12/12 on time, max 0.2 s, incl. reboot, Doze, app kill). Pixel + Xiaomi still to test |
 | ✅ **Animation bake-off** — same prototype in React Native and Flutter (`docs/spikes/animation-bakeoff.md`) | M | **Done 2026-10-06 — Flutter selected** (0% dropped frames on Galaxy A73; weighted 3.90 vs 3.15) |
-| **Parser spike** — rule-based NL parser in Dart (no chrono-node equivalent) + parse-preview chips | M–L | Passes ≥ 90% of `parser-test-set.md` counted cases |
+| ✅ **Parser spike** — rule-based NL parser in Dart (no chrono-node equivalent) | M–L | **133/133 (100%) of `parser-test-set.md` cases pass (2026-10-06).** Parse-preview chips come with the capture UI in v1.0 |
 | Local database + data model (Reminder, Occurrence, UserPrefs) | M | Core logic covered by automated tests |
 
 **Kill/pivot signal:** if exact alarms can't be made reliable, everything else waits.

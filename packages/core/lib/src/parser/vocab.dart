@@ -1,0 +1,207 @@
+/// Word lists used by the parser (docs/parser-test-set.md §3). Lowercase.
+library;
+
+const monthNames = <String, int>{
+  'january': 1,
+  'jan': 1,
+  'february': 2,
+  'feb': 2,
+  'march': 3,
+  'mar': 3,
+  'april': 4,
+  'apr': 4,
+  'may': 5,
+  'june': 6,
+  'jun': 6,
+  'july': 7,
+  'jul': 7,
+  'august': 8,
+  'aug': 8,
+  'september': 9,
+  'sept': 9,
+  'sep': 9,
+  'october': 10,
+  'oct': 10,
+  'november': 11,
+  'nov': 11,
+  'december': 12,
+  'dec': 12,
+};
+
+/// Longest first so regex alternation prefers full names.
+final monthPattern = (monthNames.keys.toList()..sort((a, b) => b.length.compareTo(a.length))).join('|');
+
+/// ISO weekday numbers (Monday = 1).
+const weekdayNames = <String, int>{
+  'monday': 1,
+  'mon': 1,
+  'tuesday': 2,
+  'tues': 2,
+  'tue': 2,
+  'wednesday': 3,
+  'wed': 3,
+  'thursday': 4,
+  'thurs': 4,
+  'thur': 4,
+  'thu': 4,
+  'friday': 5,
+  'fri': 5,
+  'saturday': 6,
+  'sat': 6,
+  'sunday': 7,
+  'sun': 7,
+};
+
+final weekdayPattern = (weekdayNames.keys.toList()..sort((a, b) => b.length.compareTo(a.length))).join('|');
+
+const rruleDay = {1: 'MO', 2: 'TU', 3: 'WE', 4: 'TH', 5: 'FR', 6: 'SA', 7: 'SU'};
+
+const numberWords = <String, int>{
+  'a': 1,
+  'an': 1,
+  'one': 1,
+  'two': 2,
+  'three': 3,
+  'four': 4,
+  'five': 5,
+  'six': 6,
+  'seven': 7,
+  'eight': 8,
+  'nine': 9,
+  'ten': 10,
+  'twelve': 12,
+};
+
+/// PRS-16: zone abbreviations → IANA.
+const zoneAbbreviations = <String, String>{
+  'et': 'America/New_York',
+  'est': 'America/New_York',
+  'edt': 'America/New_York',
+  'ct': 'America/Chicago',
+  'cst': 'America/Chicago',
+  'cdt': 'America/Chicago',
+  'mt': 'America/Denver',
+  'mst': 'America/Denver',
+  'mdt': 'America/Denver',
+  'pt': 'America/Los_Angeles',
+  'pst': 'America/Los_Angeles',
+  'pdt': 'America/Los_Angeles',
+  'gmt': 'UTC',
+  'utc': 'UTC',
+  'bst': 'Europe/London',
+  'cet': 'Europe/Paris',
+  'cest': 'Europe/Paris',
+  'jst': 'Asia/Tokyo',
+  'aest': 'Australia/Sydney',
+  'aedt': 'Australia/Sydney',
+  'ist': 'Asia/Kolkata',
+};
+
+/// PRS-17: major cities → IANA.
+const cityZones = <String, String>{
+  'london': 'Europe/London',
+  'paris': 'Europe/Paris',
+  'berlin': 'Europe/Berlin',
+  'tokyo': 'Asia/Tokyo',
+  'sydney': 'Australia/Sydney',
+  'singapore': 'Asia/Singapore',
+  'dubai': 'Asia/Dubai',
+  'new york': 'America/New_York',
+  'chicago': 'America/Chicago',
+  'la': 'America/Los_Angeles',
+  'los angeles': 'America/Los_Angeles',
+  'san francisco': 'America/Los_Angeles',
+  'toronto': 'America/Toronto',
+  'manila': 'Asia/Manila',
+  'mumbai': 'Asia/Kolkata',
+};
+
+/// PRS-29 (1) Occasion keywords.
+const occasionWords = ['birthday', 'bday', 'anniversary'];
+
+/// PRS-29 (2) Meeting keywords/phrases.
+const meetingPhrases = [
+  'meeting',
+  'call with',
+  'standup',
+  'stand-up',
+  'sync',
+  '1:1',
+  'interview',
+  'sprint planning',
+  'retro',
+  'demo with',
+];
+
+/// PRS-29 (3) Action verbs that make an input a Task even with an Event word.
+const taskVerbs = [
+  'buy',
+  'order',
+  'book',
+  'call',
+  'email',
+  'text',
+  'pay',
+  'send',
+  'submit',
+  'pick up',
+  'prepare',
+  'finish',
+  'review',
+  'renew',
+  'cancel',
+  'return',
+  'clean',
+  'fix',
+  'check',
+  'follow up',
+  'remind',
+];
+
+/// PRS-29 (4) Event keywords.
+const eventWords = [
+  'dinner',
+  'lunch',
+  'brunch',
+  'breakfast',
+  'drinks',
+  'party',
+  'concert',
+  'game',
+  'flight',
+  'appointment',
+  'dentist',
+  'doctor',
+  'physio',
+  'haircut',
+  'wedding',
+  'date night',
+  'webinar',
+  'workshop',
+  'class',
+  'practice',
+];
+
+/// PRS-14 meal default times for Events without a time.
+const mealHours = {'breakfast': 8, 'brunch': 12, 'lunch': 12, 'dinner': 19, 'drinks': 19};
+
+/// PRS-31 Work context keywords.
+const workWords = [
+  'client',
+  'team',
+  'report',
+  'invoice',
+  'deck',
+  'slides',
+  'contract',
+  'timesheet',
+  'board',
+  'sprint',
+  'manager',
+  'office',
+  'roadmap',
+  'candidate',
+  'webinar',
+  'workshop',
+  'budget',
+];

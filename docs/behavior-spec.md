@@ -307,6 +307,7 @@ Every user-adjustable default the rules above depend on. **Onboarding** settings
 | 2026-10-05 | `NTF-4`, `PRF-5` | "Tomorrow" snooze time is user-adjustable in onboarding; default day time (09:00). |
 | 2026-10-05 | `SCH-7`, `PRF-6` | Late-alert cutoff is a user setting; default 2 hours. |
 | 2026-10-05 | `TIM-11`, `TIM-12` | Tasks can optionally have an end time; due time = end if set, else start. Date-only tasks are due at end of day. |
+| 2026-10-06 | `PRS-2` (parser-test-set.md) | `past_date_rolled` is flagged only for one-time reminders; repeating ones roll to next year silently. Matches the acceptance table (I2–I4, F11, F13 vs N1–N2). |
 | 2026-10-06 | Stack (architecture.md) | **Flutter** selected over React Native by the animation bake-off (`spikes/animation-bakeoff.md`). Behavior rules unchanged; parser to be written in Dart. |
 | 2026-10-05 | `TPL-*`, `CON-*`, `PRM-7`, `PRM-8` | From competitive scan: templates moved to v1.0; Contacts birthday/anniversary import; "Send test reminder" reliability check. Positioning leads with occasions + bills. |
 | 2026-10-05 | `VW-*` (screens.md) | Google Calendar-style views added: Schedule, Day, Month in v1.0; 3 Day, Week, Year in v1.2. Reverses the earlier "no month-grid view" cut. |

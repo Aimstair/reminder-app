@@ -1,10 +1,12 @@
 # Parser Spec & Test Set — v1.0
 
-What the quick-capture parser must understand, and ~110 example inputs with their expected results. This file is both the **spec** and the **acceptance test**: each row becomes an automated test case.
+What the quick-capture parser must understand, and 133 example inputs with their expected results. This file is both the **spec** and the **acceptance test**: each row becomes an automated test case.
 
 Related: [`behavior-spec.md`](behavior-spec.md) §8 (`CAP-*` rules) · [`product-decisions.md`](product-decisions.md) (D3: English, global)
 
 **v0 exit criterion:** ≥ 90% of counted cases pass. **v1.0 release:** ≥ 95%. Stretch cases (§S) are not counted.
+
+**Status (2026-10-06):** ✅ **133 / 133 pass** — implementation `packages/core/lib/src/parser/`, tests `packages/core/test/parser/` (cases generated from this file: `cd packages/core && dart run tool/gen_parser_cases.dart`). Stretch cases S1–S6 not yet supported.
 
 ---
 
@@ -64,7 +66,7 @@ A row **passes** when every field shown in the row matches. Title comparison ign
 
 ### Dates
 - **PRS-1** Absolute dates: "Oct 20", "October 20th", "20 Oct", "2026-10-20", numeric dates in locale order ("10/12" = Oct 12 in en-US, 10 Dec in en-GB).
-- **PRS-2** A date without a year that is **already past** rolls to **next year** and sets `past_date_rolled` (e.g. "Mar 3" → Mar 3 2027).
+- **PRS-2** A date without a year that is **already past** rolls to **next year** (e.g. "Mar 3" → Mar 3 2027). The `past_date_rolled` flag is set **only for one-time reminders** — for repeating ones (occasions, "every year on March 3") next year is the expected meaning, so nothing is highlighted.
 - **PRS-3** Month + year without a day ("March 2027") → the **1st** of that month, flag `ambiguous_date`.
 - **PRS-4** A month name **without a day number** is only a date when preceded by *in / on / by / until* or followed by a year. Otherwise it's part of the title ("Pay May rent", "March band practice").
 - **PRS-5** Relative dates: *today, tomorrow, day after tomorrow, in N days/weeks/months, in a week/month*.
