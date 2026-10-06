@@ -3,7 +3,7 @@
 Reminder app (working name "Reminder App", part of the Aimstair platform). Android first, then iOS, then web. Built entirely with AI assistance — **the specs in `docs/` are the source of truth; code follows them.**
 
 ## Status
-v0 done (scaffold, Samsung alarm spike, parser 133/133). **v1.0 in progress:** ✅ Drift DB + repositories · ✅ recurrence, occurrence engine, time rules · ✅ alarm planner wired to native alarms (journal, notification text) · ✅ app startup (prefs, device zone, resync on resume) · ✅ app shell (Riverpod + go_router, Apple-style theme tokens) · ✅ Schedule view (S-12) · ✅ first capture sheet (S-20, parser → Details rows → Save). Next: reminder detail (S-30) + reschedule (S-33), chip pickers (S-21), Day/Month views, onboarding, settings. The v0 alarm test screen lives on as Drawer → Alarm diagnostics (`/diagnostics`).
+v0 done. **v1.0 feature-complete (2026-10-07), ready for device testing:** core engine (recurrence, occurrences, planner, digest, templates, calendar/contacts import, search) · Drift data layer + backup · native alarms + platform bridge (calendar, share target, QS tile, widget, backup files) · all v1.0 screens (Schedule/Day/Month, capture, detail, editor, pickers, search, completed, settings, onboarding). Open: device checks of the new native parts, Pixel/Xiaomi alarm matrix, Rive mascot art (vector stand-in in `lib/ui/bell.dart`), Inter font + icon set, crash reporting, store listing. The v0 alarm test screen lives on as Settings → Reliability → Alarm diagnostics (`/diagnostics`). Core enums: `RecurrenceMode` (not RepeatMode) and `ClockTime` (not TimeOfDay) to avoid clashes with Flutter.
 
 ## Read before working
 | File | Use it for |
@@ -19,7 +19,7 @@ v0 done (scaffold, Samsung alarm spike, parser 133/133). **v1.0 in progress:** �
 | `docs/spikes/animation-bakeoff.md` | Why Flutter; build lessons on this machine |
 
 ## Stack
-Flutter (stable) · Dart 3 · go_router · flutter_riverpod · Drift (SQLite) · timezone + flutter_timezone · rrule · **own parser** in `packages/core` · Flutter animation APIs + spring presets · rive (use Data Binding) · audioplayers · flutter_contacts · speech_to_text · home_widget · Pigeon (Dart ↔ Kotlin) · gen-l10n · flutter_test + mocktail + integration_test + Maestro · own Kotlin for alarms, notifications, calendar, widget, Quick Settings tile.
+Flutter (stable) · Dart 3 · go_router · flutter_riverpod · Drift (SQLite) · timezone + flutter_timezone · **own recurrence engine and parser** in `packages/core` · Flutter animation APIs + spring presets · rive (use Data Binding) · audioplayers · flutter_contacts · speech_to_text · Pigeon (Dart ↔ Kotlin) · gen-l10n · flutter_test + mocktail + integration_test + Maestro · own Kotlin for alarms, notifications, calendar, widget, Quick Settings tile.
 Project lives in `C:\dev\reminder-app` — **never in a path with spaces** (Android native builds fail on Windows).
 Don't add a package that isn't in `docs/architecture.md` §3 without asking and updating that table.
 
@@ -54,7 +54,7 @@ Don't add a package that isn't in `docs/architecture.md` §3 without asking and 
 - Analyze / format: `flutter analyze` · `dart format .`
 - Regenerate Pigeon bridge: `dart run pigeon --input pigeons/<file>.dart`
 - Rive native libs (if the build step fails): `dart run rive_native:setup -p android`
-- Gradle memory is capped in `android/gradle.properties` (`-Xmx2560m`, 2 workers) — this PC has limited RAM; close browsers during first builds
+- Gradle memory is capped in `android/gradle.properties` (`-Xmx2560m`, Metaspace 1 GB for release lint, 2 workers) — this PC has limited RAM; close browsers during first builds
 
 ## Definition of done
 Tests pass (core + parser + app), `flutter analyze` clean, rule IDs referenced, strings/tokens used, works in light & dark, safe areas respected, and — for anything touching alarms or notifications — checked on a real Android device in a release build.

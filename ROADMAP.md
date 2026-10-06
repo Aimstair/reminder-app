@@ -42,6 +42,8 @@ Sizing: **S** = small, **M** = medium, **L** = large. No calendar dates — each
 **Hero use cases:** never miss an occasion · never pay a late fee · capture in 3 seconds · your calendar, plus the prep.
 **Lead message:** occasions + bills (see `docs/competitors.md`).
 
+**Status (2026-10-07): feature-complete build ready for device testing.** All v1.0 screens and features are implemented and unit/widget-tested. Still open before the closed beta: real-device checks of the new native parts (calendar import, share target, Quick Settings tile, widget) and the alarm matrix on Pixel + Xiaomi; the bell mascot and illustrations are vector stand-ins until the AI → Rive art exists (DS9); Inter font and line-icon set not bundled yet (Material icons stand in); crash reporting not set up; Play Store listing and hosted privacy policy.
+
 ### Capture
 | Feature | Size |
 |---|---|

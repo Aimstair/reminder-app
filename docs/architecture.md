@@ -97,7 +97,8 @@ Versions checked on pub.dev on 2026-10-06; **re-verify at setup** and pin exact 
 | Calendar | **Own Kotlin** (`CalendarContract`) via Pigeon | — | `device_calendar` is stale (2024); fallback: `device_calendar_plus` (0.10.1, verify maturity) |
 | Contacts | `flutter_contacts` | 2.6.0 | Birthday/anniversary dates only (`CON-2`) — verify it reads contact events |
 | Speech | `speech_to_text` | 7.5.0 | Voice capture |
-| Home-screen widget | `home_widget` | 0.10.0 | Widget UI in Kotlin; data shared from Dart |
+| Home-screen widget | **Own Kotlin** (`AppWidgetProvider`) | — | Built without `home_widget`: Dart pushes the next 3 items as JSON via the platform bridge (`updateWidget`) |
+| Kotlin coroutines | `kotlinx-coroutines-android` (Gradle) | 1.9.0 | Needed by Pigeon `@async` host methods (calendar permission, backup file pickers) |
 | Share sheet | `receive_sharing_intent` | 1.9.0 | Or handle the share intent directly in Kotlin |
 | Native bridge | `pigeon` (dev) | 29.0.6 | Typed Dart ↔ Kotlin API generated from `pigeons/` |
 | Notifications & alarms | **Own Kotlin** | — | `flutter_local_notifications` (22.3.1) not used for reminders — our native module owns the firing path (§5) |
