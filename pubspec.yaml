@@ -38,6 +38,10 @@ dependencies:
     path: packages/core
   drift: ^2.35.1
   drift_flutter: ^0.3.1
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.3
+  flutter_timezone: ^5.1.1
 
 dev_dependencies:
   flutter_test:
@@ -63,6 +67,7 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  generate: true # gen-l10n from lib/l10n (copy.md keys)
 
   # To add assets to your application, add an assets section, like this:
   # assets:

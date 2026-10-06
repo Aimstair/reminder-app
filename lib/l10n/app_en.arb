@@ -1,0 +1,39 @@
+{
+  "@@locale": "en",
+
+  "appName": "Reminder App",
+
+  "notifNow": "Now · {time}",
+  "@notifNow": { "description": "copy.md notif.atTime — datetime reminder at its time", "placeholders": { "time": { "type": "String" } } },
+
+  "notifToday": "Today",
+  "@notifToday": { "description": "copy.md notif.atTime / notif.occasion.today — date-only reminder on its day" },
+
+  "notifBefore": "In {relative} · {when}",
+  "@notifBefore": { "description": "copy.md notif.before — e.g. In 1 week · Mon, Oct 12", "placeholders": { "relative": { "type": "String" }, "when": { "type": "String" } } },
+
+  "notifStartBy": "Start today · due {when}",
+  "@notifStartBy": { "description": "copy.md notif.startBy (ALR-5)", "placeholders": { "when": { "type": "String" } } },
+
+  "notifNagToday": "Still to do · due today",
+  "@notifNagToday": { "description": "copy.md notif.nag — still open on its due day" },
+
+  "notifNagSince": "Still to do · due since {when}",
+  "@notifNagSince": { "description": "copy.md notif.nag — overdue from an earlier day", "placeholders": { "when": { "type": "String" } } },
+
+  "relMinutes": "{count, plural, =1{1 min} other{{count} min}}",
+  "@relMinutes": { "placeholders": { "count": { "type": "int" } } },
+  "relHours": "{count, plural, =1{1 hour} other{{count} hours}}",
+  "@relHours": { "placeholders": { "count": { "type": "int" } } },
+  "relDays": "{count, plural, =1{1 day} other{{count} days}}",
+  "@relDays": { "placeholders": { "count": { "type": "int" } } },
+  "relWeeks": "{count, plural, =1{1 week} other{{count} weeks}}",
+  "@relWeeks": { "placeholders": { "count": { "type": "int" } } },
+  "relMonths": "{count, plural, =1{1 month} other{{count} months}}",
+  "@relMonths": { "placeholders": { "count": { "type": "int" } } },
+
+  "dayTomorrow": "Tomorrow",
+  "@dayTomorrow": { "description": "Relative day name" },
+  "dayToday": "today",
+  "@dayToday": { "description": "Lowercase 'today' inside a sentence" }
+}
