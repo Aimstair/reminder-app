@@ -141,12 +141,16 @@ Placeholders: *Whose birthday? When?* · *Which bill? Due on the…* · *What re
 
 ---
 
+**Shared text (CAP-12):** under the input when links or long text went to notes — "Shared text and links saved in notes"
+
 ## 5. Home, views & lists (S-10 – S-18)
 
 **Group headers:** Overdue · Today · Tomorrow · This week · Later · {Month Year}
 **Day view:** All day · Overdue ({n})
 **Month view:** +{n} more
 **Drawer:** Schedule · Day · Month · Types · Context · Calendars · Completed · Settings · Help & feedback
+
+Calendars section is collapsed by default; when some are filtered out it shows "{count} hidden". Same-named calendars show their account underneath.
 **Top bar:** Today · Search
 
 ### Empty states (with bell)
@@ -176,6 +180,7 @@ Placeholders: *Whose birthday? When?* · *Which bill? Due on the…* · *What re
 ## 6. Details, actions & dialogs
 
 **Reminder detail buttons:** Done · I'm prepared · Reschedule · Skip · Edit · Delete
+**Detail status card:** Pending · Overdue · Done · Skipped · Prepared · Passed · "Snoozed until {time}" (while a snooze is pending, even if the item is past due)
 **Calendar event detail:** "From {calendar name}" · **Remind me**
 **Remind me picker:** 10 min before · 1 hour before · 1 day before · Custom…
 

@@ -199,7 +199,7 @@ Detailed parser rules and examples live in `parser-test-set.md`. These are the d
 - **CAP-9** An explicit time zone in the input ("3pm EST", "10am Tokyo time") sets the reminder's zone; otherwise the default zone is used (`TIM-3`). The zone chip is shown only when it differs from the default.
 - **CAP-10** A time range ("2–4pm", "from 2 to 4") sets start and end time (`TIM-11`).
 - **CAP-11** Editing a preview chip by hand **locks** that field: further typing no longer changes it.
-- **CAP-12** Shared text (share sheet) longer than 120 characters: the first sentence is parsed as the input; the full text and any links go into notes.
+- **CAP-12** Shared text (share sheet): links never become the title — they are removed from the input and go into notes. Text longer than 120 characters: the first sentence is parsed as the input; the full text goes into notes. A link-only share opens with an empty input (the user types what it's about) and the link in notes.
 
 ## 8b. Templates (`TPL`)
 
@@ -309,6 +309,7 @@ Every user-adjustable default the rules above depend on. **Onboarding** settings
 | 2026-10-05 | `TIM-11`, `TIM-12` | Tasks can optionally have an end time; due time = end if set, else start. Date-only tasks are due at end of day. |
 | 2026-10-06 | `REC-4`, parser I4 | A Feb 29 yearly reminder stores `BYMONTH=2;BYMONTHDAY=29` so leap years land on Feb 29 while other years show Feb 28. Recurrence engine is our own (architecture.md §3). |
 | 2026-10-06 | `PRS-2` (parser-test-set.md) | `past_date_rolled` is flagged only for one-time reminders; repeating ones roll to next year silently. Matches the acceptance table (I2–I4, F11, F13 vs N1–N2). |
+| 2026-10-08 | `CAP-12`, `ALR-6`, R13 | Device testing: shared links go to notes even in short text (a TikTok link had become the title). `ALR-6` fallback only for stages already past at save time (Events/Meetings were alerting twice). R13: Android shows at most ~50 notifications per app at once — accepted; all alarms still fire. |
 | 2026-10-06 | Stack (architecture.md) | **Flutter** selected over React Native by the animation bake-off (`spikes/animation-bakeoff.md`). Behavior rules unchanged; parser to be written in Dart. |
 | 2026-10-05 | `TPL-*`, `CON-*`, `PRM-7`, `PRM-8` | From competitive scan: templates moved to v1.0; Contacts birthday/anniversary import; "Send test reminder" reliability check. Positioning leads with occasions + bills. |
 | 2026-10-05 | `VW-*` (screens.md) | Google Calendar-style views added: Schedule, Day, Month in v1.0; 3 Day, Week, Year in v1.2. Reverses the earlier "no month-grid view" cut. |

@@ -282,8 +282,10 @@ class _UpNextCard extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
     final color = c.kind(item.reminder.kind);
     final now = ref.watch(nowProvider).value ?? DateTime.now().toUtc();
-    final mins = item.times.anchor.difference(now).inMinutes.clamp(0, 9999);
+    // Round up: 40 s away reads "in 1 min", never "in 0 min".
+    final mins = (item.times.anchor.difference(now).inSeconds / 60).ceil().clamp(0, 9999);
     final countdown = mins < 60 ? l10n.relMinutes(mins) : l10n.relHours((mins / 60).round());
+    final label = mins == 0 ? l10n.notifNow(f.time(item.start)) : l10n.notifBefore(countdown, f.time(item.start));
     return Material(
       color: color.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(Radii.card),
@@ -301,7 +303,7 @@ class _UpNextCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      l10n.notifBefore(countdown, f.time(item.start)).toUpperCase(),
+                      label.toUpperCase(),
                       style: text.labelSmall?.copyWith(color: color, letterSpacing: 0.5),
                     ),
                     const SizedBox(height: 2),
@@ -401,8 +403,10 @@ class _SwipeRow extends ConsumerWidget {
     final r = item.reminder;
     final allDay = r.timing.type == TimingType.date;
     final time = allDay ? l10n.allDay : f.time(item.start);
+    // Under Today / Tomorrow the header already says the day; elsewhere (Overdue, later groups)
+    // say "Today · 9:00 AM" or "Mon, Oct 12 · 9:00 AM".
     final showDate = item.group != ScheduleGroup.today && item.group != ScheduleGroup.tomorrow;
-    final when = showDate ? '${f.date(item.start)} · $time' : time;
+    final when = showDate ? f.when(item.start, allDay: allDay, today: ref.watch(todayProvider)) : time;
     final row = ReminderRow(
       reminder: r,
       when: when,

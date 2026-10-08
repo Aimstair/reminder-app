@@ -3,6 +3,7 @@ library;
 
 export 'src/calendar/calendar_import.dart';
 export 'src/capture/draft.dart';
+export 'src/capture/shared_text.dart';
 export 'src/capture/templates.dart';
 export 'src/contacts/contacts_import.dart';
 export 'src/engine/digest.dart';

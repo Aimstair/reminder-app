@@ -118,7 +118,7 @@ final rangeProvider = Provider.family<List<DayItem>?, ({DateTime from, DateTime 
   return RangeView(prefs: ref.watch(prefsProvider)).build(reminders, saved, range.from, range.to, now);
 });
 
-/// Daily progress ring ("2/6 done"): occurrences completed today vs. today's total.
+/// Daily progress ring ("2/6 done"): tasks and occasions completed today vs. today's total.
 final todayProgressProvider = Provider<({int done, int total})>((ref) {
   final items = ref.watch(scheduleProvider) ?? const [];
   final saved = ref.watch(occurrencesProvider).value ?? const {};
@@ -131,7 +131,11 @@ final todayProgressProvider = Provider<({int done, int total})>((ref) {
           o.resolvedAt != null &&
           dateOnly(instantToWall(o.resolvedAt!, zone)) == today)
       .length;
-  final open = items.where((i) => i.group == ScheduleGroup.today || i.group == ScheduleGroup.overdue).length;
+  // Only things you can complete (tasks, occasions); meetings and events just pass.
+  final open = items
+      .where((i) => i.reminder.completable)
+      .where((i) => i.group == ScheduleGroup.today || i.group == ScheduleGroup.overdue)
+      .length;
   return (done: done, total: done + open);
 });
 

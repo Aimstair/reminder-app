@@ -52,7 +52,8 @@ class OccurrenceActions {
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
         content: Text(message),
-        duration: const Duration(seconds: 5),
+        duration: const Duration(seconds: 5), // OCC-5
+        persist: false,
         action: SnackBarAction(
           label: l10n.actionUndo,
           onPressed: () => _undo(r, key, before),
@@ -80,7 +81,10 @@ class OccurrenceActions {
 
   bool _isLastOpenToday(Reminder r, DateTime key) {
     final items = ref.read(scheduleProvider) ?? const [];
-    final today = items.where((i) => i.group == ScheduleGroup.today || i.group == ScheduleGroup.overdue).toList();
+    final today = items
+        .where((i) => i.reminder.completable)
+        .where((i) => i.group == ScheduleGroup.today || i.group == ScheduleGroup.overdue)
+        .toList();
     return today.length == 1 && today.single.reminder.id == r.id && today.single.occurrenceKey == key;
   }
 

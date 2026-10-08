@@ -54,6 +54,11 @@ class DigestCard extends ConsumerWidget {
       ),
     );
 
+    final today = ref.watch(todayProvider);
+    // "Today · 9:00 AM" / "Mon, Oct 12" — time only matters for timed items.
+    String short(({Reminder reminder, DateTime start}) i) => i.reminder.timing.type == TimingType.date
+        ? (i.start == today ? l10n.groupToday : f.date(i.start))
+        : f.when(i.start, allDay: false, today: today);
     final kept = s.prefs.stringSet('stale_kept');
     final stale = d.stale.map((i) => i.occurrenceId).where((id) => !kept.contains(id)).toSet();
     return Padding(
@@ -89,7 +94,7 @@ class DigestCard extends ConsumerWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                line(i.reminder.title, f.date(i.start), color: c.danger),
+                                line(i.reminder.title, short((reminder: i.reminder, start: i.start)), color: c.danger),
                                 Row(
                                   children: [
                                     Expanded(child: Text(l10n.digestStale, style: text.bodySmall)), // OVD-3
@@ -107,14 +112,14 @@ class DigestCard extends ConsumerWidget {
                               ],
                             ),
                           )
-                        : line(i.reminder.title, f.date(i.start),
+                        : line(i.reminder.title, short((reminder: i.reminder, start: i.start)),
                             color: c.danger, onTap: () => openDetail(context, i.reminder, i.occurrenceKey)),
                 ]),
               if (d.missed > 0) section(l10n.digestMissed, [line(l10n.digestMissedCount(d.missed), '', color: c.warning)]),
               if (d.upcomingOccasions.isNotEmpty)
                 section(l10n.digestComingUp, [
                   for (final i in d.upcomingOccasions.take(5))
-                    line(i.reminder.title, f.date(i.start),
+                    line(i.reminder.title, short((reminder: i.reminder, start: i.start)),
                         color: c.occasion, onTap: () => openDetail(context, i.reminder, i.occurrenceKey)),
                 ]),
               if (d.removedFromCalendar.isNotEmpty)

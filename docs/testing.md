@@ -70,7 +70,7 @@ Run through property tests and fixed cases:
 | R10 | Notifications disabled | No crash; banner; counted missed (`PRM-1`) |
 | R11 | Done / Snooze / Tomorrow / Undo from lock screen, app closed | State correct after next app open (journal) |
 | R12 | Nag sequence over a night | Stops at end of nag hours, resumes at start (`ALR-11`) |
-| R13 | 50 reminders at the same minute | All delivered, grouped (`SCH-10`) |
+| R13 | 50 reminders at the same minute | All fire on time, grouped (`SCH-10`); Android shows at most ~50 per app at once (accepted 2026-10-08) |
 | R14 | App updated (new build installed) | Alarms still registered |
 | R15 | Test reminder (`PRM-7`) with phone locked | ✅ result shown on return |
 

@@ -1216,4 +1216,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String actionKeepCity(String city) {
     return 'Keep $city';
   }
+
+  @override
+  String drawerCalendarsHidden(int count) {
+    return '$count hidden';
+  }
+
+  @override
+  String stateSnoozedUntil(String time) {
+    return 'Snoozed until $time';
+  }
+
+  @override
+  String get captureSharedInNotes => 'Shared text and links saved in notes';
 }

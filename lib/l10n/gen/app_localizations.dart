@@ -2163,6 +2163,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Keep {city}'**
   String actionKeepCity(String city);
+
+  /// copy.md drawer — calendars filtered out
+  ///
+  /// In en, this message translates to:
+  /// **'{count} hidden'**
+  String drawerCalendarsHidden(int count);
+
+  /// copy.md §6 detail status card
+  ///
+  /// In en, this message translates to:
+  /// **'Snoozed until {time}'**
+  String stateSnoozedUntil(String time);
+
+  /// copy.md §4 — under the input when shared text went to notes (CAP-12)
+  ///
+  /// In en, this message translates to:
+  /// **'Shared text and links saved in notes'**
+  String get captureSharedInNotes;
 }
 
 class _AppLocalizationsDelegate

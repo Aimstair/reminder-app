@@ -64,6 +64,10 @@ class DetailPage extends ConsumerWidget {
     final overdue = d.times.isOverdue(r, d.state, now);
     final state = d.times.shouldPass(r, d.state, now) ? OccurrenceState.passed : d.state;
     final resolved = state.isResolved;
+    // A pending snooze says when it rings again, even if the item is already past due (NTF-4).
+    final snoozedUntil = state == OccurrenceState.snoozed && (d.occurrence?.snoozedUntil?.isAfter(now) ?? false)
+        ? d.occurrence!.snoozedUntil!
+        : null;
     final actions = OccurrenceActions(context, ref);
     final zone = r.timing.timeZone;
     final otherZone = !allDay && zone != null && zone != device;
@@ -114,8 +118,10 @@ class DetailPage extends ConsumerWidget {
                     Expanded(
                       child: _StatCard(
                         label: l10n.detailStatus,
-                        value: f.state(state, overdue: overdue),
-                        color: overdue ? c.danger : (resolved ? c.success : null),
+                        value: snoozedUntil != null
+                            ? l10n.stateSnoozedUntil(f.time(instantToWall(snoozedUntil, device)))
+                            : f.state(state, overdue: overdue),
+                        color: snoozedUntil != null ? c.warning : (overdue ? c.danger : (resolved ? c.success : null)),
                       ),
                     ),
                   ],

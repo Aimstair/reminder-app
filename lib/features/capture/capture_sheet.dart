@@ -7,6 +7,7 @@ library;
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:reminder_core/reminder_core.dart';
 
@@ -69,6 +70,14 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
   void initState() {
     super.initState();
     _input.addListener(_reparse);
+    // A hardware Enter key saves (like the keyboard's Done) instead of adding a line break;
+    // Shift+Enter still breaks the line.
+    _focus.onKeyEvent = (_, e) {
+      final enter = e.logicalKey == LogicalKeyboardKey.enter || e.logicalKey == LogicalKeyboardKey.numpadEnter;
+      if (!enter || HardwareKeyboard.instance.isShiftPressed) return KeyEventResult.ignored;
+      if (e is KeyDownEvent) _save();
+      return KeyEventResult.handled;
+    };
     if (widget.at case final at?) {
       _lockDate = dateOnly(at);
       _lockTime = ClockTime(at.hour, at.minute);
@@ -77,16 +86,11 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
       _lockDate = dateOnly(d);
     }
     if (widget.text case final shared?) {
-      // CAP-12: long shared text → first sentence parsed, the full text and links go to notes.
-      final t = shared.trim();
-      if (t.length > 120) {
-        final m = RegExp(r'^(.{1,120}?[.!?])(\s|$)').firstMatch(t);
-        _input.text = (m?.group(1) ?? t.substring(0, 120)).trim();
-        _notes = t;
-      } else {
-        _input.text = t;
-      }
+      final split = splitSharedText(shared); // CAP-12
+      _input.text = split.input;
+      _notes = split.notes;
     }
+
   }
 
   @override
@@ -200,6 +204,8 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
         ..showSnackBar(
           SnackBar(
             content: Text(l10n.snackSaved(when)),
+            duration: const Duration(seconds: 5),
+            persist: false,
             action: SnackBarAction(label: l10n.actionUndo, onPressed: () => services.service.delete(r.id)),
           ),
         );
@@ -330,7 +336,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                         child: TextField(
                           controller: _input,
                           focusNode: _focus,
-                          autofocus: widget.text == null,
+                          autofocus: widget.text == null || _input.text.isEmpty,
                           minLines: 1,
                           maxLines: 4,
                           textCapitalization: TextCapitalization.sentences,
@@ -357,6 +363,17 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                 ],
               ),
             ),
+            if (_notes != null && widget.text != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(Space.l, Space.s, Space.l, 0),
+                child: Row(
+                  children: [
+                    Icon(Icons.link_rounded, size: 16, color: c.textSecondary),
+                    const SizedBox(width: Space.xs),
+                    Text(l10n.captureSharedInNotes, style: text.bodySmall),
+                  ],
+                ),
+              ),
             if (_listening)
               Padding(
                 padding: const EdgeInsets.only(top: Space.s),

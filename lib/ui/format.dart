@@ -33,7 +33,8 @@ class Fmt {
 
   /// "Tomorrow · 6:00 PM", "Mon, Oct 12 · All day" (relative first, absolute second).
   String when(DateTime wall, {required bool allDay, DateTime? end, DateTime? today}) {
-    final t = dateOnly(today ?? DateTime.now().toUtc());
+    // The phone's local date, not the UTC one (they differ for part of the day outside UTC).
+    final t = dateOnly(today ?? DateTime.now());
     final d = dateOnly(wall);
     final day = d == t
         ? l10n.groupToday

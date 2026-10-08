@@ -254,18 +254,35 @@ class _Drawer extends ConsumerWidget {
                 title: Text(f.context(x)),
                 onChanged: (_) => toggle(PrefKeys.hiddenContexts, filters.hiddenContexts, x.name),
               ),
-            if (selectedCals.isNotEmpty) ...[
-              header(l10n.drawerCalendars),
-              for (final cal in selectedCals)
-                CheckboxListTile(
-                  dense: true,
-                  value: !filters.hiddenCalendars.contains(cal.id),
-                  activeColor: Color(cal.color | 0xFF000000),
-                  secondary: Icon(Icons.circle, size: 14, color: Color(cal.color | 0xFF000000)),
-                  title: Text(cal.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-                  onChanged: (_) => toggle(PrefKeys.hiddenCalendars, filters.hiddenCalendars, cal.id),
+            // Collapsed by default: people with several Google accounts can have 30+ calendars (VW-2).
+            if (selectedCals.isNotEmpty)
+              Theme(
+                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                child: ExpansionTile(
+                  tilePadding: const EdgeInsets.fromLTRB(Space.xl, 0, Space.l, 0),
+                  title: Text(l10n.drawerCalendars.toUpperCase(), style: text.labelSmall?.copyWith(letterSpacing: 0.5)),
+                  subtitle: filters.hiddenCalendars.isEmpty
+                      ? null
+                      : Text(l10n.drawerCalendarsHidden(
+                          selectedCals.where((cal) => filters.hiddenCalendars.contains(cal.id)).length,
+                        )),
+                  children: [
+                    for (final cal in selectedCals)
+                      CheckboxListTile(
+                        dense: true,
+                        value: !filters.hiddenCalendars.contains(cal.id),
+                        activeColor: Color(cal.color | 0xFF000000),
+                        secondary: Icon(Icons.circle, size: 14, color: Color(cal.color | 0xFF000000)),
+                        title: Text(cal.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        // Same-named calendars (e.g. holidays) come from different accounts.
+                        subtitle: cal.accountName.isEmpty || cal.accountName == cal.name
+                            ? null
+                            : Text(cal.accountName, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        onChanged: (_) => toggle(PrefKeys.hiddenCalendars, filters.hiddenCalendars, cal.id),
+                      ),
+                  ],
                 ),
-            ],
+              ),
             const Divider(),
             ListTile(
               leading: const Icon(Icons.task_alt_rounded),

@@ -396,7 +396,8 @@ void showUndoSnack(BuildContext context, String message, {String? undoLabel, Voi
     ..showSnackBar(
       SnackBar(
         content: Text(message),
-        duration: const Duration(seconds: 5),
+        duration: const Duration(seconds: 5), // OCC-5
+        persist: false, // Flutter keeps snackbars with an action until dismissed otherwise
         action: onUndo == null || undoLabel == null ? null : SnackBarAction(label: undoLabel, onPressed: onUndo),
       ),
     );
