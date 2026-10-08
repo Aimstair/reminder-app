@@ -16,6 +16,7 @@ import '../../native/alarm_gateway.dart';
 import '../../ui/format.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
+import '../celebrate/all_clear_page.dart';
 import '../celebrate/celebration.dart';
 import '../../ui/icons.dart';
 
@@ -60,7 +61,7 @@ class OccurrenceActions {
         await s.prefs.set(PrefKeys.firstDoneShown, true);
         if (host.mounted) await showCelebration(host, Celebration.firstDone);
       } else if (wasLastToday) {
-        await showCelebration(host, Celebration.allClear);
+        await showAllClear(host); // DS12: full screen
       }
     }
     messenger

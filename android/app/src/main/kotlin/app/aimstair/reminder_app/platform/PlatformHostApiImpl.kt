@@ -215,6 +215,14 @@ class PlatformHostApiImpl(private val activity: Activity) : PlatformHostApi {
     override fun deviceInfo(): String =
         "${Build.MANUFACTURER} ${Build.MODEL} · Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})"
 
+    override fun shareText(text: String) {
+        val send = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, text)
+        }
+        activity.startActivity(Intent.createChooser(send, null))
+    }
+
     companion object {
         private const val REQ_CALENDAR = 2001
         private const val REQ_CREATE_DOC = 3001

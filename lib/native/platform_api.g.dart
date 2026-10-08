@@ -525,6 +525,25 @@ class PlatformHostApi {
     ;
     return pigeonVar_replyValue! as String;
   }
+
+  /// Opens the system share sheet with [text] (All clear "share", mockup 10). Only what the user sees.
+  Future<void> shareText(String text) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.reminder_app.PlatformHostApi.shareText$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[text]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
 }
 
 abstract class PlatformFlutterApi {

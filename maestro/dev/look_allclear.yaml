@@ -1,0 +1,19 @@
+# Dev helper: All clear screen (mockup 10). Needs dev/seed_home.yaml (+ dry cleaning) data.
+appId: app.aimstair.reminder_app
+---
+- launchApp
+- tapOn: "(Schedule|Day|Month)"
+- tapOn: "Schedule"
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          from: ".*(Pay electricity bill|Return shoes|Pick up dry cleaning|Call mom).*"
+          direction: RIGHT
+      - tapOn:
+          text: "Continue"
+          optional: true
+- extendedWaitUntil:
+    visible: "All clear!.*"
+    timeout: 8000
+- takeScreenshot: allclear_look

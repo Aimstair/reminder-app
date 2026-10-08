@@ -1457,4 +1457,70 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get monthDayEmpty => 'Nothing on this day';
+
+  @override
+  String allClearSubDay(String weekday) {
+    return 'You finished everything for $weekday.';
+  }
+
+  @override
+  String get statCompleted => 'completed';
+
+  @override
+  String get statOnTime => 'on time';
+
+  @override
+  String get statMissedAlerts => 'missed alerts';
+
+  @override
+  String get todayInReview => 'Today in review';
+
+  @override
+  String lateBy(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days late',
+      one: '1 day late',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String tomorrowCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count reminders',
+      one: '1 reminder',
+    );
+    return 'Tomorrow · $_temp0';
+  }
+
+  @override
+  String occasionInDays(String title, String days) {
+    return '$title · in $days';
+  }
+
+  @override
+  String nextNudgeOn(String when) {
+    return 'Next nudge $when';
+  }
+
+  @override
+  String get notPreparedYet => 'not prepared yet';
+
+  @override
+  String get actionPlanTomorrow => 'Plan tomorrow';
+
+  @override
+  String allClearShare(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count things',
+      one: '1 thing',
+    );
+    return 'All clear — I finished $_temp0 today.';
+  }
 }

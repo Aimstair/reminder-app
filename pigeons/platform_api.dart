@@ -93,6 +93,9 @@ abstract class PlatformHostApi {
 
   /// S-58 feedback email footer: "samsung SM-A736B · Android 15 (API 35)". Device info only.
   String deviceInfo();
+
+  /// Opens the system share sheet with [text] (All clear "share", mockup 10). Only what the user sees.
+  void shareText(String text);
 }
 
 @FlutterApi()

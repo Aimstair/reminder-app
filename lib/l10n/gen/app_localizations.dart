@@ -2457,6 +2457,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Nothing on this day'**
   String get monthDayEmpty;
+
+  /// copy.md §7 All clear screen
+  ///
+  /// In en, this message translates to:
+  /// **'You finished everything for {weekday}.'**
+  String allClearSubDay(String weekday);
+
+  /// copy.md §7 All clear screen
+  ///
+  /// In en, this message translates to:
+  /// **'completed'**
+  String get statCompleted;
+
+  /// copy.md §7 All clear screen
+  ///
+  /// In en, this message translates to:
+  /// **'on time'**
+  String get statOnTime;
+
+  /// copy.md §7 All clear screen
+  ///
+  /// In en, this message translates to:
+  /// **'missed alerts'**
+  String get statMissedAlerts;
+
+  /// copy.md §7 All clear screen
+  ///
+  /// In en, this message translates to:
+  /// **'Today in review'**
+  String get todayInReview;
+
+  /// copy.md §7 All clear screen
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day late} other{{count} days late}}'**
+  String lateBy(int count);
+
+  /// copy.md §7 All clear screen
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow · {count, plural, =1{1 reminder} other{{count} reminders}}'**
+  String tomorrowCount(int count);
+
+  /// copy.md §7 All clear screen
+  ///
+  /// In en, this message translates to:
+  /// **'{title} · in {days}'**
+  String occasionInDays(String title, String days);
+
+  /// copy.md §7 All clear screen
+  ///
+  /// In en, this message translates to:
+  /// **'Next nudge {when}'**
+  String nextNudgeOn(String when);
+
+  /// copy.md §7 All clear screen
+  ///
+  /// In en, this message translates to:
+  /// **'not prepared yet'**
+  String get notPreparedYet;
+
+  /// copy.md §7 All clear screen
+  ///
+  /// In en, this message translates to:
+  /// **'Plan tomorrow'**
+  String get actionPlanTomorrow;
+
+  /// copy.md §7 All clear screen
+  ///
+  /// In en, this message translates to:
+  /// **'All clear — I finished {count, plural, =1{1 thing} other{{count} things}} today.'**
+  String allClearShare(int count);
 }
 
 class _AppLocalizationsDelegate

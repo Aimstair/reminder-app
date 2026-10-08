@@ -385,6 +385,8 @@ interface PlatformHostApi {
   fun deviceBrand(): String
   /** S-58 feedback email footer: "samsung SM-A736B · Android 15 (API 35)". Device info only. */
   fun deviceInfo(): String
+  /** Opens the system share sheet with [text] (All clear "share", mockup 10). Only what the user sees. */
+  fun shareText(text: String)
 
   companion object {
     /** The codec used by PlatformHostApi. */
@@ -567,6 +569,24 @@ interface PlatformHostApi {
           channel.setMessageHandler { _, reply ->
             val wrapped: List<Any?> = try {
               listOf(api.deviceInfo())
+            } catch (exception: Throwable) {
+              PlatformApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.reminder_app.PlatformHostApi.shareText$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val textArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              api.shareText(textArg)
+              listOf(null)
             } catch (exception: Throwable) {
               PlatformApiPigeonUtils.wrapError(exception)
             }

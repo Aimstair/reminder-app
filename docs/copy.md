@@ -229,6 +229,8 @@ Calendars section is collapsed by default; when some are filtered out it shows "
 | Occasion done | Hope it's a great one! |
 | First reminder ever completed | **Your first one!** · That's how it's done. |
 
+**All clear screen (mockup 10, DS12):** back link *Today* · **All clear!** · *You finished everything for {weekday}.* · stat cards *completed* · *on time* · *missed alerts* · card **Today in review** + *{n} done*, late rows *{n} day(s) late* · card **Coming up**: *Tomorrow · {n} reminders* + first names/times, *{occasion} · in {n} days* + *Next nudge {date} · not prepared yet* + chip **Prepared** · button **Plan tomorrow** · share text *All clear — I finished {n} things today.*
+
 ---
 
 ## 8. Settings (S-50 – S-58)
