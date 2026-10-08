@@ -164,7 +164,7 @@ class DetailPage extends ConsumerWidget {
                   icon: AppIcons.alerts,
                   color: c.warning,
                   label: l10n.rowAlerts,
-                  value: f.alerts(d.occurrence?.overrideAlertPlan ?? r.alertPlan),
+                  value: f.alerts(d.occurrence?.overrideAlertPlan ?? r.alertPlan, allDay: allDay),
                   onTap: r.isCalendarEvent ? () => remindMeFlow(context, ref, r) : null,
                 ),
                 if (r.nagInterval != null)

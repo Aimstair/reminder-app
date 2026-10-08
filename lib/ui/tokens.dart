@@ -23,11 +23,15 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.meeting,
     required this.event,
     required this.occasion,
+    required this.purple,
   });
 
   final Color bgGrouped, surface, surfaceElevated, textPrimary, textSecondary, separator;
   final Color accent, danger, success, warning;
   final Color task, meeting, event, occasion;
+
+  /// Extra accent for form icons (alerts row in mockup 03).
+  final Color purple;
 
   static const light = AppColors(
     bgGrouped: Color(0xFFF2F2F7),
@@ -44,6 +48,7 @@ class AppColors extends ThemeExtension<AppColors> {
     meeting: Color(0xFF5856D6),
     event: Color(0xFFFF9500),
     occasion: Color(0xFFFF2D55),
+    purple: Color(0xFFAF52DE),
   );
 
   static const dark = AppColors(
@@ -61,6 +66,7 @@ class AppColors extends ThemeExtension<AppColors> {
     meeting: Color(0xFF5E5CE6),
     event: Color(0xFFFF9F0A),
     occasion: Color(0xFFFF375F),
+    purple: Color(0xFFBF5AF2),
   );
 
   static AppColors of(BuildContext context) => Theme.of(context).extension<AppColors>()!;
@@ -94,4 +100,11 @@ abstract final class Space {
 
 abstract final class Radii {
   static const chip = 10.0, row = 12.0, card = 16.0, sheet = 24.0;
+}
+
+/// Motion durations (design-direction.md, motion tokens).
+abstract final class Motion {
+  static const micro = Duration(milliseconds: 150); // chips, checkbox, toggles
+  static const standard = Duration(milliseconds: 280); // sheets, row move, view switch
+  static const emphasized = Duration(milliseconds: 450); // saved item flying in, view transitions
 }

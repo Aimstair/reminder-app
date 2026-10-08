@@ -21,6 +21,7 @@ export 'src/planner/alarm_planner.dart';
 export 'src/recurrence/recurrence.dart';
 export 'src/time/calendar.dart';
 export 'src/time/zones.dart';
+export 'src/views/glyph.dart';
 export 'src/views/range.dart';
 export 'src/views/schedule.dart';
 export 'src/views/search.dart';

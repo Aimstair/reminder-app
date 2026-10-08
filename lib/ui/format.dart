@@ -64,6 +64,8 @@ class Fmt {
         every = l10n.everyWeeks(n);
       case 'MONTHLY' when parts['BYSETPOS'] == '-1':
         every = l10n.repeatLastBusinessDay;
+      case 'MONTHLY' when n == 1 && int.tryParse(parts['BYMONTHDAY'] ?? '') != null:
+        every = l10n.monthlyOnDay(ordinal(int.parse(parts['BYMONTHDAY']!)));
       case 'MONTHLY':
         every = l10n.everyMonths(n);
       case 'YEARLY':
@@ -81,8 +83,9 @@ class Fmt {
   }
 
   /// One stage: "At time", "10 min before", "1 week before".
-  String offset(AlertOffset o) {
-    if (o.amount == 0) return l10n.alertAtTime;
+  /// [allDay]: a zero offset on a date-only item reads "on the day" (copy.md §4).
+  String offset(AlertOffset o, {bool allDay = false}) {
+    if (o.amount == 0) return allDay ? l10n.alertOnTheDay : l10n.alertAtTime;
     final n = o.amount.abs();
     final rel = switch (o.unit) {
       OffsetUnit.minutes => l10n.relMinutes(n),
@@ -94,7 +97,23 @@ class Fmt {
     return o.amount < 0 ? l10n.alertBefore(rel) : rel;
   }
 
-  String alerts(List<AlertStage> plan) => plan.isEmpty ? l10n.alertNone : plan.map((s) => offset(s.offset)).join(', ');
+  String alerts(List<AlertStage> plan, {bool allDay = false}) {
+    if (plan.isEmpty) return l10n.alertNone;
+    final parts = [for (final s in plan) offset(s.offset, allDay: allDay)];
+    // "2 days before, on the day": lowercase after the first item, capitalized when alone.
+    return [
+      for (var i = 0; i < parts.length; i++)
+        i == 0 ? parts[i][0].toUpperCase() + parts[i].substring(1) : parts[i],
+    ].join(', ');
+  }
+
+  /// 1st, 2nd, 3rd… in English; a plain number elsewhere until translations bring their own.
+  String ordinal(int n) {
+    if (!locale.startsWith('en')) return '$n';
+    final tens = n % 100;
+    final suffix = tens >= 11 && tens <= 13 ? 'th' : switch (n % 10) { 1 => 'st', 2 => 'nd', 3 => 'rd', _ => 'th' };
+    return '$n$suffix';
+  }
 
   String duration(Duration d) =>
       d.inMinutes % 60 == 0 ? l10n.relHours(d.inHours) : l10n.relMinutes(d.inMinutes);

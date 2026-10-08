@@ -30,6 +30,11 @@ ThemeData buildTheme(Brightness brightness) {
     scaffoldBackgroundColor: c.bgGrouped,
     textTheme: text,
     extensions: [c],
+    switchTheme: SwitchThemeData(
+      trackColor: WidgetStateProperty.resolveWith((st) => st.contains(WidgetState.selected) ? c.success : null),
+      thumbColor: WidgetStateProperty.resolveWith((st) => st.contains(WidgetState.selected) ? Colors.white : null),
+      trackOutlineColor: WidgetStateProperty.resolveWith((st) => st.contains(WidgetState.selected) ? Colors.transparent : null),
+    ),
     dividerTheme: DividerThemeData(color: c.separator, thickness: 0.5, space: 0.5),
     appBarTheme: AppBarTheme(
       backgroundColor: c.bgGrouped,

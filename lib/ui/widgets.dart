@@ -5,6 +5,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:reminder_core/reminder_core.dart';
 
+import '../l10n/gen/app_localizations.dart';
 import 'bell.dart';
 import 'tokens.dart';
 import 'icons.dart';
@@ -15,6 +16,10 @@ class IconTile extends StatelessWidget {
 
   factory IconTile.kind(BuildContext context, Kind kind, {double size = 40}) =>
       IconTile(icon: kindIcon(kind), color: AppColors.of(context).kind(kind), size: size);
+
+  /// The item's own icon (bill, bag, phone…) in its type color — rows and cards (DS11).
+  factory IconTile.item(BuildContext context, Reminder r, {double size = 40}) =>
+      IconTile(icon: glyphIcon(glyphFor(r)), color: AppColors.of(context).kind(r.kind), size: size);
 
   final IconData icon;
   final Color color;
@@ -114,8 +119,9 @@ class GroupCaption extends StatelessWidget {
   );
 }
 
-/// The reminder row (screens.md §4): icon tile, title, when, repeat/work/bell/calendar icons,
-/// overdue and done styles.
+/// The reminder row (screens.md §4, mockup 02-schedule-home): round checkbox in the type color,
+/// title, a subline (clock + when, repeat, nag and context chips), and the item's icon tile.
+/// Overdue = red subline; done = filled checkbox, faded, struck through.
 class ReminderRow extends StatelessWidget {
   const ReminderRow({
     super.key,
@@ -123,7 +129,9 @@ class ReminderRow extends StatelessWidget {
     required this.when,
     this.overdue = false,
     this.done = false,
+    this.nagLabel,
     this.onTap,
+    this.onCheck,
     this.trailing,
   });
 
@@ -131,24 +139,33 @@ class ReminderRow extends StatelessWidget {
   final String when;
   final bool overdue;
   final bool done;
+
+  /// "Every 2h" when the item nags (ALR-9); null hides the chip.
+  final String? nagLabel;
   final VoidCallback? onTap;
+
+  /// Tapping the checkbox; null = not completable here (meetings, events, calendar items).
+  final VoidCallback? onCheck;
   final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final text = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     final r = reminder;
-    final small = c.textSecondary;
+    final type = c.kind(r.kind);
+    final sub = overdue ? c.danger : c.textSecondary;
+    final subStyle = text.bodyMedium?.copyWith(color: sub);
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: Space.m, vertical: Space.m),
+        padding: const EdgeInsets.fromLTRB(Space.m, Space.m, Space.m, Space.m),
         child: Opacity(
           opacity: done ? 0.55 : 1,
           child: Row(
             children: [
-              IconTile.kind(context, r.kind),
+              CheckCircle(color: type, checked: done, onTap: onCheck),
               const SizedBox(width: Space.m),
               Expanded(
                 child: Column(
@@ -156,43 +173,31 @@ class ReminderRow extends StatelessWidget {
                   children: [
                     Text(
                       r.title,
-                      style: text.bodyLarge?.copyWith(decoration: done ? TextDecoration.lineThrough : null),
+                      style: text.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w500,
+                        decoration: done ? TextDecoration.lineThrough : null,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
-                    Row(
+                    const SizedBox(height: 3),
+                    Wrap(
+                      spacing: Space.xs,
+                      runSpacing: 2,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        Flexible(
-                          child: Text(
-                            when,
-                            style: text.bodyMedium?.copyWith(color: overdue ? c.danger : null),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (r.rrule != null) ...[
-                          const SizedBox(width: Space.xs),
-                          Icon(AppIcons.repeat, size: 14, color: small),
-                        ],
-                        if (r.alertPlan.isNotEmpty && !r.isCalendarEvent) ...[
-                          const SizedBox(width: Space.xs),
-                          Icon(AppIcons.alert, size: 14, color: small),
-                        ],
-                        if (r.isCalendarEvent) ...[
-                          const SizedBox(width: Space.xs),
-                          Icon(AppIcons.calendar, size: 13, color: small),
-                          if (r.alertPlan.isNotEmpty) Icon(AppIcons.alert, size: 14, color: small),
-                        ],
-                        if (r.context == ReminderContext.work) ...[
-                          const SizedBox(width: Space.xs),
-                          Icon(AppIcons.work, size: 14, color: small),
-                        ],
+                        Icon(r.isCalendarEvent ? AppIcons.calendar : AppIcons.clockSmall, size: 15, color: sub),
+                        Text(when, style: subStyle),
+                        if (r.rrule != null) Icon(AppIcons.repeat, size: 15, color: sub),
+                        if (nagLabel case final nag?) MiniChip(nag, color: overdue ? c.danger : c.textSecondary),
+                        if (r.context == ReminderContext.work) MiniChip(l10n.ctxWork, color: c.textSecondary),
                       ],
                     ),
                   ],
                 ),
               ),
-              ?trailing,
+              const SizedBox(width: Space.s),
+              trailing ?? IconTile.item(context, r),
             ],
           ),
         ),
@@ -201,7 +206,117 @@ class ReminderRow extends StatelessWidget {
   }
 }
 
+/// Round checkbox in a type color (mockup rows). Filled with a tick when [checked].
+class CheckCircle extends StatelessWidget {
+  const CheckCircle({super.key, required this.color, this.checked = false, this.onTap});
+  final Color color;
+  final bool checked;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final circle = AnimatedContainer(
+      duration: Motion.micro,
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: checked ? color : Colors.transparent,
+        border: Border.all(color: color, width: 2),
+      ),
+      child: checked ? const Icon(AppIcons.check, size: 16, color: Colors.white) : null,
+    );
+    if (onTap == null) return circle;
+    return Semantics(
+      button: true,
+      label: l10n.actionDone,
+      child: InkResponse(onTap: onTap, radius: 24, child: Padding(padding: const EdgeInsets.all(2), child: circle)),
+    );
+  }
+}
+
+/// Small rounded chip inside a row subline ("Every 2h", "Work").
+class MiniChip extends StatelessWidget {
+  const MiniChip(this.label, {super.key, required this.color});
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+    decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(6)),
+    child: Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w600)),
+  );
+}
+
 enum BannerTone { info, warning }
+
+/// iOS-style segmented control (mockup 03): gray track, white thumb on the selected item,
+/// optional colored dot per item.
+class SegmentedPills<T> extends StatelessWidget {
+  const SegmentedPills({super.key, required this.items, required this.selected, required this.onChanged});
+  final List<({T value, String label, Color? dot})> items;
+  final T selected;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final text = Theme.of(context).textTheme;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: c.separator.withValues(alpha: dark ? 0.35 : 0.18),
+        borderRadius: BorderRadius.circular(Radii.row),
+      ),
+      child: Row(
+        children: [
+          for (final i in items)
+            Expanded(
+              child: Semantics(
+                button: true,
+                selected: i.value == selected,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => onChanged(i.value),
+                  child: AnimatedContainer(
+                    duration: Motion.micro,
+                    padding: const EdgeInsets.symmetric(vertical: Space.s),
+                    decoration: BoxDecoration(
+                      color: i.value == selected ? (dark ? c.surfaceElevated : c.surface) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(Radii.row - 3),
+                      boxShadow: i.value == selected
+                          ? [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 4, offset: const Offset(0, 1))]
+                          : null,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (i.dot != null) ...[
+                          Container(width: 7, height: 7, decoration: BoxDecoration(color: i.dot, shape: BoxShape.circle)),
+                          const SizedBox(width: 6),
+                        ],
+                        Flexible(
+                          child: Text(
+                            i.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: text.titleSmall?.copyWith(fontWeight: i.value == selected ? FontWeight.w600 : FontWeight.w500),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
 
 /// Persistent banners on the home shell (G2–G4, G10).
 class InfoBanner extends StatelessWidget {

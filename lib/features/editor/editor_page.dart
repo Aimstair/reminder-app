@@ -223,7 +223,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                   icon: AppIcons.alerts,
                   color: c.warning,
                   label: l10n.rowAlerts,
-                  value: f.alerts(_alerts),
+                  value: f.alerts(_alerts, allDay: _allDay),
                   onTap: () async {
                     final v = await pickAlerts(context, _alerts);
                     if (v != null) setState(() => _alerts = v);

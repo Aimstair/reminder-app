@@ -29,7 +29,8 @@ Future<void> showCaptureSheet(BuildContext context, {DateTime? at, DateTime? day
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    showDragHandle: false,
+    showDragHandle: true,
+    backgroundColor: AppColors.of(context).bgGrouped, // white cards on the grouped background (mockup 03)
     builder: (_) => CaptureSheet(at: at, day: day, text: text, onSavedWithAlerts: () => withAlerts = true),
   );
   if (withAlerts && context.mounted) await runPermissionFlowOnce(context);
@@ -306,31 +307,20 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
             SheetBar(
               title: l10n.newReminder,
               left: TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.actionCancel)),
-              right: TextButton(
+              right: FilledButton(
+                style: FilledButton.styleFrom(shape: const StadiumBorder(), visualDensity: VisualDensity.compact),
                 onPressed: savable ? _save : null,
                 child: Text(l10n.actionSave, style: const TextStyle(fontWeight: FontWeight.w600)),
               ),
             ),
             const SizedBox(height: Space.s),
-            // Input card: text + voice + removable template tag
+            // Input card (mockup 03): text + round mic; template tag and "Understood" hint under it.
             Material(
-              color: c.bgGrouped,
-              borderRadius: BorderRadius.circular(Radii.row),
+              color: c.surface,
+              borderRadius: BorderRadius.circular(Radii.card),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (_template case final t?)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(Space.m, Space.m, Space.m, 0),
-                      child: InputChip(
-                        avatar: Icon(templateIcon(t), size: 18),
-                        label: Text(templateLabel(l10n, t)),
-                        onDeleted: () {
-                          setState(() => _template = null);
-                          _reparse();
-                        },
-                      ),
-                    ),
                   Row(
                     children: [
                       Expanded(
@@ -351,16 +341,45 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                           ),
                         ),
                       ),
-                      IconButton(
-                        tooltip: l10n.actionSpeak,
-                        onPressed: _voice,
-                        icon: Icon(
-                          _listening ? AppIcons.stop : AppIcons.mic,
-                          color: _listening ? c.danger : c.accent,
+                      Padding(
+                        padding: const EdgeInsets.only(right: Space.m),
+                        child: IconButton.filledTonal(
+                          tooltip: l10n.actionSpeak,
+                          style: IconButton.styleFrom(
+                            backgroundColor: (_listening ? c.danger : c.accent).withValues(alpha: 0.12),
+                          ),
+                          onPressed: _voice,
+                          icon: Icon(_listening ? AppIcons.stop : AppIcons.mic, color: _listening ? c.danger : c.accent),
                         ),
                       ),
                     ],
                   ),
+                  if (_template != null || p != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(Space.l, 0, Space.l, Space.m),
+                      child: Wrap(
+                        spacing: Space.s,
+                        runSpacing: Space.xs,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          if (_template case final t?)
+                            InputChip(
+                              avatar: Icon(templateIcon(t), size: 16, color: c.event),
+                              label: Text(l10n.templateTag(templateLabel(l10n, t))),
+                              labelStyle: text.labelLarge?.copyWith(color: Color.lerp(c.event, Colors.black, 0.35)),
+                              backgroundColor: c.event.withValues(alpha: 0.14),
+                              side: BorderSide.none,
+                              shape: const StadiumBorder(),
+                              deleteIconColor: Color.lerp(c.event, Colors.black, 0.35),
+                              onDeleted: () {
+                                setState(() => _template = null);
+                                _reparse();
+                              },
+                            ),
+                          if (p != null) Text(l10n.captureUnderstood, style: text.bodySmall),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -402,11 +421,10 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                   padding: const EdgeInsets.fromLTRB(Space.l, Space.s, Space.l, 0),
                   child: Text(hint, style: text.bodySmall?.copyWith(color: c.warning)),
                 ),
-              const SizedBox(height: Space.l),
+              GroupCaption(l10n.captureDetails),
               InsetGroup(
                 margin: EdgeInsets.zero,
                 indent: 56,
-                color: c.bgGrouped,
                 children: [
                   FormRow(
                     icon: AppIcons.calendar,
@@ -441,7 +459,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                     ),
                   FormRow(
                     icon: AppIcons.repeat,
-                    color: c.meeting,
+                    color: c.textSecondary,
                     label: l10n.rowRepeat,
                     value: f.repeat(p.rrule, p.repeatMode ?? RecurrenceMode.fixed),
                     onTap: () async {
@@ -457,10 +475,10 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                     },
                   ),
                   FormRow(
-                    icon: AppIcons.alerts,
-                    color: c.warning,
+                    icon: AppIcons.alert,
+                    color: c.purple,
                     label: l10n.rowAlerts,
-                    value: f.alerts(_plan(p)),
+                    value: f.alerts(_plan(p), allDay: p.timing?.type != TimingType.datetime),
                     onTap: () async {
                       final v = await pickAlerts(context, _plan(p));
                       if (v != null) setState(() => _lockAlerts = v);
@@ -468,9 +486,10 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                   ),
                   if (p.kind == Kind.task || p.kind == Kind.occasion)
                     SwitchRow(
-                      icon: AppIcons.nag,
-                      color: c.success,
+                      icon: AppIcons.time,
+                      color: c.warning,
                       label: l10n.rowNag,
+                      subtitle: _nagSubtitle(l10n, f),
                       value: p.nag != null,
                       onChanged: (v) => setState(() => _lockNag = v),
                     ),
@@ -479,21 +498,25 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
               if (_firstAlert(p, f) case final first?)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(Space.l, Space.s, Space.l, 0),
-                  child: Text(first, style: text.bodySmall),
+                  child: Row(
+                    children: [
+                      Icon(AppIcons.alert, size: 16, color: c.textSecondary),
+                      const SizedBox(width: Space.s),
+                      Expanded(child: Text(first, style: text.bodySmall)),
+                    ],
+                  ),
                 ),
-              const SizedBox(height: Space.l),
-              SegmentedButton<Kind>(
-                showSelectedIcon: false,
-                segments: [for (final k in Kind.values) ButtonSegment(value: k, label: Text(f.kind(k)))],
-                selected: {p.kind},
-                onSelectionChanged: (s) => setState(() => _lockKind = s.first),
+              GroupCaption(l10n.fieldType),
+              SegmentedPills<Kind>(
+                items: [for (final k in Kind.values) (value: k, label: f.kind(k), dot: c.kind(k))],
+                selected: p.kind,
+                onChanged: (k) => setState(() => _lockKind = k),
               ),
               const SizedBox(height: Space.m),
-              SegmentedButton<ReminderContext>(
-                showSelectedIcon: false,
-                segments: [for (final x in ReminderContext.values) ButtonSegment(value: x, label: Text(f.context(x)))],
-                selected: {p.context},
-                onSelectionChanged: (s) => setState(() => _lockContext = s.first),
+              SegmentedPills<ReminderContext>(
+                items: [for (final x in ReminderContext.values) (value: x, label: f.context(x), dot: null)],
+                selected: p.context,
+                onChanged: (x) => setState(() => _lockContext = x),
               ),
             ],
           ],
@@ -537,7 +560,14 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
         .toList();
     if (alarms.isEmpty) return null;
     final first = instantToWall(alarms.first.fireAt, prefs.deviceTimeZone);
-    return '${f.l10n.rowAlerts}: ${f.when(first, allDay: false, today: dateOnly(instantToWall(now, prefs.deviceTimeZone)))}';
+    return f.l10n.captureFirstAlert(f.when(first, allDay: false, today: dateOnly(instantToWall(now, prefs.deviceTimeZone))));
+  }
+
+  /// "Every 2 hours, 8 AM – 10 PM" (mockup 03): the default nag interval and the nag hours (ALR-9, PRF-4).
+  String _nagSubtitle(AppLocalizations l10n, Fmt f) {
+    final p = ref.read(prefsProvider);
+    String t(ClockTime c) => f.time(DateTime.utc(2026, 1, 1, c.hour, c.minute));
+    return l10n.nagEveryBetween(l10n.nagEvery(f.duration(const Duration(hours: 2))), l10n.timeRange(t(p.nagStart), t(p.nagEnd)));
   }
 
   String? _hint(ParseResult p, AppLocalizations l10n, Fmt f) {

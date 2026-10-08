@@ -30,9 +30,9 @@ class HomeShell extends ConsumerStatefulWidget {
   ConsumerState<HomeShell> createState() => _HomeShellState();
 
   static IconData viewIcon(HomeView v) => switch (v) {
-    HomeView.schedule => AppIcons.scheduleView,
-    HomeView.day => AppIcons.dayView,
-    HomeView.month => AppIcons.monthView,
+    HomeView.schedule => AppIcons.listView,
+    HomeView.day => AppIcons.calendarView,
+    HomeView.month => AppIcons.monthGrid,
   };
 
   static String viewName(AppLocalizations l10n, HomeView v) => switch (v) {
@@ -56,66 +56,47 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final f = Fmt.of(context);
     final home = ref.watch(homeProvider);
     final today = ref.watch(todayProvider);
     final notifier = ref.read(homeProvider.notifier);
-    final title = switch (home.view) {
-      HomeView.schedule => f.month(today),
-      HomeView.day => home.date.year == today.year ? f.month(home.date) : f.monthYear(home.date),
-      HomeView.month => home.date.year == today.year ? f.month(home.date) : f.monthYear(home.date),
-    };
-    final showToday = home.view != HomeView.schedule &&
-        (home.view == HomeView.day ? home.date != today : (home.date.month != today.month || home.date.year != today.year));
+    final schedule = home.view == HomeView.schedule;
 
     return Scaffold(
       appBar: AppBar(
-        titleSpacing: 0,
-        title: InkWell(
-          borderRadius: BorderRadius.circular(Radii.row),
-          onTap: () async {
-            final d = await showMiniMonth(context, home.view == HomeView.schedule ? today : home.date); // S-18
-            if (d == null) return;
-            if (home.view == HomeView.schedule) {
-              notifier.openDay(d);
-            } else {
-              notifier.setDate(d);
-            }
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Space.s, vertical: Space.xs),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(title, style: Theme.of(context).textTheme.titleLarge),
-                const Icon(AppIcons.dropDown),
-              ],
-            ),
+        leading: Builder(
+          builder: (context) => IconButton(
+            tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+            icon: const Icon(AppIcons.menu),
+            onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
+        centerTitle: true,
+        title: _ViewPill(view: home.view, onSelected: notifier.setView),
         actions: [
-          IconButton(
-            tooltip: l10n.topSearch,
-            icon: const Icon(AppIcons.search),
-            onPressed: () => context.push('/search'),
-          ),
-          if (showToday)
-            TextButton(onPressed: notifier.today, child: Text(l10n.topToday))
-          else
-            const SizedBox(width: 0),
-          PopupMenuButton<HomeView>(
-            tooltip: l10n.viewSchedule,
-            icon: Icon(HomeShell.viewIcon(home.view)),
-            initialValue: home.view,
-            onSelected: notifier.setView,
-            itemBuilder: (_) => [
-              for (final v in HomeView.values)
-                PopupMenuItem(
-                  value: v,
-                  child: Row(children: [Icon(HomeShell.viewIcon(v), size: 20), const SizedBox(width: Space.m), Text(HomeShell.viewName(l10n, v))]),
+          if (schedule) ...[
+            IconButton(
+              tooltip: l10n.topSearch,
+              icon: const Icon(AppIcons.search),
+              onPressed: () => context.push('/search'),
+            ),
+            IconButton(
+              tooltip: l10n.drawerSettings,
+              icon: const Icon(AppIcons.settings),
+              onPressed: () => context.push('/settings'),
+            ),
+          ] else
+            Padding(
+              padding: const EdgeInsets.only(right: Space.l),
+              child: FilledButton.tonal(
+                style: FilledButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  backgroundColor: AppColors.of(context).accent.withValues(alpha: 0.12),
+                  foregroundColor: AppColors.of(context).accent,
                 ),
-            ],
-          ),
+                onPressed: notifier.today, // VW-9
+                child: Text(l10n.topToday),
+              ),
+            ),
         ],
       ),
       drawer: const _Drawer(),
@@ -138,6 +119,52 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         tooltip: l10n.newReminder,
         onPressed: () => showCaptureSheet(context, day: home.view == HomeView.schedule || home.date == today ? null : home.date),
         child: const Icon(AppIcons.add, size: 30),
+      ),
+    );
+  }
+}
+
+/// Centered view switcher (mockups 02/06/08): icon · view name · caret in a rounded pill.
+class _ViewPill extends StatelessWidget {
+  const _ViewPill({required this.view, required this.onSelected});
+  final HomeView view;
+  final ValueChanged<HomeView> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = AppColors.of(context);
+    return PopupMenuButton<HomeView>(
+      tooltip: '',
+      initialValue: view,
+      onSelected: onSelected,
+      position: PopupMenuPosition.under,
+      itemBuilder: (_) => [
+        for (final v in HomeView.values)
+          PopupMenuItem(
+            value: v,
+            child: Row(
+              children: [
+                Icon(HomeShell.viewIcon(v), size: 20),
+                const SizedBox(width: Space.m),
+                Text(HomeShell.viewName(l10n, v)),
+              ],
+            ),
+          ),
+      ],
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(Space.l, Space.s, Space.m, Space.s),
+        decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(Radii.sheet)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(HomeShell.viewIcon(view), size: 20, color: c.textPrimary),
+            const SizedBox(width: Space.s),
+            Text(HomeShell.viewName(l10n, view), style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(width: Space.xs),
+            Icon(AppIcons.dropDown, size: 16, color: c.textPrimary),
+          ],
+        ),
       ),
     );
   }

@@ -1247,4 +1247,77 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aboutLicenses => 'Open-source licences';
+
+  @override
+  String hoursShort(int count) {
+    return '${count}h';
+  }
+
+  @override
+  String minutesShort(int count) {
+    return '${count}m';
+  }
+
+  @override
+  String dueWhen(String when) {
+    return 'Due $when';
+  }
+
+  @override
+  String get dayYesterday => 'yesterday';
+
+  @override
+  String get sectionNagging => 'Nagging';
+
+  @override
+  String sectionDoneCount(int count) {
+    return '$count done';
+  }
+
+  @override
+  String get ringDone => 'done';
+
+  @override
+  String get upNext => 'Up next';
+
+  @override
+  String inTime(String time) {
+    return 'in $time';
+  }
+
+  @override
+  String get filterAll => 'All';
+
+  @override
+  String get filterOccasions => 'Occasions';
+
+  @override
+  String get filterEvents => 'Events';
+
+  @override
+  String get filterMeetings => 'Meetings';
+
+  @override
+  String get captureDetails => 'Details';
+
+  @override
+  String captureFirstAlert(String when) {
+    return 'First alert $when';
+  }
+
+  @override
+  String get captureUnderstood => 'Understood from your text';
+
+  @override
+  String templateTag(String name) {
+    return '$name template';
+  }
+
+  @override
+  String nagEveryBetween(String every, String range) {
+    return '$every, $range';
+  }
+
+  @override
+  String get alertOnTheDay => 'on the day';
 }

@@ -141,6 +141,8 @@ Placeholders: *Whose birthday? When?* · *Which bill? Due on the…* · *What re
 
 ---
 
+**Capture sheet (mockup 03):** captions *Details* · *Type* · template tag "{name} template" + "Understood from your text" · line under the rows "First alert {when}" · Nag subtitle "Every 2 hours, 8 AM – 10 PM".
+
 **Shared text (CAP-12):** under the input when links or long text went to notes — "Shared text and links saved in notes"
 
 ## 5. Home, views & lists (S-10 – S-18)
@@ -152,6 +154,8 @@ Placeholders: *Whose birthday? When?* · *Which bill? Due on the…* · *What re
 
 Calendars section is collapsed by default; when some are filtered out it shows "{count} hidden". Same-named calendars show their account underneath.
 **Top bar:** Today · Search
+
+**Schedule home (mockup 02):** filter chips *All · Personal · Work · Occasions · Events · Meetings* · ring "{done}/{total}" + "done" · card label "Up next" + pill "in 45 min" · occasion card "In 6 days" · section header extras "Nagging" (Overdue) and "{n} done" (Today) · row subline "Due yesterday" / "Due Sat" for overdue, nag chip "Every 2h", context chip "Work".
 
 ### Empty states (with bell)
 | ID | Where | Title | Sub | Button |

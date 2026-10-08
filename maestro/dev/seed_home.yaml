@@ -1,0 +1,12 @@
+# Dev helper (not part of the suite): fills a fresh app with data like mockup 02 for visual checks.
+# Run: maestro/run.sh dev/seed_home.yaml   (emulator only)
+appId: app.aimstair.reminder_app
+---
+- runFlow: ../common/fresh_app.yaml
+- runFlow: { file: ../common/save_reminder.yaml, env: { TEXT: "Client call meeting in 45 minutes" } }
+- runFlow: { file: ../common/save_reminder.yaml, env: { TEXT: "Mom's birthday in 6 days" } }
+- runFlow: { file: ../common/save_reminder.yaml, env: { TEXT: "Pay electricity bill today 1am nag me" } }
+- runFlow: { file: ../common/save_reminder.yaml, env: { TEXT: "Return shoes today 2am" } }
+- runFlow: { file: ../common/save_reminder.yaml, env: { TEXT: "Team standup meeting today 9:30am" } }
+- runFlow: { file: ../common/save_reminder.yaml, env: { TEXT: "Call mom today 6pm" } }
+- takeScreenshot: home_seeded

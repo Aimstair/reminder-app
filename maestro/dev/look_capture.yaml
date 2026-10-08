@@ -1,0 +1,11 @@
+# Dev helper: capture sheet like mockup 03 (Bill due template + "Pay rent on the 1st").
+appId: app.aimstair.reminder_app
+---
+- launchApp
+- tapOn: "New reminder"
+- tapOn: "Bill due"
+- inputText: "Pay rent on the 1st"
+- hideKeyboard
+- takeScreenshot: capture_look
+- tapOn: "Cancel"
+- takeScreenshot: home_look

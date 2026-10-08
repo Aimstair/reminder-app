@@ -4,6 +4,7 @@
 library;
 
 import 'package:flutter/widgets.dart';
+import 'package:reminder_core/reminder_core.dart';
 
 abstract final class AppIcons {
   static const IconData add = IconData(0xe3d4, fontFamily: 'Phosphor'); // plus
@@ -14,12 +15,17 @@ abstract final class AppIcons {
   static const IconData appointment = IconData(0xe570, fontFamily: 'Phosphor'); // firstAidKit
   static const IconData autoAdd = IconData(0xe4d0, fontFamily: 'Phosphor'); // userPlus
   static const IconData backup = IconData(0xe00c, fontFamily: 'Phosphor'); // archive
+  static const IconData bag = IconData(0xe0b0, fontFamily: 'Phosphor'); // bag
   static const IconData battery = IconData(0xe0ba, fontFamily: 'Phosphor'); // batteryCharging
   static const IconData bill = IconData(0xe3ec, fontFamily: 'Phosphor'); // receipt
   static const IconData birthday = IconData(0xe780, fontFamily: 'Phosphor'); // cake
   static const IconData calendar = IconData(0xe10a, fontFamily: 'Phosphor'); // calendarBlank
   static const IconData calendarOff = IconData(0xe10c, fontFamily: 'Phosphor'); // calendarX
+  static const IconData calendarView = IconData(0xe10a, fontFamily: 'Phosphor'); // calendarBlank
+  static const IconData call = IconData(0xe3b8, fontFamily: 'Phosphor'); // phone
+  static const IconData chat = IconData(0xe17a, fontFamily: 'Phosphor'); // chatText
   static const IconData check = IconData(0xe182, fontFamily: 'Phosphor'); // check
+  static const IconData clockSmall = IconData(0xe19a, fontFamily: 'Phosphor'); // clock
   static const IconData close = IconData(0xe4f6, fontFamily: 'Phosphor'); // x
   static const IconData collapse = IconData(0xe13c, fontFamily: 'Phosphor'); // caretUp
   static const IconData contactRemoved = IconData(0xe4ce, fontFamily: 'Phosphor'); // userMinus
@@ -30,6 +36,7 @@ abstract final class AppIcons {
   static const IconData diagnostics = IconData(0xe2ac, fontFamily: 'Phosphor'); // heartbeat
   static const IconData digest = IconData(0xe5b6, fontFamily: 'Phosphor'); // sunHorizon
   static const IconData disconnect = IconData(0xe2e4, fontFamily: 'Phosphor'); // linkBreak
+  static const IconData document = IconData(0xe23a, fontFamily: 'Phosphor'); // fileText
   static const IconData done = IconData(0xe184, fontFamily: 'Phosphor'); // checkCircle
   static const IconData dot = IconData(0xe18a, fontFamily: 'PhosphorFill'); // circle
   static const IconData dropDown = IconData(0xe136, fontFamily: 'Phosphor'); // caretDown
@@ -41,15 +48,21 @@ abstract final class AppIcons {
   static const IconData expand = IconData(0xe136, fontFamily: 'Phosphor'); // caretDown
   static const IconData exportFile = IconData(0xeaf0, fontFamily: 'Phosphor'); // export
   static const IconData feedback = IconData(0xe168, fontFamily: 'Phosphor'); // chatCircle
+  static const IconData fitness = IconData(0xe0b6, fontFamily: 'Phosphor'); // barbell
+  static const IconData food = IconData(0xe262, fontFamily: 'Phosphor'); // forkKnife
   static const IconData gift = IconData(0xe276, fontFamily: 'Phosphor'); // gift
+  static const IconData giftSolid = IconData(0xe276, fontFamily: 'PhosphorFill'); // gift (fill) — occasion card art
   static const IconData help = IconData(0xe3e8, fontFamily: 'Phosphor'); // question
   static const IconData importFile = IconData(0xe20c, fontFamily: 'Phosphor'); // downloadSimple
   static const IconData info = IconData(0xe2ce, fontFamily: 'Phosphor'); // info
   static const IconData licenses = IconData(0xe23a, fontFamily: 'Phosphor'); // fileText
   static const IconData link = IconData(0xe2e2, fontFamily: 'Phosphor'); // link
+  static const IconData listView = IconData(0xe2f2, fontFamily: 'Phosphor'); // listBullets
   static const IconData meeting = IconData(0xe68e, fontFamily: 'Phosphor'); // usersThree
   static const IconData mic = IconData(0xe326, fontFamily: 'Phosphor'); // microphone
+  static const IconData menu = IconData(0xe484, fontFamily: 'Phosphor'); // textAlignLeft (mockup hamburger)
   static const IconData minus = IconData(0xe32a, fontFamily: 'Phosphor'); // minus
+  static const IconData monthGrid = IconData(0xe476, fontFamily: 'Phosphor'); // table
   static const IconData monthView = IconData(0xe7b4, fontFamily: 'Phosphor'); // calendarDots
   static const IconData nag = IconData(0xe038, fontFamily: 'Phosphor'); // arrowCounterClockwise
   static const IconData next = IconData(0xe13a, fontFamily: 'Phosphor'); // caretRight
@@ -61,6 +74,7 @@ abstract final class AppIcons {
   static const IconData ok = IconData(0xe184, fontFamily: 'PhosphorFill'); // checkCircle
   static const IconData personal = IconData(0xe4c2, fontFamily: 'Phosphor'); // user
   static const IconData pickDate = IconData(0xe714, fontFamily: 'Phosphor'); // calendarPlus
+  static const IconData plane = IconData(0xe5d6, fontFamily: 'Phosphor'); // airplaneTilt
   static const IconData precise = IconData(0xe492, fontFamily: 'Phosphor'); // timer
   static const IconData preciseOff = IconData(0xe492, fontFamily: 'Phosphor'); // timer
   static const IconData previous = IconData(0xe138, fontFamily: 'Phosphor'); // caretLeft
@@ -75,6 +89,7 @@ abstract final class AppIcons {
   static const IconData search = IconData(0xe30c, fontFamily: 'Phosphor'); // magnifyingGlass
   static const IconData send = IconData(0xe396, fontFamily: 'Phosphor'); // paperPlaneRight
   static const IconData settings = IconData(0xe270, fontFamily: 'Phosphor'); // gear
+  static const IconData share = IconData(0xeaf0, fontFamily: 'Phosphor'); // export
   static const IconData skip = IconData(0xe5a6, fontFamily: 'Phosphor'); // skipForward
   static const IconData snooze = IconData(0xe5ee, fontFamily: 'Phosphor'); // bellZ
   static const IconData sound = IconData(0xe33c, fontFamily: 'Phosphor'); // musicNote
@@ -83,9 +98,32 @@ abstract final class AppIcons {
   static const IconData task = IconData(0xe184, fontFamily: 'Phosphor'); // checkCircle
   static const IconData time = IconData(0xe19a, fontFamily: 'Phosphor'); // clock
   static const IconData timeZone = IconData(0xe288, fontFamily: 'Phosphor'); // globe
+  static const IconData tooth = IconData(0xe9cc, fontFamily: 'Phosphor'); // tooth
   static const IconData travel = IconData(0xe504, fontFamily: 'Phosphor'); // airplaneTakeoff
   static const IconData undo = IconData(0xe08a, fontFamily: 'Phosphor'); // arrowUUpLeft
+  static const IconData video = IconData(0xe4da, fontFamily: 'Phosphor'); // videoCamera
   static const IconData waiting = IconData(0xe2b4, fontFamily: 'Phosphor'); // hourglassHigh
   static const IconData warning = IconData(0xe4e0, fontFamily: 'Phosphor'); // warning
   static const IconData work = IconData(0xe0ee, fontFamily: 'Phosphor'); // briefcase
 }
+
+/// Icon for an item's tile (DS11 rows): bill → receipt, shopping → bag, call → phone…
+IconData glyphIcon(ItemGlyph g) => switch (g) {
+  ItemGlyph.task => AppIcons.task,
+  ItemGlyph.meeting => AppIcons.meeting,
+  ItemGlyph.video => AppIcons.video,
+  ItemGlyph.event => AppIcons.event,
+  ItemGlyph.gift => AppIcons.gift,
+  ItemGlyph.bill => AppIcons.bill,
+  ItemGlyph.shopping => AppIcons.bag,
+  ItemGlyph.call => AppIcons.call,
+  ItemGlyph.tooth => AppIcons.tooth,
+  ItemGlyph.medical => AppIcons.appointment,
+  ItemGlyph.food => AppIcons.food,
+  ItemGlyph.document => AppIcons.document,
+  ItemGlyph.fitness => AppIcons.fitness,
+  ItemGlyph.travel => AppIcons.plane,
+  ItemGlyph.renewal => AppIcons.renewal,
+  ItemGlyph.trial => AppIcons.precise,
+  ItemGlyph.nightOut => AppIcons.nightOut,
+};

@@ -2205,6 +2205,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open-source licences'**
   String get aboutLicenses;
+
+  /// copy.md §5 — Compact duration, e.g. nag chip "Every 2h"
+  ///
+  /// In en, this message translates to:
+  /// **'{count}h'**
+  String hoursShort(int count);
+
+  /// copy.md §5 — Compact duration
+  ///
+  /// In en, this message translates to:
+  /// **'{count}m'**
+  String minutesShort(int count);
+
+  /// copy.md §5 — Row subline for overdue items: "Due yesterday", "Due Sat"
+  ///
+  /// In en, this message translates to:
+  /// **'Due {when}'**
+  String dueWhen(String when);
+
+  /// copy.md §5 — Inside "Due yesterday"
+  ///
+  /// In en, this message translates to:
+  /// **'yesterday'**
+  String get dayYesterday;
+
+  /// copy.md §5 — Right side of the Overdue header when something nags
+  ///
+  /// In en, this message translates to:
+  /// **'Nagging'**
+  String get sectionNagging;
+
+  /// copy.md §5 — Right side of the Today header
+  ///
+  /// In en, this message translates to:
+  /// **'{count} done'**
+  String sectionDoneCount(int count);
+
+  /// copy.md §5 — Small label inside the daily progress ring
+  ///
+  /// In en, this message translates to:
+  /// **'done'**
+  String get ringDone;
+
+  /// copy.md §5 — Home card label
+  ///
+  /// In en, this message translates to:
+  /// **'Up next'**
+  String get upNext;
+
+  /// copy.md §5 — Countdown pill: "in 45 min", "in 6 days"
+  ///
+  /// In en, this message translates to:
+  /// **'in {time}'**
+  String inTime(String time);
+
+  /// copy.md §5 — Schedule filter chip
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get filterAll;
+
+  /// copy.md §5 — Schedule filter chip
+  ///
+  /// In en, this message translates to:
+  /// **'Occasions'**
+  String get filterOccasions;
+
+  /// copy.md §5 — Schedule filter chip
+  ///
+  /// In en, this message translates to:
+  /// **'Events'**
+  String get filterEvents;
+
+  /// copy.md §5 — Schedule filter chip
+  ///
+  /// In en, this message translates to:
+  /// **'Meetings'**
+  String get filterMeetings;
+
+  /// copy.md §4 capture caption
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get captureDetails;
+
+  /// copy.md §4 line under the capture rows
+  ///
+  /// In en, this message translates to:
+  /// **'First alert {when}'**
+  String captureFirstAlert(String when);
+
+  /// copy.md §4 next to the template tag
+  ///
+  /// In en, this message translates to:
+  /// **'Understood from your text'**
+  String get captureUnderstood;
+
+  /// copy.md §4 removable template tag
+  ///
+  /// In en, this message translates to:
+  /// **'{name} template'**
+  String templateTag(String name);
+
+  /// copy.md §4 Nag subtitle: "Every 2 hours, 8 AM – 10 PM"
+  ///
+  /// In en, this message translates to:
+  /// **'{every}, {range}'**
+  String nagEveryBetween(String every, String range);
+
+  /// copy.md §4 alert summary for a date-only item at its day ("1 week, 1 day, on the day")
+  ///
+  /// In en, this message translates to:
+  /// **'on the day'**
+  String get alertOnTheDay;
 }
 
 class _AppLocalizationsDelegate
