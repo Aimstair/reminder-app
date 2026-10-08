@@ -48,7 +48,7 @@ Don't add a package that isn't in `docs/architecture.md` §3 without asking and 
 ## Commands
 *(confirmed during v0; Flutter SDK at C:/src/flutter)*
 - Run on phone (hot reload): `flutter run` · performance and alarms: `flutter run --release`
-- Release APK / Play bundle: `flutter build apk --release` · `flutter build appbundle`
+- Release APK / Play bundle: `flutter build apk --release` · `flutter build appbundle` (add `--dart-define=SENTRY_DSN=<dsn>` for beta/store builds to turn on crash reporting)
 - Core tests: `cd packages/core && dart test` · app tests: `flutter test` · `flutter test integration_test`
 - E2E: `maestro test maestro/`
 - Analyze / format: `flutter analyze` · `dart format .`

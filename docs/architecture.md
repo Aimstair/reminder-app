@@ -208,6 +208,7 @@ Derived from `reminder-app-concept.md` and `behavior-spec.md`. Every app table h
 ## 8. Cross-cutting rules
 - **Spec traceability:** code implementing a rule references its ID in a short comment (`// ALR-11`); tests are named after rule or case IDs.
 - **No reminder content** leaves the device in v1.0 (crash reports and analytics are scrubbed).
+  - Crash reporting (`lib/integrations/crash_reporting.dart`) is on only in release builds made with `--dart-define=SENTRY_DSN=…`. Sent: error type, stack trace, device/OS/app version. Not sent: messages, exception text, breadcrumbs, screenshots, view hierarchy, user info. Native (Kotlin) crashes go through the Android SDK without the Dart scrubber — keep reminder text out of Kotlin exception messages.
 - **Strings** only via l10n keys; **colors/spacing/motion** only via design tokens.
 - **Edge-to-edge:** Android 15 draws apps under the system bars — every screen and sheet must respect safe-area insets (bake-off bug: sheet buttons under the navigation bar).
 - **Performance budgets** (see `testing.md`): cold start < 2 s on a mid-range phone; capture sheet opens < 150 ms; no dropped frames in scrolling and animations at the device's refresh rate.

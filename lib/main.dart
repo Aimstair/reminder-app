@@ -11,6 +11,7 @@ import 'app/router.dart';
 import 'data/prefs_repository.dart';
 import 'features/actions/occurrence_actions.dart';
 import 'features/capture/capture_sheet.dart';
+import 'integrations/crash_reporting.dart';
 import 'l10n/gen/app_localizations.dart';
 import 'native/platform_gateway.dart';
 import 'services/reminder_service.dart';
@@ -18,7 +19,7 @@ import 'ui/format.dart';
 import 'ui/theme.dart';
 
 /// Bootstrap (architecture.md §2): services → providers → router.
-Future<void> main() async {
+Future<void> main() => runWithCrashReporting(() async {
   WidgetsFlutterBinding.ensureInitialized();
   final platform = PlatformGateway();
   final services = await AppServices.start(platform: platform);
@@ -28,7 +29,7 @@ Future<void> main() async {
       child: const ReminderApp(),
     ),
   );
-}
+});
 
 class ReminderApp extends ConsumerStatefulWidget {
   const ReminderApp({super.key});
