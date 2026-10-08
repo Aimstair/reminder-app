@@ -1,7 +1,8 @@
-/// S-13 Day view (Notion Calendar structure, Things 3 finish): all-day strip on top (VW-3, with
-/// "Overdue (n)" on today, VW-5), hourly grid with a now line (VW-11), overlapping items side by side
-/// (max 3, then "+N"), swipe between days (VW-9), tap an empty slot to capture there (VW-8).
-/// The grid is reused by 3 Day / Week in v1.2.
+/// S-13 Day view — built to mockup `docs/design/mockups/06-day-view.png` (DS11): big date header
+/// with "items" / "busy" pills (tap → mini month, S-18), week strip with the selected day circled,
+/// all-day chips (with "Overdue (n)" on today, VW-5), hourly grid with tinted blocks and a now line
+/// with its time (VW-11), overlapping items side by side (max 3, then "+N"), swipe between days
+/// (VW-9), tap an empty slot to capture there (VW-8). The grid is reused by 3 Day / Week in v1.2.
 library;
 
 import 'dart:math' as math;
@@ -14,11 +15,12 @@ import '../../app/providers.dart';
 import '../../data/prefs_repository.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../ui/format.dart';
+import '../../ui/icons.dart';
 import '../../ui/tokens.dart';
 import '../actions/occurrence_actions.dart';
 import '../capture/capture_sheet.dart';
 import '../digest/digest_card.dart';
-import '../../ui/icons.dart';
+import '../month/month_view.dart' show firstWeekday, showMiniMonth;
 
 const _hourHeight = 60.0;
 const _gutter = 52.0;
@@ -48,10 +50,14 @@ class _DayViewState extends ConsumerState<DayView> {
       final index = _origin + date.difference(_base).inDays;
       if (_pages.hasClients && _pages.page?.round() != index) _pages.jumpToPage(index);
     });
-    return PageView.builder(
-      controller: _pages,
-      onPageChanged: (i) => ref.read(homeProvider.notifier).setDate(addDays(_base, i - _origin)),
-      itemBuilder: (_, i) => _DayPage(day: addDays(_base, i - _origin)),
+    // White page like the mockup (Notion-style grid), not the grouped gray.
+    return ColoredBox(
+      color: AppColors.of(context).surface,
+      child: PageView.builder(
+        controller: _pages,
+        onPageChanged: (i) => ref.read(homeProvider.notifier).setDate(addDays(_base, i - _origin)),
+        itemBuilder: (_, i) => _DayPage(day: addDays(_base, i - _origin)),
+      ),
     );
   }
 }
@@ -91,8 +97,6 @@ class _DayPageState extends ConsumerState<_DayPage> {
     final day = widget.day;
     final l10n = AppLocalizations.of(context);
     final c = AppColors.of(context);
-    final f = Fmt.of(context);
-    final text = Theme.of(context).textTheme;
     final today = ref.watch(todayProvider);
     final isToday = day == today;
     final showCompleted = ref.watch(prefsRepoProvider).flag(PrefKeys.showCompleted, fallback: true);
@@ -107,69 +111,78 @@ class _DayPageState extends ConsumerState<_DayPage> {
 
     return Column(
       children: [
-        // Date header
-        Padding(
-          padding: const EdgeInsets.fromLTRB(Space.l, Space.xs, Space.l, Space.s),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(color: isToday ? c.danger : null, shape: BoxShape.circle),
-                child: Text('${day.day}',
-                    style: text.titleLarge?.copyWith(color: isToday ? Colors.white : c.textPrimary)),
-              ),
-              const SizedBox(width: Space.m),
-              Text(f.dayLong(day).replaceAll(RegExp(r',? \d+$'), ''), style: text.titleMedium),
-            ],
-          ),
-        ),
+        _Header(day: day, items: all.length, busyMinutes: _busyMinutes(timed, day)),
+        _DayStrip(selected: day),
         if (isToday) const DigestCard(),
-        // All-day strip
         if (allDay.isNotEmpty || overdue.isNotEmpty)
           Container(
-            width: double.infinity,
-            margin: const EdgeInsets.fromLTRB(Space.l, Space.xs, Space.l, Space.s),
-            padding: const EdgeInsets.all(Space.s),
-            decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(Radii.row)),
-            child: Column(
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(color: c.separator.withValues(alpha: 0.5), width: 0.5),
+                bottom: BorderSide(color: c.separator.withValues(alpha: 0.5), width: 0.5),
+              ),
+            ),
+            padding: const EdgeInsets.fromLTRB(Space.s, Space.s, Space.l, Space.s),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: Space.xs, bottom: Space.xs),
-                  child: Text(l10n.allDay.toUpperCase(), style: text.labelSmall),
-                ),
-                if (overdue.isNotEmpty) ...[
-                  InkWell(
-                    onTap: () => setState(() => _overdueOpen = !_overdueOpen),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: Space.xs, vertical: Space.xs),
-                      child: Row(
-                        children: [
-                          Icon(_overdueOpen ? AppIcons.collapse : AppIcons.expand, color: c.danger, size: 18),
-                          Text(l10n.overdueCount(overdue.length), style: text.bodyMedium?.copyWith(color: c.danger)),
-                        ],
-                      ),
+                SizedBox(
+                  width: _gutter - Space.s,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      l10n.allDay.toUpperCase().replaceFirst(' ', '\n'),
+                      textAlign: TextAlign.right,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700, height: 1.1),
                     ),
                   ),
-                  if (_overdueOpen)
-                    for (final o in overdue)
-                      _AllDayChip(
-                        title: o.reminder.title,
-                        kind: o.reminder.kind,
-                        overdue: true,
-                        onTap: () => openDetail(context, o.reminder, o.occurrenceKey),
+                ),
+                const SizedBox(width: Space.s),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: Space.s,
+                        runSpacing: Space.s,
+                        children: [
+                          if (overdue.isNotEmpty)
+                            _AllDayChip(
+                              label: l10n.overdueCount(overdue.length),
+                              icon: AppIcons.error,
+                              color: c.danger,
+                              onTap: () => setState(() => _overdueOpen = !_overdueOpen),
+                            ),
+                          for (final i in allDay)
+                            _AllDayChip(
+                              label: i.reminder.title,
+                              icon: glyphIcon(glyphFor(i.reminder)),
+                              color: i.overdue ? c.danger : c.kind(i.reminder.kind),
+                              done: i.resolved,
+                              onTap: () => openDetail(context, i.reminder, i.occurrenceKey),
+                            ),
+                        ],
                       ),
-                ],
-                for (final i in allDay)
-                  _AllDayChip(
-                    title: i.reminder.title,
-                    kind: i.reminder.kind,
-                    done: i.resolved,
-                    overdue: i.overdue,
-                    onTap: () => openDetail(context, i.reminder, i.occurrenceKey),
+                      if (_overdueOpen)
+                        Padding(
+                          padding: const EdgeInsets.only(top: Space.s),
+                          child: Wrap(
+                            spacing: Space.s,
+                            runSpacing: Space.s,
+                            children: [
+                              for (final o in overdue)
+                                _AllDayChip(
+                                  label: o.reminder.title,
+                                  icon: glyphIcon(glyphFor(o.reminder)),
+                                  color: c.danger,
+                                  onTap: () => openDetail(context, o.reminder, o.occurrenceKey),
+                                ),
+                            ],
+                          ),
+                        ),
+                    ],
                   ),
+                ),
               ],
             ),
           ),
@@ -181,6 +194,7 @@ class _DayPageState extends ConsumerState<_DayPage> {
               height: 24 * _hourHeight + Space.l,
               child: LayoutBuilder(
                 builder: (context, box) => Stack(
+                  clipBehavior: Clip.none,
                   children: [
                     for (var h = 0; h < 24; h++) _HourLine(hour: h),
                     // Empty-slot taps → capture at that time (VW-8, CAP-11 locked).
@@ -197,7 +211,7 @@ class _DayPageState extends ConsumerState<_DayPage> {
                         },
                       ),
                     ),
-                    ..._blocks(context, timed, box.maxWidth - _gutter - Space.s),
+                    ..._blocks(context, timed, box.maxWidth - _gutter - Space.l),
                     if (isToday) _NowLine(zone: ref.watch(prefsProvider).deviceTimeZone),
                   ],
                 ),
@@ -207,6 +221,27 @@ class _DayPageState extends ConsumerState<_DayPage> {
         ),
       ],
     );
+  }
+
+  /// Minutes covered by timed items on this day (overlaps counted once) — the "busy" pill.
+  int _busyMinutes(List<DayItem> timed, DateTime day) {
+    final spans = [
+      for (final i in timed)
+        (i.start, (i.end ?? i.start.add(const Duration(minutes: 30))).isAfter(i.start) ? (i.end ?? i.start.add(const Duration(minutes: 30))) : i.start),
+    ]..sort((a, b) => a.$1.compareTo(b.$1));
+    var total = 0;
+    DateTime? curStart, curEnd;
+    for (final (s, e) in spans) {
+      if (curEnd == null || s.isAfter(curEnd)) {
+        if (curStart != null) total += curEnd!.difference(curStart).inMinutes;
+        curStart = s;
+        curEnd = e;
+      } else if (e.isAfter(curEnd)) {
+        curEnd = e;
+      }
+    }
+    if (curStart != null) total += curEnd!.difference(curStart).inMinutes;
+    return total;
   }
 
   /// Lays out overlapping items side by side (max 3 columns, then "+N", VW-11).
@@ -243,11 +278,11 @@ class _DayPageState extends ConsumerState<_DayPage> {
           final height = endOf(i).difference(i.start).inMinutes / 60 * _hourHeight;
           final hidden = ci == 2 && cols.length > 3 ? cols.skip(3).expand((x) => x).length : 0;
           out.add(Positioned(
-            top: top,
-            left: _gutter + ci * w,
-            width: w - 2,
-            height: math.max(height - 2, 22),
-            child: _Block(item: i, more: hidden),
+            top: top + 1,
+            left: _gutter + Space.xs + ci * w,
+            width: w - 4,
+            height: math.max(height - 3, 24),
+            child: _Block(item: i, end: endOf(i), more: hidden),
           ));
         }
       }
@@ -263,6 +298,145 @@ class _DayPageState extends ConsumerState<_DayPage> {
     }
     flush();
     return out;
+  }
+}
+
+/// Big date + weekday / month, and the "items" / "busy" pills (mockup 06). Tap → mini month (S-18).
+class _Header extends ConsumerWidget {
+  const _Header({required this.day, required this.items, required this.busyMinutes});
+  final DateTime day;
+  final int items;
+  final int busyMinutes;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final f = Fmt.of(context);
+    final text = Theme.of(context).textTheme;
+    final busy = busyMinutes < 60 ? l10n.minutesShort(busyMinutes) : l10n.hoursShort((busyMinutes / 60).round());
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Space.l, Space.xs, Space.l, Space.s),
+      child: Row(
+        children: [
+          Expanded(
+            child: InkWell(
+              borderRadius: BorderRadius.circular(Radii.row),
+              onTap: () async {
+                final d = await showMiniMonth(context, day);
+                if (d != null) ref.read(homeProvider.notifier).setDate(d);
+              },
+              child: Row(
+                children: [
+                  Text('${day.day}', style: text.displayLarge?.copyWith(fontWeight: FontWeight.w700, height: 1)),
+                  const SizedBox(width: Space.m),
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(f.weekdayLong(day), style: text.titleLarge, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        Text(f.monthYear(day), style: text.titleMedium?.copyWith(color: AppColors.of(context).textSecondary, fontWeight: FontWeight.w400)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          _Pill(value: '$items', label: l10n.statItems(items)),
+          const SizedBox(width: Space.s),
+          _Pill(value: busy, label: l10n.statBusy),
+        ],
+      ),
+    );
+  }
+}
+
+class _Pill extends StatelessWidget {
+  const _Pill({required this.value, required this.label});
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final text = Theme.of(context).textTheme;
+    return Container(
+      constraints: const BoxConstraints(minWidth: 64),
+      padding: const EdgeInsets.symmetric(horizontal: Space.m, vertical: Space.s),
+      decoration: BoxDecoration(color: c.separator.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(Radii.card)),
+      child: Column(
+        children: [
+          Text(value, style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+          Text(label, style: text.labelSmall),
+        ],
+      ),
+    );
+  }
+}
+
+/// The selected day's week (mockup 06): circled selected day, type-colored dots; tap selects.
+class _DayStrip extends ConsumerWidget {
+  const _DayStrip({required this.selected});
+  final DateTime selected;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = AppColors.of(context);
+    final f = Fmt.of(context);
+    final text = Theme.of(context).textTheme;
+    final start = addDays(selected, -((selected.weekday - firstWeekday(context) + 7) % 7));
+    final items = ref.watch(rangeProvider((from: start, to: addDays(start, 6)))) ?? const <DayItem>[];
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Space.m, 0, Space.m, Space.s),
+      child: Row(
+        children: [
+          for (var i = 0; i < 7; i++)
+            Expanded(
+              child: Builder(builder: (context) {
+                final day = addDays(start, i);
+                final kinds = items.where((x) => x.day == day && !x.resolved).map((x) => x.reminder.kind).toSet();
+                final isSel = day == selected;
+                return InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: () => ref.read(homeProvider.notifier).setDate(day),
+                  child: Column(
+                    children: [
+                      Text(f.weekdayNarrow(day), style: text.labelSmall),
+                      const SizedBox(height: Space.xs),
+                      Container(
+                        width: 40,
+                        height: 40,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(color: isSel ? c.accent : null, shape: BoxShape.circle),
+                        child: Text(
+                          '${day.day}',
+                          style: text.titleMedium?.copyWith(color: isSel ? Colors.white : c.textPrimary, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      const SizedBox(height: Space.xs),
+                      SizedBox(
+                        height: 6,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            for (final k in Kind.values.where(kinds.contains))
+                              Container(
+                                width: 5,
+                                height: 5,
+                                margin: const EdgeInsets.symmetric(horizontal: 1),
+                                decoration: BoxDecoration(color: c.kind(k), shape: BoxShape.circle),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -286,11 +460,11 @@ class _HourLine extends StatelessWidget {
             child: hour == 0
                 ? null
                 : Transform.translate(
-                    offset: const Offset(0, -8),
+                    offset: const Offset(0, -9),
                     child: Text(
                       f.time(DateTime.utc(2026, 1, 1, hour)).replaceAll(':00', ''),
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.labelSmall,
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ),
           ),
@@ -301,6 +475,7 @@ class _HourLine extends StatelessWidget {
   }
 }
 
+/// Red now line with its time in a pill on the left (mockup 06).
 class _NowLine extends StatelessWidget {
   const _NowLine({required this.zone});
   final String zone;
@@ -308,16 +483,24 @@ class _NowLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final f = Fmt.of(context);
     final now = instantToWall(DateTime.now().toUtc(), zone);
     final top = (now.hour * 60 + now.minute) / 60 * _hourHeight;
     return Positioned(
-      top: top - 3,
-      left: _gutter - 3,
+      top: top - 10,
+      left: 0,
       right: 0,
       child: IgnorePointer(
         child: Row(
           children: [
-            Container(width: 6, height: 6, decoration: BoxDecoration(color: c.danger, shape: BoxShape.circle)),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(color: c.danger, borderRadius: BorderRadius.circular(Radii.chip)),
+              child: Text(
+                f.time(now).replaceAll(RegExp(r'\s?[AaPp]\.?[Mm]\.?$'), ''),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
+              ),
+            ),
             Expanded(child: Container(height: 1.5, color: c.danger)),
           ],
         ),
@@ -326,51 +509,64 @@ class _NowLine extends StatelessWidget {
   }
 }
 
-/// Time-grid block (design-direction "Calendar block style"): tinted fill, 3 dp type-color bar,
-/// faded + struck through when done.
+/// Time-grid block (mockup 06): tinted fill, 3 dp type-color bar, item icon + title, time range,
+/// a bell when it has alerts; faded + struck through when done.
 class _Block extends StatelessWidget {
-  const _Block({required this.item, this.more = 0});
+  const _Block({required this.item, required this.end, this.more = 0});
   final DayItem item;
+  final DateTime end;
   final int more;
 
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final f = Fmt.of(context);
+    final l10n = AppLocalizations.of(context);
     final text = Theme.of(context).textTheme;
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final color = c.kind(item.reminder.kind);
+    final r = item.reminder;
+    final color = item.overdue ? c.danger : c.kind(r.kind);
     final done = item.resolved;
     final fill = color.withValues(alpha: done ? (dark ? 0.12 : 0.06) : (dark ? 0.24 : 0.12));
+    final fg = done ? c.textSecondary : c.textPrimary;
+    final range = item.end == null ? f.time(item.start) : l10n.timeRange(f.time(item.start), f.time(end));
     return Material(
       color: fill,
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: BorderRadius.circular(Radii.row - 2),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => openDetail(context, item.reminder, item.occurrenceKey),
+        onTap: () => openDetail(context, r, item.occurrenceKey),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(width: 3, color: item.overdue ? c.danger : color),
+            Container(width: 3, color: color.withValues(alpha: done ? 0.4 : 1)),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.xs),
                 child: LayoutBuilder(
                   builder: (_, box) => Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        more > 0 ? '${item.reminder.title} · +$more' : item.reminder.title,
-                        maxLines: box.maxHeight > 36 ? 2 : 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: text.labelSmall?.copyWith(
-                          color: done ? c.textSecondary : c.textPrimary,
-                          fontWeight: FontWeight.w600,
-                          decoration: done ? TextDecoration.lineThrough : null,
-                        ),
+                      Row(
+                        children: [
+                          Icon(glyphIcon(glyphFor(r)), size: 16, color: done ? c.textSecondary : color),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              more > 0 ? '${r.title} · +$more' : r.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: text.titleSmall?.copyWith(
+                                color: fg,
+                                fontWeight: FontWeight.w700,
+                                decoration: done ? TextDecoration.lineThrough : null,
+                              ),
+                            ),
+                          ),
+                          if (r.alertPlan.isNotEmpty && !done) Icon(AppIcons.alert, size: 15, color: color),
+                        ],
                       ),
-                      if (box.maxHeight > 36)
-                        Text(f.time(item.start), style: text.labelSmall, maxLines: 1),
+                      if (box.maxHeight > 40) Text(range, style: text.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
                     ],
                   ),
                 ),
@@ -383,46 +579,46 @@ class _Block extends StatelessWidget {
   }
 }
 
+/// All-day chip (mockup 06): type-tinted, item icon + title; overdue red; done faded.
 class _AllDayChip extends StatelessWidget {
-  const _AllDayChip({required this.title, required this.kind, this.done = false, this.overdue = false, this.onTap});
-  final String title;
-  final Kind kind;
+  const _AllDayChip({required this.label, required this.icon, required this.color, this.done = false, this.onTap});
+  final String label;
+  final IconData icon;
+  final Color color;
   final bool done;
-  final bool overdue;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final c = AppColors.of(context);
-    final color = c.kind(kind);
     final text = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.only(top: 3),
-      child: Material(
-        color: color.withValues(alpha: done ? 0.06 : 0.14),
-        borderRadius: BorderRadius.circular(6),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(6),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Space.s, vertical: 5),
-            child: Row(
-              children: [
-                Icon(kindIcon(kind), size: 14, color: overdue ? c.danger : color),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: text.bodyMedium?.copyWith(
-                      color: done ? c.textSecondary : (overdue ? c.danger : c.textPrimary),
-                      decoration: done ? TextDecoration.lineThrough : null,
-                    ),
+    final deep = Color.lerp(color, Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black, 0.2)!;
+    return Material(
+      color: color.withValues(alpha: done ? 0.06 : 0.14),
+      borderRadius: BorderRadius.circular(Radii.row - 2),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(Radii.row - 2),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: Space.m, vertical: Space.s),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: deep),
+              const SizedBox(width: 6),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 200),
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: text.titleSmall?.copyWith(
+                    color: deep,
+                    fontWeight: FontWeight.w600,
+                    decoration: done ? TextDecoration.lineThrough : null,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

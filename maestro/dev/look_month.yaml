@@ -1,0 +1,7 @@
+# Dev helper: Month view (mockup 08). Needs dev/seed_home.yaml data.
+appId: app.aimstair.reminder_app
+---
+- launchApp
+- tapOn: "(Schedule|Day|Month)"   # the view pill, whichever view was last used (VW-1)
+- tapOn: "Month"
+- takeScreenshot: month_look

@@ -157,6 +157,10 @@ Calendars section is collapsed by default; when some are filtered out it shows "
 
 **Schedule home (mockup 02):** filter chips *All · Personal · Work · Occasions · Events · Meetings* · ring "{done}/{total}" + "done" · card label "Up next" + pill "in 45 min" · occasion card "In 6 days" · section header extras "Nagging" (Overdue) and "{n} done" (Today) · row subline "Due yesterday" / "Due Sat" for overdue, nag chip "Every 2h", context chip "Work".
 
+**Day view (mockup 06):** header stat pills *{n} items* and *{4h} busy* · all-day row label *All day* · chip *Overdue ({n})*.
+
+**Month view (mockup 08):** summary chips *{n} occasions · {n} bills due · {n} meetings* · selected day panel: heading *Mon, Oct 12* + *{n} items*, type chip (*Bill* for bills), empty *Nothing on this day*.
+
 ### Empty states (with bell)
 | ID | Where | Title | Sub | Button |
 |---|---|---|---|---|

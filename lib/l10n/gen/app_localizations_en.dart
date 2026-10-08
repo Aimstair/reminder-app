@@ -1404,4 +1404,57 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get actionSkipYear => 'Skip this year';
+
+  @override
+  String statItems(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'items',
+      one: 'item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get statBusy => 'busy';
+
+  @override
+  String summaryOccasions(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'occasions',
+      one: 'occasion',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String summaryBills(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'bills due',
+      one: 'bill due',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String summaryMeetings(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'meetings',
+      one: 'meeting',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get chipBill => 'Bill';
+
+  @override
+  String get monthDayEmpty => 'Nothing on this day';
 }

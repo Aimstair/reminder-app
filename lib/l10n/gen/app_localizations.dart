@@ -2415,6 +2415,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Skip this year'**
   String get actionSkipYear;
+
+  /// copy.md §5 Day view header pill
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{item} other{items}}'**
+  String statItems(int count);
+
+  /// copy.md §5 Day view header pill
+  ///
+  /// In en, this message translates to:
+  /// **'busy'**
+  String get statBusy;
+
+  /// copy.md §5 Month view
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{occasion} other{occasions}}'**
+  String summaryOccasions(int count);
+
+  /// copy.md §5 Month view
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{bill due} other{bills due}}'**
+  String summaryBills(int count);
+
+  /// copy.md §5 Month view
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{meeting} other{meetings}}'**
+  String summaryMeetings(int count);
+
+  /// copy.md §5 Month view
+  ///
+  /// In en, this message translates to:
+  /// **'Bill'**
+  String get chipBill;
+
+  /// copy.md §5 Month view
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing on this day'**
+  String get monthDayEmpty;
 }
 
 class _AppLocalizationsDelegate

@@ -491,5 +491,19 @@
   "historyDoneIn": "Done in {years}",
   "@historyDoneIn": {"description":"copy.md §6 detail — source card history line","placeholders":{"years":{"type":"String"}}},
   "actionSkipYear": "Skip this year",
-  "@actionSkipYear": {"description":"copy.md §6 detail — yearly items' Skip button"}
+  "@actionSkipYear": {"description":"copy.md §6 detail — yearly items' Skip button"},
+  "statItems": "{count, plural, =1{item} other{items}}",
+  "@statItems": {"description":"copy.md §5 Day view header pill","placeholders":{"count":{"type":"int"}}},
+  "statBusy": "busy",
+  "@statBusy": {"description":"copy.md §5 Day view header pill"},
+  "summaryOccasions": "{count, plural, =1{occasion} other{occasions}}",
+  "@summaryOccasions": {"description":"copy.md §5 Month view","placeholders":{"count":{"type":"int"}}},
+  "summaryBills": "{count, plural, =1{bill due} other{bills due}}",
+  "@summaryBills": {"description":"copy.md §5 Month view","placeholders":{"count":{"type":"int"}}},
+  "summaryMeetings": "{count, plural, =1{meeting} other{meetings}}",
+  "@summaryMeetings": {"description":"copy.md §5 Month view","placeholders":{"count":{"type":"int"}}},
+  "chipBill": "Bill",
+  "@chipBill": {"description":"copy.md §5 Month view"},
+  "monthDayEmpty": "Nothing on this day",
+  "@monthDayEmpty": {"description":"copy.md §5 Month view"}
 }

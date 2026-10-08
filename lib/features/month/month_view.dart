@@ -13,6 +13,8 @@ import '../../data/prefs_repository.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../ui/format.dart';
 import '../../ui/tokens.dart';
+import '../actions/occurrence_actions.dart';
+import '../../ui/widgets.dart';
 import '../capture/capture_sheet.dart';
 import '../../ui/icons.dart';
 
@@ -81,6 +83,8 @@ class _MonthPage extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
     final days = monthGrid(month, firstWeekday(context));
     final today = ref.watch(todayProvider);
+    final home = ref.watch(homeProvider);
+    final selected = home.date.month == month.month && home.date.year == month.year ? home.date : null;
     final showCompleted = ref.watch(prefsRepoProvider).flag(PrefKeys.showCompleted, fallback: true);
     final items = (ref.watch(rangeProvider((from: days.first, to: days.last))) ?? const <DayItem>[])
         .where((i) => showCompleted || !i.resolved)
@@ -89,115 +93,383 @@ class _MonthPage extends ConsumerWidget {
     for (final i in items) {
       (byDay[i.day] ??= []).add(i);
     }
+    // Month summary chips (mockup 08): occasions · bills due · meetings in this month.
+    final inMonth = items.where((i) => i.day.month == month.month && i.day.year == month.year).toList();
+    final occasions = inMonth.where((i) => i.reminder.kind == Kind.occasion).length;
+    final bills = inMonth.where((i) => glyphFor(i.reminder) == ItemGlyph.bill).length;
+    final meetings = inMonth.where((i) => i.reminder.kind == Kind.meeting).length;
+    final dayItems = selected == null ? const <DayItem>[] : (byDay[selected] ?? const <DayItem>[]);
+    final notifier = ref.read(homeProvider.notifier);
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(Space.l, 0, Space.l, Space.s),
-          child: Align(alignment: Alignment.centerLeft, child: Text(f.monthYear(month), style: text.titleLarge)),
-        ),
-        Row(
-          children: [
-            for (var i = 0; i < 7; i++)
-              Expanded(
-                child: Text(
-                  f.weekdayShort(days[i]).toUpperCase(),
-                  textAlign: TextAlign.center,
-                  style: text.labelSmall,
+    return ColoredBox(
+      color: c.surface,
+      child: CustomScrollView(
+        slivers: [
+          // October 2026  ‹ ›
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(Space.l, Space.xs, Space.l, Space.m),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(Radii.row),
+                      onTap: () async {
+                        final d = await showMiniMonth(context, selected ?? month); // S-18
+                        if (d != null) notifier.setDate(d);
+                      },
+                      child: Text.rich(
+                        TextSpan(
+                          text: f.month(month),
+                          style: text.displaySmall,
+                          children: [
+                            TextSpan(
+                              text: ' ${month.year}',
+                              style: text.titleLarge?.copyWith(color: c.textSecondary, fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  _RoundButton(
+                    icon: AppIcons.previous,
+                    tooltip: MaterialLocalizations.of(context).previousMonthTooltip,
+                    onTap: () => notifier.setDate(DateTime.utc(month.year, month.month - 1)),
+                  ),
+                  const SizedBox(width: Space.s),
+                  _RoundButton(
+                    icon: AppIcons.next,
+                    tooltip: MaterialLocalizations.of(context).nextMonthTooltip,
+                    onTap: () => notifier.setDate(DateTime.utc(month.year, month.month + 1)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(Space.l, 0, Space.l, Space.m),
+              child: Row(
+                children: [
+                  Expanded(child: _Summary(count: occasions, label: l10n.summaryOccasions(occasions), color: c.occasion)),
+                  const SizedBox(width: Space.s),
+                  Expanded(child: _Summary(count: bills, label: l10n.summaryBills(bills), color: c.event)),
+                  const SizedBox(width: Space.s),
+                  Expanded(child: _Summary(count: meetings, label: l10n.summaryMeetings(meetings), color: c.meeting)),
+                ],
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Space.s),
+              child: Row(
+                children: [
+                  for (var i = 0; i < 7; i++)
+                    Expanded(
+                      child: Text(
+                        f.weekdayShort(days[i]).toUpperCase(),
+                        textAlign: TextAlign.center,
+                        style: text.labelMedium?.copyWith(color: c.textSecondary, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(Space.s, Space.xs, Space.s, Space.m),
+              child: Column(
+                children: [
+                  for (var w = 0; w < 6; w++)
+                    Container(
+                      height: 62,
+                      decoration: BoxDecoration(
+                        border: Border(top: BorderSide(color: c.separator.withValues(alpha: 0.4), width: 0.5)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (var d = 0; d < 7; d++)
+                            Expanded(
+                              child: _Cell(
+                                day: days[w * 7 + d],
+                                inMonth: days[w * 7 + d].month == month.month,
+                                today: days[w * 7 + d] == today,
+                                selected: days[w * 7 + d] == selected,
+                                items: byDay[days[w * 7 + d]] ?? const [],
+                                onTap: () => notifier.setDate(days[w * 7 + d]), // VW-8: select, list below
+                                onLongPress: () => showCaptureSheet(context, day: days[w * 7 + d]),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          // Selected day's items (mockup 08): rounded panel on the grouped background.
+          if (selected != null)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: c.bgGrouped,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(Radii.sheet)),
+                ),
+                padding: const EdgeInsets.fromLTRB(Space.l, Space.l, Space.l, 96),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(Radii.row),
+                            onTap: () => notifier.openDay(selected), // heading → Day view (VW-8)
+                            child: Text(f.date(selected, today: today), style: text.titleLarge),
+                          ),
+                        ),
+                        Text('${dayItems.length} ${l10n.statItems(dayItems.length)}', style: text.bodyMedium),
+                      ],
+                    ),
+                    const SizedBox(height: Space.m),
+                    if (dayItems.isEmpty)
+                      Text(l10n.monthDayEmpty, style: text.bodyMedium)
+                    else
+                      for (final i in dayItems) ...[
+                        _DayItemCard(item: i, today: today),
+                        const SizedBox(height: Space.m),
+                      ],
+                  ],
                 ),
               ),
-          ],
-        ),
-        const SizedBox(height: Space.xs),
-        Expanded(
-          child: Column(
-            children: [
-              for (var w = 0; w < 6; w++)
-                Expanded(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (var d = 0; d < 7; d++)
-                        Expanded(
-                          child: Builder(builder: (context) {
-                            final day = days[w * 7 + d];
-                            final inMonth = day.month == month.month;
-                            final isToday = day == today;
-                            final list = byDay[day] ?? const <DayItem>[];
-                            return InkWell(
-                              onTap: () => ref.read(homeProvider.notifier).openDay(day), // VW-8
-                              onLongPress: () => showCaptureSheet(context, day: day),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  border: Border(top: BorderSide(color: c.separator.withValues(alpha: 0.5), width: 0.5)),
-                                ),
-                                padding: const EdgeInsets.all(2),
-                                child: Column(
-                                  children: [
-                                    Container(
-                                      width: 24,
-                                      height: 24,
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(color: isToday ? c.accent : null, shape: BoxShape.circle),
-                                      child: Text(
-                                        '${day.day}',
-                                        style: text.labelSmall?.copyWith(
-                                          color: isToday
-                                              ? Colors.white
-                                              : (inMonth ? c.textPrimary : c.textSecondary.withValues(alpha: 0.4)),
-                                          fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    for (final i in list.take(list.length > 3 ? 2 : 3)) _Label(item: i),
-                                    if (list.length > 3)
-                                      Text(l10n.moreCount(list.length - 2), style: text.labelSmall?.copyWith(fontSize: 10)),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }),
-                        ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
+            ),
+        ],
+      ),
     );
   }
 }
 
-/// Month cell label (screens.md §4): type color, occasion icon, done faded, overdue red.
+class _RoundButton extends StatelessWidget {
+  const _RoundButton({required this.icon, required this.tooltip, required this.onTap});
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => IconButton.filledTonal(
+    tooltip: tooltip,
+    style: IconButton.styleFrom(
+      backgroundColor: AppColors.of(context).separator.withValues(alpha: 0.18),
+      foregroundColor: AppColors.of(context).textPrimary,
+    ),
+    onPressed: onTap,
+    icon: Icon(icon),
+  );
+}
+
+/// "2 occasions" chip (mockup 08): tinted, big colored count + label.
+class _Summary extends StatelessWidget {
+  const _Summary({required this.count, required this.label, required this.color});
+  final int count;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final deep = Color.lerp(color, Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black, 0.3)!;
+    return Container(
+      height: 52,
+      padding: const EdgeInsets.symmetric(horizontal: Space.m),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(Radii.card)),
+      child: Row(
+        children: [
+          Text('$count', style: text.titleLarge?.copyWith(color: deep, fontWeight: FontWeight.w700)),
+          const SizedBox(width: Space.s),
+          Expanded(
+            child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: text.labelLarge?.copyWith(color: deep)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Month cell (VW-10, mockup 08): day number (today filled, selected ringed), up to 3 type dots,
+/// one short label for the first all-day item.
+class _Cell extends StatelessWidget {
+  const _Cell({
+    required this.day,
+    required this.inMonth,
+    required this.today,
+    required this.selected,
+    required this.items,
+    required this.onTap,
+    required this.onLongPress,
+  });
+  final DateTime day;
+  final bool inMonth;
+  final bool today;
+  final bool selected;
+  final List<DayItem> items;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final text = Theme.of(context).textTheme;
+    final open = items.where((i) => !i.resolved).toList();
+    final kinds = Kind.values.where((k) => open.any((i) => i.reminder.kind == k)).take(3).toList();
+    final labelItem = items.where((i) => i.allDay).firstOrNull;
+    final ring = selected && !today ? (open.isEmpty ? c.accent : c.kind(open.first.reminder.kind)) : null;
+    return InkWell(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      child: Column(
+        children: [
+          const SizedBox(height: Space.xs),
+          Container(
+            width: 30,
+            height: 30,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: today ? c.accent : (ring?.withValues(alpha: 0.12)),
+              shape: BoxShape.circle,
+              border: ring == null ? null : Border.all(color: ring, width: 2),
+            ),
+            child: Text(
+              '${day.day}',
+              style: text.titleSmall?.copyWith(
+                color: today ? Colors.white : (ring ?? (inMonth ? c.textPrimary : c.textSecondary.withValues(alpha: 0.4))),
+                fontWeight: today || selected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(height: 3),
+          SizedBox(
+            height: 6,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (final k in kinds)
+                  Container(
+                    width: 5,
+                    height: 5,
+                    margin: const EdgeInsets.symmetric(horizontal: 1),
+                    decoration: BoxDecoration(color: c.kind(k), shape: BoxShape.circle),
+                  ),
+              ],
+            ),
+          ),
+          if (labelItem != null) ...[
+            const SizedBox(height: 2),
+            _Label(item: labelItem),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// One short label in a cell (VW-10): "Mom", "Rent", "Party" — tinted in the type color.
 class _Label extends StatelessWidget {
+  static const _verbs = {
+    'pay', 'buy', 'call', 'pick', 'get', 'book', 'return', 'renew', 'cancel', 'order',
+    'send', 'take', 'fix', 'clean', 'water', 'submit', 'file', 'email', 'text', 'visit',
+  };
+
   const _Label({required this.item});
   final DayItem item;
+
+  /// A noun for the cell: first word with the possessive dropped ("Mom's birthday" → "Mom"), or the
+  /// last word when the title starts with an action ("Pay rent" → "Rent", "Pick up dry cleaning" → "Cleaning").
+  static String short(Reminder r) {
+    final words = r.title.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    if (words.isEmpty) return '';
+    final action = _verbs.contains(words.first.toLowerCase());
+    var w = action && words.length > 1 ? words.last : words.first;
+    w = w.replaceAll(RegExp(r"['’]s$"), '');
+    return w.isEmpty ? '' : w[0].toUpperCase() + w.substring(1);
+  }
 
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final color = item.overdue ? c.danger : c.kind(item.reminder.kind);
-    final done = item.resolved;
+    final deep = Color.lerp(color, Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black, 0.25)!;
     return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 2),
-      padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: done ? 0.06 : 0.16),
-        borderRadius: BorderRadius.circular(3),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+      decoration: BoxDecoration(color: color.withValues(alpha: item.resolved ? 0.06 : 0.16), borderRadius: BorderRadius.circular(5)),
       child: Text(
-        '${item.reminder.kind == Kind.occasion ? '🎂 ' : ''}${item.reminder.title}',
+        short(item.reminder),
         maxLines: 1,
         overflow: TextOverflow.clip,
         softWrap: false,
         style: TextStyle(
-          fontSize: 10,
-          height: 1.25,
-          color: done ? c.textSecondary : c.textPrimary,
-          decoration: done ? TextDecoration.lineThrough : null,
+          fontSize: 11,
+          height: 1.2,
+          fontWeight: FontWeight.w600,
+          color: item.resolved ? c.textSecondary : deep,
+          decoration: item.resolved ? TextDecoration.lineThrough : null,
+        ),
+      ),
+    );
+  }
+}
+
+/// Row card in the selected-day panel (mockup 08): icon tile, title, when, type chip.
+class _DayItemCard extends StatelessWidget {
+  const _DayItemCard({required this.item, required this.today});
+  final DayItem item;
+  final DateTime today;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final f = Fmt.of(context);
+    final l10n = AppLocalizations.of(context);
+    final text = Theme.of(context).textTheme;
+    final r = item.reminder;
+    final color = c.kind(r.kind);
+    final bill = glyphFor(r) == ItemGlyph.bill;
+    return Material(
+      color: c.surface,
+      borderRadius: BorderRadius.circular(Radii.card + 4),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(Radii.card + 4),
+        onTap: () => openDetail(context, r, item.occurrenceKey),
+        child: Padding(
+          padding: const EdgeInsets.all(Space.m),
+          child: Row(
+            children: [
+              IconTile.item(context, r),
+              const SizedBox(width: Space.m),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      r.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: text.titleMedium?.copyWith(decoration: item.resolved ? TextDecoration.lineThrough : null),
+                    ),
+                    Text(
+                      f.when(item.start, allDay: item.allDay, today: today),
+                      style: text.bodyMedium?.copyWith(color: item.overdue ? c.danger : null),
+                    ),
+                  ],
+                ),
+              ),
+              MiniChip(bill ? l10n.chipBill : f.kind(r.kind), color: bill ? c.event : color),
+            ],
+          ),
         ),
       ),
     );

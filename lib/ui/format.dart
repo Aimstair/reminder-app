@@ -28,6 +28,7 @@ class Fmt {
   String monthYear(DateTime wall) => DateFormat.yMMMM(locale).format(wall);
   String month(DateTime wall) => DateFormat.MMMM(locale).format(wall);
   String weekdayShort(DateTime wall) => DateFormat.E(locale).format(wall);
+  String weekdayLong(DateTime wall) => DateFormat.EEEE(locale).format(wall);
   String weekdayNarrow(DateTime wall) => DateFormat.E(locale).format(wall).substring(0, 1);
   String dayLong(DateTime wall) => DateFormat.MMMMEEEEd(locale).format(wall);
 

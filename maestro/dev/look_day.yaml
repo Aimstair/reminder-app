@@ -1,0 +1,8 @@
+# Dev helper: Day view (mockup 06). Needs dev/seed_home.yaml data.
+appId: app.aimstair.reminder_app
+---
+- launchApp
+- runFlow: { file: ../common/save_reminder.yaml, env: { TEXT: "Pick up dry cleaning today" } }
+- tapOn: "(Schedule|Day|Month)"   # the view pill, whichever view was last used (VW-1)
+- tapOn: "Day"
+- takeScreenshot: day_look
