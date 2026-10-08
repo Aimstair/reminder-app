@@ -9,6 +9,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import app.aimstair.reminder_app.MainActivity
+import app.aimstair.reminder_app.R
 import app.aimstair.reminder_app.platform.PendingLaunch
 
 /** Builds and posts reminder notifications (NTF-*). Channels per docs/copy.md §2. */
@@ -24,14 +25,14 @@ object Notifications {
         val nm = context.getSystemService(NotificationManager::class.java)
         nm.createNotificationChannels(
             listOf(
-                NotificationChannel(CHANNEL_REMINDERS, "Reminders", NotificationManager.IMPORTANCE_HIGH)
-                    .apply { description = "Alerts for your reminders" },
-                NotificationChannel(CHANNEL_NAG, "Nagging reminders", NotificationManager.IMPORTANCE_HIGH)
-                    .apply { description = "Repeat alerts until you mark something done" },
-                NotificationChannel(CHANNEL_DIGEST, "Daily digest", NotificationManager.IMPORTANCE_DEFAULT)
-                    .apply { description = "Your morning summary of overdue and upcoming items" },
-                NotificationChannel(CHANNEL_SYSTEM, "App status", NotificationManager.IMPORTANCE_LOW)
-                    .apply { description = "Late alerts, time zone changes, reliability tips" },
+                NotificationChannel(CHANNEL_REMINDERS, context.getString(R.string.channel_reminders), NotificationManager.IMPORTANCE_HIGH)
+                    .apply { description = context.getString(R.string.channel_reminders_desc) },
+                NotificationChannel(CHANNEL_NAG, context.getString(R.string.channel_nag), NotificationManager.IMPORTANCE_HIGH)
+                    .apply { description = context.getString(R.string.channel_nag_desc) },
+                NotificationChannel(CHANNEL_DIGEST, context.getString(R.string.channel_digest), NotificationManager.IMPORTANCE_DEFAULT)
+                    .apply { description = context.getString(R.string.channel_digest_desc) },
+                NotificationChannel(CHANNEL_SYSTEM, context.getString(R.string.channel_system), NotificationManager.IMPORTANCE_LOW)
+                    .apply { description = context.getString(R.string.channel_system_desc) },
             )
         )
     }
@@ -70,16 +71,20 @@ object Notifications {
         else @Suppress("DEPRECATION") Notification.Builder(context)
 
     /** NTF-2: buttons per situation. */
-    private fun actionsFor(kind: String): List<Pair<String, String>> = when (kind) {
-        "occasion_prep" -> listOf("Tomorrow" to ActionReceiver.TOMORROW,
-            "I'm prepared" to ActionReceiver.PREPARED, "Done" to ActionReceiver.DONE)
-        "occasion_day" -> listOf("Snooze 1h" to ActionReceiver.SNOOZE, "Done" to ActionReceiver.DONE)
-        "meeting" -> listOf("Snooze 5m" to ActionReceiver.SNOOZE)
+    /** Button label resource → receiver action ([OPEN] launches the app instead, mockup 05). */
+    private fun actionsFor(kind: String): List<Pair<Int, String>> = when (kind) {
+        "occasion_prep" -> listOf(R.string.notif_tomorrow to ActionReceiver.TOMORROW,
+            R.string.notif_prepared to ActionReceiver.PREPARED, R.string.notif_done to ActionReceiver.DONE)
+        "occasion_day" -> listOf(R.string.notif_snooze_1h to ActionReceiver.SNOOZE, R.string.notif_done to ActionReceiver.DONE)
+        "meeting" -> listOf(R.string.notif_snooze_5m to ActionReceiver.SNOOZE, R.string.notif_open to OPEN)
         "digest" -> emptyList() // DIG-3: tap opens the app
-        "test" -> listOf("Snooze 1m" to ActionReceiver.SNOOZE, "Done" to ActionReceiver.DONE)
-        else -> listOf("Snooze 1h" to ActionReceiver.SNOOZE,
-            "Tomorrow" to ActionReceiver.TOMORROW, "Done" to ActionReceiver.DONE)
+        "test" -> listOf(R.string.notif_snooze_1m to ActionReceiver.SNOOZE, R.string.notif_done to ActionReceiver.DONE)
+        else -> listOf(R.string.notif_snooze_1h to ActionReceiver.SNOOZE,
+            R.string.notif_tomorrow to ActionReceiver.TOMORROW, R.string.notif_done to ActionReceiver.DONE)
     }
+
+    /** Pseudo-action: the button opens the reminder like tapping the body (NTF-3). */
+    private const val OPEN = "open"
 
     fun showAlarm(context: Context, alarm: NativeDb.Alarm, late: Boolean) {
         ensureChannels(context)
@@ -88,7 +93,7 @@ object Notifications {
             alarm.key.contains(":nag") -> CHANNEL_NAG
             else -> CHANNEL_REMINDERS
         }
-        val body = if (late) alarm.body + " · late" else alarm.body
+        val body = if (late) alarm.body + context.getString(R.string.notif_late_suffix) else alarm.body
         val b = builder(context, channel)
             .setSmallIcon(android.R.drawable.ic_popup_reminder)
             .setContentTitle(alarm.title)
@@ -99,7 +104,8 @@ object Notifications {
             .setAutoCancel(true)
             .setContentIntent(openAppIntent(context, alarm.key))
         actionsFor(alarm.kind).forEach { (label, action) ->
-            b.addAction(Notification.Action.Builder(null, label, actionIntent(context, alarm, action)).build())
+            val intent = if (action == OPEN) openAppIntent(context, alarm.key) else actionIntent(context, alarm, action)
+            b.addAction(Notification.Action.Builder(null, context.getString(label), intent).build())
         }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             @Suppress("DEPRECATION")
@@ -109,14 +115,15 @@ object Notifications {
     }
 
     /** NTF-9: replace the notification for 5 s with a confirmation + Undo. */
-    fun showUndo(context: Context, alarm: NativeDb.Alarm, verb: String) {
+    fun showUndo(context: Context, alarm: NativeDb.Alarm, verbRes: Int) {
+        val verb = context.getString(verbRes)
         ensureChannels(context)
         val b = builder(context, CHANNEL_SYSTEM)
             .setSmallIcon(android.R.drawable.ic_popup_reminder)
             .setContentTitle(verb)
             .setContentText(alarm.title)
             .setAutoCancel(true)
-            .addAction(Notification.Action.Builder(null, "Undo",
+            .addAction(Notification.Action.Builder(null, context.getString(R.string.notif_undo),
                 actionIntent(context, alarm, ActionReceiver.UNDO)).build())
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) b.setTimeoutAfter(UNDO_VISIBLE_MS)
         context.getSystemService(NotificationManager::class.java).notify(idFor(alarm.key), b.build())

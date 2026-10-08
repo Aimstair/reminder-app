@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Native (Kotlin) user-facing text: notification buttons and channels (copy.md §2), widget (S-61).
+     Flutter strings live in lib/l10n/*.arb; these are the ones shown without Flutter running. -->
+<resources>
+    <!-- Notification buttons (copy.md §2, NTF-2, mockup 05) -->
+    <string name="notif_tomorrow">Tomorrow</string>
+    <string name="notif_prepared">I\'m prepared</string>
+    <string name="notif_done">Done</string>
+    <string name="notif_snooze_1h">Snooze 1h</string>
+    <string name="notif_snooze_5m">Snooze 5m</string>
+    <string name="notif_snooze_1m">Snooze 1m</string>
+    <string name="notif_open">Open</string>
+    <string name="notif_undo">Undo</string>
+    <string name="notif_confirm_done">Done</string>
+    <string name="notif_confirm_prepared">Prepared</string>
+    <!-- SCH-7: appended to a late alert's body -->
+    <string name="notif_late_suffix">" · late"</string>
+
+    <!-- Notification channels (copy.md §2) -->
+    <string name="channel_reminders">Reminders</string>
+    <string name="channel_reminders_desc">Alerts for your reminders</string>
+    <string name="channel_nag">Nagging reminders</string>
+    <string name="channel_nag_desc">Repeat alerts until you mark something done</string>
+    <string name="channel_digest">Daily digest</string>
+    <string name="channel_digest_desc">Your morning summary of overdue and upcoming items</string>
+    <string name="channel_system">App status</string>
+    <string name="channel_system_desc">Late alerts, time zone changes, reliability tips</string>
+
+    <!-- Home-screen widget (mockup 05) -->
+    <string name="widget_add_label">Add</string>
+    <plurals name="widget_left">
+        <item quantity="one">%d left</item>
+        <item quantity="other">%d left</item>
+    </plurals>
+</resources>

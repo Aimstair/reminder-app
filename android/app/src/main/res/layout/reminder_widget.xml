@@ -1,64 +1,111 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- S-61 home-screen widget: [+] quick add and the next 3 reminders. -->
+<!-- S-61 home-screen widget (mockup 05): MON 5 · N left, the next 3 items with type-colored bars,
+     big [+ Add] on the right. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
-    android:orientation="vertical"
-    android:padding="14dp">
+    android:orientation="horizontal"
+    android:padding="16dp">
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="bottom"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/widget_day"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/widget_accent"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:textColor="@color/widget_text"
+                android:textSize="26sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_left"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:paddingBottom="4dp"
+                android:textColor="@color/widget_text_secondary"
+                android:textSize="14sp" />
+        </LinearLayout>
 
         <TextView
-            android:layout_width="0dp"
+            android:id="@+id/widget_empty"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/widget_title"
-            android:textColor="@color/widget_text"
+            android:layout_marginTop="10dp"
+            android:text="@string/widget_empty"
+            android:textColor="@color/widget_text_secondary"
+            android:textSize="13sp" />
+
+        <LinearLayout android:id="@+id/widget_row1" style="@style/WidgetRow">
+            <ImageView android:id="@+id/widget_row1_bar" style="@style/WidgetBar" />
+            <LinearLayout style="@style/WidgetRowText">
+                <TextView android:id="@+id/widget_row1_title" style="@style/WidgetRowTitle" />
+                <TextView android:id="@+id/widget_row1_when" style="@style/WidgetRowWhen" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/widget_row2" style="@style/WidgetRow">
+            <ImageView android:id="@+id/widget_row2_bar" style="@style/WidgetBar" />
+            <LinearLayout style="@style/WidgetRowText">
+                <TextView android:id="@+id/widget_row2_title" style="@style/WidgetRowTitle" />
+                <TextView android:id="@+id/widget_row2_when" style="@style/WidgetRowWhen" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/widget_row3" style="@style/WidgetRow">
+            <ImageView android:id="@+id/widget_row3_bar" style="@style/WidgetBar" />
+            <LinearLayout style="@style/WidgetRowText">
+                <TextView android:id="@+id/widget_row3_title" style="@style/WidgetRowTitle" />
+                <TextView android:id="@+id/widget_row3_when" style="@style/WidgetRowWhen" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/widget_add"
+        android:layout_width="96dp"
+        android:layout_height="match_parent"
+        android:layout_marginStart="12dp"
+        android:background="@drawable/widget_add_tall"
+        android:contentDescription="@string/widget_add"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_add" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/widget_add_label"
+            android:textColor="#FFFFFFFF"
             android:textSize="15sp"
             android:textStyle="bold" />
-
-        <ImageButton
-            android:id="@+id/widget_add"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:background="@drawable/widget_add_background"
-            android:contentDescription="@string/widget_add"
-            android:src="@drawable/ic_add" />
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/widget_empty"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="@string/widget_empty"
-        android:textColor="@color/widget_text_secondary"
-        android:textSize="13sp" />
-
-    <LinearLayout
-        android:id="@+id/widget_row1"
-        style="@style/WidgetRow">
-        <TextView android:id="@+id/widget_row1_title" style="@style/WidgetRowTitle" />
-        <TextView android:id="@+id/widget_row1_when" style="@style/WidgetRowWhen" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/widget_row2"
-        style="@style/WidgetRow">
-        <TextView android:id="@+id/widget_row2_title" style="@style/WidgetRowTitle" />
-        <TextView android:id="@+id/widget_row2_when" style="@style/WidgetRowWhen" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/widget_row3"
-        style="@style/WidgetRow">
-        <TextView android:id="@+id/widget_row3_title" style="@style/WidgetRowTitle" />
-        <TextView android:id="@+id/widget_row3_when" style="@style/WidgetRowWhen" />
     </LinearLayout>
 </LinearLayout>

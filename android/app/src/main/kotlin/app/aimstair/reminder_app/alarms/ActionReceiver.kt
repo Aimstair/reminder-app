@@ -1,5 +1,6 @@
 package app.aimstair.reminder_app.alarms
 
+import app.aimstair.reminder_app.R
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -30,11 +31,11 @@ class ActionReceiver : BroadcastReceiver() {
         when (action) {
             DONE -> {
                 cancelSiblings(context, key, keepDayOf = false) // OCC-4
-                Notifications.showUndo(context, alarm, "Done") // NTF-9
+                Notifications.showUndo(context, alarm, R.string.notif_confirm_done) // NTF-9
             }
             PREPARED -> {
                 cancelSiblings(context, key, keepDayOf = true) // OCC-3: day-of alert still rings
-                Notifications.showUndo(context, alarm, "Prepared")
+                Notifications.showUndo(context, alarm, R.string.notif_confirm_prepared)
             }
             SNOOZE -> {
                 // NTF-4: snooze delays the alert only, never the due date

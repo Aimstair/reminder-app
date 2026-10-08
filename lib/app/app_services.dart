@@ -6,6 +6,7 @@ import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:intl/intl.dart';
 import 'package:reminder_core/reminder_core.dart';
 
 import '../data/app_database.dart';
@@ -24,6 +25,7 @@ import '../services/calendar_service.dart';
 import '../services/contacts_service.dart';
 import '../services/reminder_service.dart';
 import '../ui/format.dart';
+import '../ui/tokens.dart';
 
 class AppServices {
   AppServices._({
@@ -137,18 +139,25 @@ class AppServices {
     if (p == null) return;
     try {
       final now = DateTime.now().toUtc();
-      final items = ScheduleView(prefs: prefs.current)
-          .build([...await reminders.watchActive().first, ...calendar.reminders], await occurrences.byPlannerId(), now)
-          .where((i) => !i.overdue)
-          .take(3);
+      final schedule = ScheduleView(prefs: prefs.current)
+          .build([...await reminders.watchActive().first, ...calendar.reminders], await occurrences.byPlannerId(), now);
+      final items = schedule.where((i) => !i.overdue).take(3);
+      // "4 left": tasks and occasions still open today (incl. overdue), like the progress ring.
+      final open = schedule
+          .where((i) => i.reminder.completable && (i.group == ScheduleGroup.today || i.group == ScheduleGroup.overdue))
+          .length;
       final f = Fmt(l10n, l10n.localeName);
       final today = dateOnly(instantToWall(now, prefs.deviceTimeZone));
       await p.updateWidget(jsonEncode({
+        'day': DateFormat.E(l10n.localeName).format(today).toUpperCase(), // mockup 05: "MON 5 · 4 left"
+        'date': '${today.day}',
+        'left': open,
         'items': [
           for (final i in items)
             {
               'title': i.reminder.title,
               'when': f.when(i.start, allDay: i.reminder.timing.type == TimingType.date, today: today),
+              'color': AppColors.light.kind(i.reminder.kind).toARGB32(), // widget is light-only
             },
         ],
         'empty': l10n.widgetEmpty,

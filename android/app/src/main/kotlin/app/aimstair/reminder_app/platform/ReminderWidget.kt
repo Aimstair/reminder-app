@@ -13,9 +13,10 @@ import app.aimstair.reminder_app.R
 import org.json.JSONObject
 
 /**
- * S-61 home-screen widget: [+] quick add and the next 3 reminders. Dart pushes the content as JSON
- * (`{"items":[{"title","when"}],"empty":"…"}`) via PlatformHostApi.updateWidget; it is kept in
- * SharedPreferences so the widget can redraw without Flutter.
+ * S-61 home-screen widget (mockup 05): MON 5 · N left, the next 3 reminders with type-colored bars,
+ * a big [+ Add]. Dart pushes the content as JSON
+ * (`{"day","date","left":n,"items":[{"title","when","color"}],"empty":"…"}`) via
+ * PlatformHostApi.updateWidget; it is kept in SharedPreferences so the widget can redraw without Flutter.
  */
 class ReminderWidget : AppWidgetProvider() {
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
@@ -26,10 +27,12 @@ class ReminderWidget : AppWidgetProvider() {
         private const val PREFS = "reminder_widget"
         private const val KEY_JSON = "json"
 
+        private data class Row(val row: Int, val bar: Int, val title: Int, val whenId: Int)
+
         private val rows = listOf(
-            Triple(R.id.widget_row1, R.id.widget_row1_title, R.id.widget_row1_when),
-            Triple(R.id.widget_row2, R.id.widget_row2_title, R.id.widget_row2_when),
-            Triple(R.id.widget_row3, R.id.widget_row3_title, R.id.widget_row3_when),
+            Row(R.id.widget_row1, R.id.widget_row1_bar, R.id.widget_row1_title, R.id.widget_row1_when),
+            Row(R.id.widget_row2, R.id.widget_row2_bar, R.id.widget_row2_title, R.id.widget_row2_when),
+            Row(R.id.widget_row3, R.id.widget_row3_bar, R.id.widget_row3_title, R.id.widget_row3_when),
         )
 
         fun update(context: Context, json: String) {
@@ -58,15 +61,24 @@ class ReminderWidget : AppWidgetProvider() {
             views.setOnClickPendingIntent(R.id.widget_add, launchIntent(context, PendingLaunch.ACTION_CAPTURE, 1))
             views.setOnClickPendingIntent(R.id.widget_root, launchIntent(context, null, 2))
 
+            views.setTextViewText(R.id.widget_day, data.optString("day"))
+            views.setTextViewText(R.id.widget_date, data.optString("date"))
+            val left = data.optInt("left", 0)
+            views.setTextViewText(
+                R.id.widget_left,
+                if (left > 0) context.resources.getQuantityString(R.plurals.widget_left, left, left) else "",
+            )
+
             val count = minOf(items?.length() ?: 0, rows.size)
-            rows.forEachIndexed { i, (row, title, whenId) ->
+            rows.forEachIndexed { i, r ->
                 if (i < count) {
                     val item = items!!.getJSONObject(i)
-                    views.setViewVisibility(row, View.VISIBLE)
-                    views.setTextViewText(title, item.optString("title"))
-                    views.setTextViewText(whenId, item.optString("when"))
+                    views.setViewVisibility(r.row, View.VISIBLE)
+                    views.setTextViewText(r.title, item.optString("title"))
+                    views.setTextViewText(r.whenId, item.optString("when"))
+                    views.setInt(r.bar, "setColorFilter", item.optInt("color", 0xFF007AFF.toInt()))
                 } else {
-                    views.setViewVisibility(row, View.GONE)
+                    views.setViewVisibility(r.row, View.GONE)
                 }
             }
             views.setViewVisibility(R.id.widget_empty, if (count == 0) View.VISIBLE else View.GONE)
