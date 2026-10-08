@@ -1,0 +1,18 @@
+# Dev helper: onboarding "Just type it" (mockup 01). Wipes app data — emulator only.
+appId: app.aimstair.reminder_app
+---
+- launchApp:
+    clearState: true
+    permissions:
+      notifications: allow
+- tapOn:
+    text: "Wait"
+    optional: true
+- extendedWaitUntil:
+    visible: "Get started"
+    timeout: 20000
+- tapOn: "Get started"
+- extendedWaitUntil:
+    visible: "Occasion"
+    timeout: 8000
+- takeScreenshot: onboarding_look

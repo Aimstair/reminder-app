@@ -1523,4 +1523,28 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return 'All clear — I finished $_temp0 today.';
   }
+
+  @override
+  String get obCard1Title => 'Mom\'s birthday';
+
+  @override
+  String get obCard1Sub => 'In 1 week';
+
+  @override
+  String get obCard2Title => 'Pay rent';
+
+  @override
+  String get obCard2Sub => 'Still to do';
+
+  @override
+  String get obCard3Title => 'Client call';
+
+  @override
+  String get obCard3Sub => 'In 10 min';
+
+  @override
+  String get obCard4Title => 'Buy milk';
+
+  @override
+  String get obCard4Sub => 'Tomorrow';
 }

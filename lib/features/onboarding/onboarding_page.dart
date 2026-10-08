@@ -64,6 +64,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     final l10n = AppLocalizations.of(context);
     final c = AppColors.of(context);
     return Scaffold(
+      backgroundColor: c.surface, // white like mockup 01
       body: SafeArea(
         child: Column(
           children: [
@@ -128,6 +129,7 @@ class _Step extends StatelessWidget {
     required this.onPrimary,
     this.secondary,
     this.onSecondary,
+    this.below,
   });
   final String title;
   final String sub;
@@ -137,25 +139,57 @@ class _Step extends StatelessWidget {
   final String? secondary;
   final VoidCallback? onSecondary;
 
+  /// Shown under the title and text (the "Try your own" card on S-01a).
+  final Widget? below;
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final c = AppColors.of(context);
+    final primaryButton = SizedBox(
+      height: 56,
+      child: FilledButton(
+        style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.card + 4))),
+        onPressed: onPrimary,
+        child: Text(primary),
+      ),
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: Space.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(child: Center(child: SingleChildScrollView(child: child))),
-          Text(title, style: text.displaySmall?.copyWith(fontSize: 30), textAlign: TextAlign.center),
+          // Left-aligned, large (mockup 01).
+          Text(title, style: text.displaySmall?.copyWith(fontSize: 34)),
           const SizedBox(height: Space.s),
-          Text(sub, style: text.bodyLarge?.copyWith(color: AppColors.of(context).textSecondary), textAlign: TextAlign.center),
+          Text(sub, style: text.titleMedium?.copyWith(color: c.textSecondary, fontWeight: FontWeight.w400)),
+          if (below != null) ...[const SizedBox(height: Space.l), below!],
           const SizedBox(height: Space.xl),
-          SizedBox(height: 52, child: FilledButton(onPressed: onPrimary, child: Text(primary))),
-          SizedBox(
-            height: 48,
-            child: secondary == null ? null : TextButton(onPressed: onSecondary, child: Text(secondary!)),
-          ),
-          const SizedBox(height: Space.s),
+          if (secondary == null)
+            primaryButton
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 56,
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: c.separator.withValues(alpha: 0.18),
+                        foregroundColor: c.textPrimary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.card + 4)),
+                      ),
+                      onPressed: onSecondary,
+                      child: Text(secondary!),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: Space.m),
+                Expanded(flex: 2, child: primaryButton),
+              ],
+            ),
+          const SizedBox(height: Space.m),
         ],
       ),
     );
@@ -344,6 +378,8 @@ class _JustTypeItState extends ConsumerState<_JustTypeIt> {
             if (p.rrule != null) (AppIcons.repeat, f.repeat(p.rrule, p.repeatMode ?? RecurrenceMode.fixed), c.meeting),
           ];
     final typedDone = _input.text.trim() == l10n.obTypeDemo;
+    final text = Theme.of(context).textTheme;
+    final alerts = p == null ? null : _alertsChip(f, p);
     return _Step(
       title: l10n.obTypeTitle,
       sub: l10n.obTypeSub,
@@ -351,67 +387,174 @@ class _JustTypeItState extends ConsumerState<_JustTypeIt> {
       onPrimary: p != null && canSave(p) && !_saving ? () => _save(p) : null,
       secondary: l10n.actionNext,
       onSecondary: widget.onNext,
-      child: Column(
-        children: [
-          Bell(size: 84, mood: typedDone && _demo ? BellMood.happy : BellMood.thinking),
-          if (typedDone && _demo)
-            Padding(
-              padding: const EdgeInsets.only(top: Space.s),
-              child: Text(l10n.obBellBirthday, style: Theme.of(context).textTheme.bodyMedium),
-            ),
-          const SizedBox(height: Space.l),
-          Material(
-            color: c.surface,
-            borderRadius: BorderRadius.circular(Radii.card),
-            child: TextField(
-              controller: _input,
-              readOnly: _demo,
-              onTap: () {
-                if (_demo) {
-                  _typer?.cancel();
-                  setState(() => _demo = false);
-                  _input.clear();
-                }
-              },
-              style: Theme.of(context).textTheme.bodyLarge,
-              decoration: InputDecoration(
-                hintText: l10n.obTypePlaceholder,
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.all(Space.l),
-              ),
-            ),
-          ),
-          const SizedBox(height: Space.m),
-          Wrap(
-            spacing: Space.s,
-            runSpacing: Space.s,
-            alignment: WrapAlignment.center,
+      // Bell surrounded by example cards (mockup 01). Arguments follow the screen: art, then `below`.
+      // ignore: sort_child_properties_last
+      child: SizedBox(
+        height: 300,
+        child: LayoutBuilder(
+          builder: (context, box) => Stack(
+            alignment: Alignment.center,
             children: [
-              for (final (i, (icon, label, color)) in chips.indexed)
-                TweenAnimationBuilder<double>(
-                  key: ValueKey('$i$label'),
-                  tween: Tween(begin: 0, end: 1),
-                  duration: Duration(milliseconds: 260 + i * 90),
-                  curve: Curves.easeOutBack,
-                  builder: (_, v, child) => Transform.scale(scale: v, child: child),
-                  child: Chip(
-                    avatar: Icon(icon, size: 16, color: color),
-                    label: Text(label),
-                    backgroundColor: color.withValues(alpha: 0.12),
-                    side: BorderSide.none,
-                  ),
-                ),
+              Container(width: 270, height: 270, decoration: BoxDecoration(color: c.event.withValues(alpha: 0.10), shape: BoxShape.circle)),
+              Container(width: 200, height: 200, decoration: BoxDecoration(color: c.event.withValues(alpha: 0.14), shape: BoxShape.circle)),
+              Bell(size: 150, mood: typedDone && _demo ? BellMood.happy : BellMood.calm),
+              _FloatCard(left: 0, top: 4, angle: -0.06, icon: AppIcons.gift, color: c.occasion, title: l10n.obCard1Title, sub: l10n.obCard1Sub),
+              _FloatCard(right: 0, top: 70, angle: 0.06, icon: AppIcons.bill, color: c.event, title: l10n.obCard2Title, sub: l10n.obCard2Sub),
+              _FloatCard(left: 8, bottom: 40, angle: 0.04, icon: AppIcons.video, color: c.meeting, title: l10n.obCard3Title, sub: l10n.obCard3Sub),
+              _FloatCard(right: 12, bottom: 0, angle: -0.06, icon: AppIcons.bag, color: c.task, title: l10n.obCard4Title, sub: l10n.obCard4Sub),
             ],
           ),
-          if (_demo && typedDone)
-            TextButton(
-              onPressed: () {
-                setState(() => _demo = false);
-                _input.clear();
-              },
-              child: Text(l10n.obTryOwn),
+        ),
+      ),
+      below: Container(
+        padding: const EdgeInsets.all(Space.l),
+        decoration: BoxDecoration(color: c.separator.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(Radii.sheet)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.obTryOwn, style: text.titleSmall?.copyWith(color: c.textSecondary, fontWeight: FontWeight.w600)),
+            const SizedBox(height: Space.s),
+            Container(
+              decoration: BoxDecoration(
+                color: c.surface,
+                borderRadius: BorderRadius.circular(Radii.card),
+                border: Border.all(color: c.accent, width: 2),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _input,
+                      readOnly: _demo,
+                      onTap: () {
+                        if (_demo) {
+                          _typer?.cancel();
+                          setState(() => _demo = false);
+                          _input.clear();
+                        }
+                      },
+                      style: text.bodyLarge,
+                      decoration: InputDecoration(
+                        hintText: l10n.obTypePlaceholder,
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: Space.l, vertical: Space.m),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: Space.s),
+                    child: IconButton.filledTonal(
+                      style: IconButton.styleFrom(backgroundColor: c.accent.withValues(alpha: 0.12)),
+                      onPressed: null,
+                      icon: Icon(AppIcons.mic, color: c.accent),
+                    ),
+                  ),
+                ],
+              ),
             ),
-        ],
+            const SizedBox(height: Space.m),
+            Wrap(
+              spacing: Space.s,
+              runSpacing: Space.s,
+              children: [
+                for (final (i, (icon, label, color, tinted)) in [...chips.map((x) => (x.$1, x.$2, x.$3, x == chips.first)), if (alerts != null) (AppIcons.alert, alerts, c.textPrimary, false)].indexed)
+                  TweenAnimationBuilder<double>(
+                    key: ValueKey('$i$label'),
+                    tween: Tween(begin: 0, end: 1),
+                    duration: Duration(milliseconds: 260 + i * 90),
+                    curve: Curves.easeOutBack,
+                    builder: (_, v, child) => Transform.scale(scale: v, child: child),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: Space.m, vertical: Space.s),
+                      decoration: BoxDecoration(
+                        color: tinted ? color.withValues(alpha: 0.14) : c.surface,
+                        borderRadius: BorderRadius.circular(Radii.row),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(icon, size: 16, color: tinted ? color : c.textPrimary),
+                          const SizedBox(width: 6),
+                          Text(label, style: text.titleSmall?.copyWith(color: tinted ? color : c.textPrimary, fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// "1 week · 1 day · on the day" (mockup 01): the alert plan without "before".
+  String _alertsChip(Fmt f, ParseResult p) {
+    final allDay = p.timing?.type != TimingType.datetime;
+    final plan = p.alerts?.map((o) => AlertStage(AlertOffset.parse(o))).toList() ??
+        ref.read(prefsProvider).alertPlanFor(p.kind, p.timing?.type ?? TimingType.date);
+    return plan.map((s) {
+      final o = s.offset;
+      if (o.amount == 0) return f.offset(o, allDay: allDay);
+      return f.offset(AlertOffset(o.amount.abs(), o.unit), allDay: allDay); // positive → no "before"
+    }).join(' · ');
+  }
+}
+
+/// Floating example card around the bell (mockup 01).
+class _FloatCard extends StatelessWidget {
+  const _FloatCard({
+    this.left,
+    this.right,
+    this.top,
+    this.bottom,
+    required this.angle,
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.sub,
+  });
+  final double? left, right, top, bottom;
+  final double angle;
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String sub;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final text = Theme.of(context).textTheme;
+    return Positioned(
+      left: left,
+      right: right,
+      top: top,
+      bottom: bottom,
+      child: Transform.rotate(
+        angle: angle,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(Space.s, Space.s, Space.l, Space.s),
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(Radii.card),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 14, offset: const Offset(0, 4))],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconTile(icon: icon, color: color, size: 34),
+              const SizedBox(width: Space.s),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(title, style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                  Text(sub, style: text.labelSmall),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

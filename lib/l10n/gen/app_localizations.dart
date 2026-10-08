@@ -2529,6 +2529,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All clear — I finished {count, plural, =1{1 thing} other{{count} things}} today.'**
   String allClearShare(int count);
+
+  /// copy.md §3 S-01a floating example card
+  ///
+  /// In en, this message translates to:
+  /// **'Mom\'s birthday'**
+  String get obCard1Title;
+
+  /// copy.md §3 S-01a floating example card
+  ///
+  /// In en, this message translates to:
+  /// **'In 1 week'**
+  String get obCard1Sub;
+
+  /// copy.md §3 S-01a floating example card
+  ///
+  /// In en, this message translates to:
+  /// **'Pay rent'**
+  String get obCard2Title;
+
+  /// copy.md §3 S-01a floating example card
+  ///
+  /// In en, this message translates to:
+  /// **'Still to do'**
+  String get obCard2Sub;
+
+  /// copy.md §3 S-01a floating example card
+  ///
+  /// In en, this message translates to:
+  /// **'Client call'**
+  String get obCard3Title;
+
+  /// copy.md §3 S-01a floating example card
+  ///
+  /// In en, this message translates to:
+  /// **'In 10 min'**
+  String get obCard3Sub;
+
+  /// copy.md §3 S-01a floating example card
+  ///
+  /// In en, this message translates to:
+  /// **'Buy milk'**
+  String get obCard4Title;
+
+  /// copy.md §3 S-01a floating example card
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow'**
+  String get obCard4Sub;
 }
 
 class _AppLocalizationsDelegate

@@ -529,5 +529,21 @@
   "actionPlanTomorrow": "Plan tomorrow",
   "@actionPlanTomorrow": {"description":"copy.md §7 All clear screen"},
   "allClearShare": "All clear — I finished {count, plural, =1{1 thing} other{{count} things}} today.",
-  "@allClearShare": {"description":"copy.md §7 All clear screen","placeholders":{"count":{"type":"int"}}}
+  "@allClearShare": {"description":"copy.md §7 All clear screen","placeholders":{"count":{"type":"int"}}},
+  "obCard1Title": "Mom's birthday",
+  "@obCard1Title": {"description": "copy.md §3 S-01a floating example card"},
+  "obCard1Sub": "In 1 week",
+  "@obCard1Sub": {"description": "copy.md §3 S-01a floating example card"},
+  "obCard2Title": "Pay rent",
+  "@obCard2Title": {"description": "copy.md §3 S-01a floating example card"},
+  "obCard2Sub": "Still to do",
+  "@obCard2Sub": {"description": "copy.md §3 S-01a floating example card"},
+  "obCard3Title": "Client call",
+  "@obCard3Title": {"description": "copy.md §3 S-01a floating example card"},
+  "obCard3Sub": "In 10 min",
+  "@obCard3Sub": {"description": "copy.md §3 S-01a floating example card"},
+  "obCard4Title": "Buy milk",
+  "@obCard4Title": {"description": "copy.md §3 S-01a floating example card"},
+  "obCard4Sub": "Tomorrow",
+  "@obCard4Sub": {"description": "copy.md §3 S-01a floating example card"}
 }
