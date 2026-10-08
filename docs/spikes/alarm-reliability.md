@@ -28,6 +28,25 @@
 
 **Fire log summary:** 12 on time · 1 late (intended) · 1 missed (intended). Real alarms: max delay **0.2 s**.
 
+## v1.0 build — Samsung Galaxy A73 (Android 15), release, 2026-10-08
+Real reminders created through the app (share target → capture → Save), not spike buttons. Delays from the native fire log.
+
+| Test (docs/testing.md §3) | Battery setting | Result |
+|---|---|---|
+| R1 Foreground | Unrestricted | ✅ 0.0 s |
+| R2 Background | Unrestricted | ✅ 0.0 s |
+| R3 Swiped away from Recents | Unrestricted | ✅ 0.0 s |
+| R4 Deep Doze (forced via `dumpsys deviceidle force-idle`, unplugged) | Unrestricted | ✅ 0.0 s, still IDLE when fired |
+| R14 App updated (`adb install -r`), app not opened | Unrestricted | ✅ same alarms registered before/after |
+| R9 Exact alarms revoked (`appops --uid … deny`) | **Default** | ✅ re-registered inexact (+10 min window), banner G3 shown; fired 7 min 47 s late. Re-grant → native receiver re-registered exact without opening the app |
+| R13 50 alarms at the same minute | Default | ⚠️ 50/50 alarms fired and 50/50 `notify()` calls at 09:40:00; Android showed **48** — its ~50-active-notifications-per-app cap was reached (other app notifications were still in the shade). Grouped under one summary (`SCH-10`) ✅ |
+| R10 Notifications off (`pm revoke POST_NOTIFICATIONS`) | Default | ✅ no crash; banner G2; digest "1 alert wasn't shown" |
+
+Notes:
+- With battery **Unrestricted**, Android allows exact alarms even without `SCHEDULE_EXACT_ALARM` (`exactAllowReason=allow-listed`), so R9 must run with the default battery setting.
+- Device time zone can't be changed over adb on Android 15 (`SUGGEST_MANUAL_TIME_AND_ZONE` required) — R8 is manual.
+- **Bug found and fixed:** the `ALR-6` anchor fallback was re-applied on every re-plan, so after an Event/Meeting's last alert fired, a second alert was added at the start time. Now applied only when all stages were already past at the last save.
+
 ## Still to do (before v1.0 exit criteria)
 - Run the same script on **Pixel** and **Xiaomi/Redmi** (most aggressive battery management) — via beta testers if no device is available
 - Confirm results with the **default battery setting** vs "Unrestricted" (record which was used)

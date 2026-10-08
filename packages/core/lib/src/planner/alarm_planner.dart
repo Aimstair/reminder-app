@@ -173,8 +173,14 @@ class AlarmPlanner {
       if (inWindow(at) && !sent.contains(key)) out.add(make(key, at, AlertKind.stage, stage: stages[i]));
     }
 
-    // ALR-6: every stage already past but the occurrence is still ahead → one alert at the anchor.
-    if (stages.isNotEmpty && fires.every((f) => !f.isAfter(now)) && times.anchor.isAfter(now)) {
+    // ALR-6: every stage was already past when the reminder (or this occurrence) was last saved, and
+    // the occurrence is still ahead → one alert at the anchor. Stages that passed after saving have
+    // fired (or were missed) — no fallback then, or every alert would ring twice.
+    final edited = occ != null && (occ.overrideStart != null || occ.overrideAlertPlan != null);
+    final savedAt = edited && occ.meta.updatedAt.isAfter(r.meta.updatedAt) ? occ.meta.updatedAt : r.meta.updatedAt;
+    if (stages.isNotEmpty &&
+        fires.every((f) => !f.isAfter(savedAt) && !f.isAfter(now)) &&
+        times.anchor.isAfter(now)) {
       final key = '$occId:anchor:0';
       if (inWindow(times.anchor) && !sent.contains(key)) out.add(make(key, times.anchor, AlertKind.anchorFallback));
     }

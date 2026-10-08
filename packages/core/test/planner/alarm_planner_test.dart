@@ -110,6 +110,21 @@ void main() {
     expect(alarms.map((a) => (a.key, _local(a.fireAt))), [('soon~202610051430:anchor:0', '2026-10-05T14:30')]);
   });
 
+  test('ALR-6 no anchor fallback when the stages passed after saving (they fired)', () {
+    // Event at 15:00 with a −1h alert, saved at 13:00; the 14:00 alert has fired, now 14:10.
+    final saved = _now.subtract(const Duration(hours: 1));
+    final event = Reminder(
+      meta: RecordMeta(id: 'ev', createdAt: saved, updatedAt: saved, deviceId: 'd'),
+      title: 'ev',
+      kind: Kind.event,
+      context: ReminderContext.personal,
+      timing: _dt(2026, 10, 5, 15, 0),
+      alertPlan: const [AlertStage(AlertOffset(-1, OffsetUnit.hours))],
+    );
+    final later = _at(2026, 10, 5, 14, 10);
+    expect(_planner().plan([event], {}, later), isEmpty);
+  });
+
   test('SCH-6 alerts already shown are not planned again', () {
     final mom = _r('mom', Kind.occasion, _date(2026, 10, 12), rrule: 'FREQ=YEARLY');
     final start = DateTime.utc(2026, 10, 12);
