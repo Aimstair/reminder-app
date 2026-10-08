@@ -84,8 +84,11 @@ class Fmt {
 
   /// One stage: "At time", "10 min before", "1 week before".
   /// [allDay]: a zero offset on a date-only item reads "on the day" (copy.md §4).
-  String offset(AlertOffset o, {bool allDay = false}) {
+  String offset(AlertOffset offset, {bool allDay = false}) {
+    var o = offset;
     if (o.amount == 0) return allDay ? l10n.alertOnTheDay : l10n.alertAtTime;
+    // Whole weeks read as weeks: −7 days → "1 week before" (copy.md §4).
+    if (o.unit == OffsetUnit.days && o.amount % 7 == 0) o = AlertOffset(o.amount ~/ 7, OffsetUnit.weeks);
     final n = o.amount.abs();
     final rel = switch (o.unit) {
       OffsetUnit.minutes => l10n.relMinutes(n),

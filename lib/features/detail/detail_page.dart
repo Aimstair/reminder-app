@@ -1,5 +1,7 @@
-/// S-30 Reminder detail and S-31 Calendar event detail (+ S-32 Remind me). Colored banner header in
-/// the type color with overlapping stat cards (DS11).
+/// S-30 Reminder detail and S-31 Calendar event detail (+ S-32 Remind me) — built to mockup
+/// `docs/design/mockups/04-occasion-detail.png` (DS11): pastel banner in the type color with back
+/// link, Edit, chips, title + date line and the item's art; three stat cards overlapping it; a
+/// Nudges timeline (Sent · Next · Day-of); notes; source card; big type-colored action at the bottom.
 library;
 
 import 'package:flutter/material.dart';
@@ -7,37 +9,50 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:reminder_core/reminder_core.dart';
 
+import '../../app/home_shell.dart' show HomeShell;
 import '../../app/providers.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../ui/format.dart';
+import '../../ui/icons.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
 import '../actions/occurrence_actions.dart';
 import '../editor/editor_page.dart';
-import '../../ui/icons.dart';
+import '../pickers/pickers.dart' show pickAlerts;
 
 /// One occurrence of one reminder, resolved for display.
 class DetailData {
-  const DetailData({required this.reminder, required this.key, this.occurrence, required this.times});
+  const DetailData({
+    required this.reminder,
+    required this.key,
+    this.occurrence,
+    required this.times,
+    required this.doneKeys,
+  });
   final Reminder reminder;
   final DateTime key;
   final Occurrence? occurrence;
   final OccurrenceTimes times;
 
+  /// Occurrence keys of this reminder that were completed (history card, DS13).
+  final List<DateTime> doneKeys;
+
   OccurrenceState get state => occurrence?.state ?? OccurrenceState.pending;
 }
 
 final detailProvider = Provider.family<DetailData?, ({String id, DateTime key})>((ref, a) {
-  final all = [
-    ...?ref.watch(allRemindersProvider).value,
-    ...?ref.watch(calendarRemindersProvider).value,
-  ];
+  final all = [...?ref.watch(allRemindersProvider).value, ...?ref.watch(calendarRemindersProvider).value];
   final r = all.where((x) => x.id == a.id).firstOrNull;
   if (r == null) return null;
-  final occ = ref.watch(occurrencesProvider).value?[AlarmPlanner.occurrenceId(r.id, a.key)];
+  final saved = ref.watch(occurrencesProvider).value ?? const <String, Occurrence>{};
+  final occ = saved[AlarmPlanner.occurrenceId(r.id, a.key)];
   final prefs = ref.watch(prefsProvider);
   final times = OccurrenceTimes.of(r, occ?.overrideStart ?? a.key, prefs, overrideEnd: occ?.overrideEnd);
-  return DetailData(reminder: r, key: a.key, occurrence: occ, times: times);
+  final doneKeys = [
+    for (final o in saved.values)
+      if (o.reminderId == r.id && o.state == OccurrenceState.done) o.occurrenceKey,
+  ]..sort((x, y) => y.compareTo(x));
+  return DetailData(reminder: r, key: a.key, occurrence: occ, times: times, doneKeys: doneKeys);
 });
 
 class DetailPage extends ConsumerWidget {
@@ -50,174 +65,152 @@ class DetailPage extends ConsumerWidget {
     final d = ref.watch(detailProvider((id: reminderId, key: occurrenceKey)));
     final l10n = AppLocalizations.of(context);
     if (d == null) {
-      return Scaffold(appBar: AppBar(), body: EmptyState(title: l10n.errGeneric));
+      return Scaffold(
+        appBar: AppBar(),
+        body: EmptyState(title: l10n.errGeneric),
+      );
     }
     final r = d.reminder;
     final c = AppColors.of(context);
-    final color = c.kind(r.kind);
     final f = Fmt.of(context);
     final prefs = ref.watch(prefsProvider);
     final now = ref.watch(nowProvider).value ?? DateTime.now().toUtc();
+    final today = ref.watch(todayProvider);
     final device = prefs.deviceTimeZone;
     final allDay = r.timing.type == TimingType.date;
     final startLocal = allDay ? dateOnly(d.times.start) : instantToWall(d.times.anchor, device);
-    final endLocal = !allDay && d.times.end.isAfter(d.times.anchor) ? instantToWall(d.times.end, device) : null;
     final overdue = d.times.isOverdue(r, d.state, now);
     final state = d.times.shouldPass(r, d.state, now) ? OccurrenceState.passed : d.state;
     final resolved = state.isResolved;
-    // A pending snooze says when it rings again, even if the item is already past due (NTF-4).
-    final snoozedUntil = state == OccurrenceState.snoozed && (d.occurrence?.snoozedUntil?.isAfter(now) ?? false)
-        ? d.occurrence!.snoozedUntil!
-        : null;
-    final actions = OccurrenceActions(context, ref);
     final zone = r.timing.timeZone;
     final otherZone = !allDay && zone != null && zone != device;
+    final plan = d.occurrence?.overrideAlertPlan ?? r.alertPlan;
+
+    // Stat cards: time to go · nudges sent · history (DS13) or status.
+    final planner = AlarmPlanner(prefs: prefs, text: (_) => (title: '', body: ''));
+    final fires = [for (final s in plan) (stage: s, at: planner.fireTime(r, d.times, s))]
+      ..sort((a, b) => a.at.compareTo(b.at));
+    final sent = fires.where((x) => !x.at.isAfter(now)).length;
+    final days = dateOnly(startLocal).difference(today).inDays;
+    final yearly = (r.rrule ?? '').contains('FREQ=YEARLY');
+    final doneCount = d.doneKeys.length;
 
     return Scaffold(
+      backgroundColor: c.bgGrouped,
       body: CustomScrollView(
         slivers: [
-          SliverAppBar(
-            pinned: true,
-            expandedHeight: 210,
-            backgroundColor: color,
-            foregroundColor: Colors.white,
-            actions: [
-              if (!r.isCalendarEvent && !resolved)
-                IconButton(
-                  tooltip: l10n.actionEdit,
-                  icon: const Icon(AppIcons.edit),
-                  onPressed: () => openEditor(context, ref, r, d.key),
-                ),
-              if (!r.isCalendarEvent)
-                IconButton(
-                  tooltip: l10n.actionDelete,
-                  icon: const Icon(AppIcons.delete),
-                  onPressed: () async {
-                    if (await actions.delete(r, d.key) && context.mounted) context.pop();
-                  },
-                ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              collapseMode: CollapseMode.parallax,
-              background: _Banner(reminder: r, color: color),
-            ),
-          ),
+          // Banner and stat cards in one box so the cards paint over the banner's bottom edge.
           SliverToBoxAdapter(
-            child: Transform.translate(
-              offset: const Offset(0, -Space.l),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: Space.l),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _StatCard(
-                        label: l10n.detailWhen,
-                        value: allDay ? f.date(startLocal) : '${f.date(startLocal)}\n${f.time(startLocal)}',
-                      ),
+            child: Column(
+              children: [
+                _Banner(data: d, startLocal: startLocal, allDay: allDay),
+                Transform.translate(
+                  offset: const Offset(0, -Space.xxxl),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: Space.l),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: days > 0 && !resolved
+                              ? _StatCard(value: '$days', label: l10n.statDaysToGo(days), color: c.kind(r.kind))
+                              : overdue && days < 0
+                              ? _StatCard(value: '${-days}', label: l10n.statDaysLate(-days), color: c.danger)
+                              : _StatCard(
+                                  value: allDay ? l10n.groupToday : f.time(startLocal),
+                                  label: allDay ? l10n.allDay.toLowerCase() : l10n.groupToday.toLowerCase(),
+                                  color: c.kind(r.kind),
+                                  small: true,
+                                ),
+                        ),
+                        const SizedBox(width: Space.m),
+                        Expanded(
+                          child: _StatCard(value: '$sent', suffix: '/${fires.length}', label: l10n.statNudgesSent),
+                        ),
+                        const SizedBox(width: Space.m),
+                        Expanded(
+                          child: r.repeats
+                              ? _StatCard(
+                                  value: '$doneCount',
+                                  label: yearly ? l10n.statYearsDone(doneCount) : l10n.statTimesDone(doneCount),
+                                  color: c.success,
+                                )
+                              : _StatCard(
+                                  value: f.state(state, overdue: overdue),
+                                  label: l10n.statStatus,
+                                  color: overdue ? c.danger : (resolved ? c.success : null),
+                                  small: true,
+                                ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: Space.m),
-                    Expanded(
-                      child: _StatCard(
-                        label: l10n.detailStatus,
-                        value: snoozedUntil != null
-                            ? l10n.stateSnoozedUntil(f.time(instantToWall(snoozedUntil, device)))
-                            : f.state(state, overdue: overdue),
-                        color: snoozedUntil != null ? c.warning : (overdue ? c.danger : (resolved ? c.success : null)),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
           if (_duplicate(ref, r, d) case final dup?)
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: Space.s),
-                child: _DuplicateBanner(reminder: r, event: dup),
-              ),
+              child: _DuplicateBanner(reminder: r, event: dup),
             ),
           SliverToBoxAdapter(
-            child: InsetGroup(
-              indent: 56,
-              children: [
-                FormRow(
-                  icon: AppIcons.time,
-                  color: c.accent,
-                  label: l10n.detailWhen,
-                  value: f.when(startLocal, allDay: allDay, end: endLocal),
-                ),
-                if (otherZone)
-                  FormRow(
-                    icon: AppIcons.timeZone,
-                    color: c.meeting,
-                    label: l10n.detailTimeZone,
-                    value: l10n.zoneNote(f.time(d.occurrence?.overrideStart ?? d.key), Fmt.city(zone)), // TIM-6
-                  ),
-                FormRow(
-                  icon: AppIcons.repeat,
-                  color: c.meeting,
-                  label: l10n.rowRepeat,
-                  value: f.repeat(r.rrule, r.repeatMode),
-                ),
-                FormRow(
-                  icon: AppIcons.alerts,
-                  color: c.warning,
-                  label: l10n.rowAlerts,
-                  value: f.alerts(d.occurrence?.overrideAlertPlan ?? r.alertPlan, allDay: allDay),
-                  onTap: r.isCalendarEvent ? () => remindMeFlow(context, ref, r) : null,
-                ),
-                if (r.nagInterval != null)
-                  FormRow(
-                    icon: AppIcons.nag,
-                    color: c.success,
-                    label: l10n.rowNag,
-                    value: l10n.nagEvery(f.duration(r.nagInterval!)),
-                  ),
-                if (r.isCalendarEvent)
-                  FormRow(
-                    icon: AppIcons.calendar,
-                    color: c.event,
-                    label: l10n.detailFromCalendar(ref.read(servicesProvider).calendar.calendarFor(r)?.name ?? ''),
-                  ),
-                if (r.source is ContactSource) _ContactRow(source: r.source as ContactSource),
-              ],
+            child: _NudgesCard(
+              reminder: r,
+              fires: fires,
+              now: now,
+              allDay: allDay,
+              prepared: state == OccurrenceState.prepared,
+              onChange: r.isCalendarEvent
+                  ? () => remindMeFlow(context, ref, r)
+                  : (resolved ? null : () => _changeAlerts(context, ref, r, plan)),
             ),
           ),
-          if ((r.notes ?? '').isNotEmpty) ...[
-            SliverToBoxAdapter(child: GroupCaption(l10n.detailNotes)),
+          if (otherZone)
             SliverToBoxAdapter(
-              child: InsetGroup(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(Space.l),
-                    child: SelectableText(r.notes!, style: Theme.of(context).textTheme.bodyLarge),
-                  ),
-                ],
+              child: _InfoCard(
+                icon: AppIcons.timeZone,
+                text: l10n.zoneNote(f.time(d.occurrence?.overrideStart ?? d.key), Fmt.city(zone)), // TIM-6
               ),
             ),
-          ],
+          if ((r.notes ?? '').isNotEmpty)
+            SliverToBoxAdapter(
+              child: _InfoCard(icon: AppIcons.chat, text: r.notes!, selectable: true),
+            ),
+          if (r.source is ContactSource)
+            SliverToBoxAdapter(
+              child: _ContactCard(reminder: r, doneKeys: d.doneKeys),
+            )
+          else if (r.isCalendarEvent)
+            SliverToBoxAdapter(
+              child: _InfoCard(
+                icon: AppIcons.calendar,
+                text: l10n.detailFromCalendar(ref.read(servicesProvider).calendar.calendarFor(r)?.name ?? ''),
+              ),
+            ),
           if (r.isCalendarEvent) ...[
             SliverToBoxAdapter(child: GroupCaption(l10n.fieldType)),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: Space.l),
-                child: SegmentedButton<Kind>(
-                  showSelectedIcon: false,
-                  segments: [
-                    for (final k in Kind.values) ButtonSegment(value: k, label: Text(f.kind(k))),
-                  ],
-                  selected: {r.kind},
-                  onSelectionChanged: (s) => ref.read(servicesProvider).calendar.correct(r, kind: s.first), // CAL-5
+                child: SegmentedPills<Kind>(
+                  items: [for (final k in Kind.values) (value: k, label: f.kind(k), dot: c.kind(k))],
+                  selected: r.kind,
+                  onChanged: (k) => ref.read(servicesProvider).calendar.correct(r, kind: k), // CAL-5
                 ),
               ),
             ),
           ],
-          SliverToBoxAdapter(child: _Actions(data: d, state: state, overdue: overdue)),
           const SliverToBoxAdapter(child: SizedBox(height: Space.xxxl)),
         ],
       ),
+      bottomNavigationBar: _Actions(data: d, state: state, overdue: overdue),
     );
+  }
+
+  /// Change the alert plan from the Nudges card (S-21g); repeating items keep it for the series.
+  static Future<void> _changeAlerts(BuildContext context, WidgetRef ref, Reminder r, List<AlertStage> plan) async {
+    final v = await pickAlerts(context, plan);
+    if (v == null) return;
+    await ref.read(servicesProvider).service.edit(r.copyWith(alertPlan: v));
   }
 
   /// CAL-9: manual reminder that looks like an imported event.
@@ -255,123 +248,445 @@ Future<void> remindMeFlow(BuildContext context, WidgetRef ref, Reminder r) async
   await s.service.resync();
 }
 
-class _Banner extends StatelessWidget {
-  const _Banner({required this.reminder, required this.color});
-  final Reminder reminder;
-  final Color color;
+/// Pastel header (mockup 04): back link · Edit, type/context chips, title, date line, the item's art.
+class _Banner extends ConsumerWidget {
+  const _Banner({required this.data, required this.startLocal, required this.allDay});
+  final DetailData data;
+  final DateTime startLocal;
+  final bool allDay;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final c = AppColors.of(context);
     final f = Fmt.of(context);
     final text = Theme.of(context).textTheme;
-    final r = reminder;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [color, Color.lerp(color, Colors.black, 0.18)!],
-        ),
-      ),
-      child: Stack(
-        children: [
-          // Large faint glyph as the illustration layer.
-          Positioned(
-            right: -24,
-            bottom: -8,
-            child: Icon(kindIcon(r.kind), size: 170, color: Colors.white.withValues(alpha: 0.16)),
-          ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(Space.l, 56, Space.l, Space.xxxl),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Wrap(
-                    spacing: Space.s,
-                    children: [
-                      _Chip(text: f.kind(r.kind)),
-                      _Chip(text: f.context(r.context)),
-                    ],
-                  ),
-                  const SizedBox(height: Space.s),
-                  Text(
-                    r.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: text.titleLarge?.copyWith(color: Colors.white, fontSize: 26),
-                  ),
-                ],
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final r = data.reminder;
+    final color = c.kind(r.kind);
+    final deep = Color.lerp(color, dark ? Colors.white : Colors.black, 0.3)!;
+    final resolved = data.state.isResolved;
+    final actions = OccurrenceActions(context, ref);
+    final when = allDay ? f.date(startLocal) : '${f.date(startLocal)} · ${f.time(startLocal)}';
+    final line = r.rrule == null ? when : '$when · ${f.repeat(r.rrule, r.repeatMode)}';
+    final art = r.kind == Kind.occasion ? AppIcons.giftSolid : glyphIcon(glyphFor(r));
+    return Container(
+      color: Color.alphaBlend(color.withValues(alpha: dark ? 0.24 : 0.14), c.surface),
+      padding: const EdgeInsets.only(bottom: Space.xxxl + Space.l),
+      child: SafeArea(
+        bottom: false,
+        child: Stack(
+          children: [
+            // Soft circle + the item's art on the right.
+            Positioned(
+              right: -40,
+              top: -20,
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
               ),
             ),
-          ),
-        ],
+            Positioned(
+              right: Space.xl,
+              top: 64,
+              child: Icon(art, size: 96, color: color),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    TextButton.icon(
+                      style: TextButton.styleFrom(foregroundColor: deep),
+                      onPressed: () => context.canPop() ? context.pop() : context.go('/'),
+                      icon: const Icon(AppIcons.previous, size: 20),
+                      label: Text(
+                        HomeShell.viewName(l10n, ref.read(homeProvider).view),
+                        style: text.titleMedium?.copyWith(color: deep),
+                      ),
+                    ),
+                    const Spacer(),
+                    if (!r.isCalendarEvent && !resolved)
+                      TextButton(
+                        style: TextButton.styleFrom(foregroundColor: deep),
+                        onPressed: () => openEditor(context, ref, r, data.key),
+                        child: Text(l10n.actionEdit, style: text.titleMedium?.copyWith(color: deep)),
+                      ),
+                    if (!r.isCalendarEvent)
+                      IconButton(
+                        tooltip: l10n.actionDelete,
+                        color: deep,
+                        icon: const Icon(AppIcons.delete),
+                        onPressed: () async {
+                          if (await actions.delete(r, data.key) && context.mounted) context.pop();
+                        },
+                      ),
+                    const SizedBox(width: Space.xs),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(Space.l, Space.l, 140, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: Space.s,
+                        children: [
+                          _Chip(text: f.kind(r.kind).toUpperCase(), color: deep),
+                          _Chip(text: f.context(r.context).toUpperCase(), color: c.textSecondary),
+                        ],
+                      ),
+                      const SizedBox(height: Space.m),
+                      Text(
+                        r.title,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: text.displaySmall?.copyWith(fontSize: 30),
+                      ),
+                      const SizedBox(height: Space.xs),
+                      Text(
+                        line,
+                        style: text.titleMedium?.copyWith(color: deep, fontWeight: FontWeight.w400),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _Chip extends StatelessWidget {
-  const _Chip({required this.text});
+  const _Chip({required this.text, required this.color});
   final String text;
+  final Color color;
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: 0.22),
-      borderRadius: BorderRadius.circular(Radii.chip),
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+    decoration: BoxDecoration(color: AppColors.of(context).surface, borderRadius: BorderRadius.circular(Radii.chip)),
+    child: Text(
+      text,
+      style: Theme.of(context).textTheme.labelMedium
+          ?.copyWith(color: color, fontWeight: FontWeight.w700, letterSpacing: 0.4),
     ),
-    child: Text(text, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
   );
 }
 
+/// Overlapping stat card (mockup 04): big number (optionally "/n"), small label.
 class _StatCard extends StatelessWidget {
-  const _StatCard({required this.label, required this.value, this.color});
-  final String label;
+  const _StatCard({required this.value, required this.label, this.suffix, this.color, this.small = false});
   final String value;
+  final String? suffix;
+  final String label;
   final Color? color;
+
+  /// Words instead of a number ("Today", "Overdue") — a smaller size so they fit.
+  final bool small;
 
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final text = Theme.of(context).textTheme;
+    final big = (small ? text.titleLarge : text.displaySmall)?.copyWith(
+      color: color ?? c.textPrimary,
+      fontWeight: FontWeight.w700,
+    );
     return Container(
+      height: 92,
       padding: const EdgeInsets.all(Space.m),
       decoration: BoxDecoration(
         color: c.surface,
-        borderRadius: BorderRadius.circular(Radii.card),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 14, offset: const Offset(0, 4))],
+        borderRadius: BorderRadius.circular(Radii.card + 4),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 3))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label.toUpperCase(), style: text.labelSmall),
-          const SizedBox(height: 2),
-          Text(value, style: text.titleMedium?.copyWith(color: color), maxLines: 2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text.rich(
+              TextSpan(
+                text: value,
+                style: big,
+                children: [
+                  if (suffix != null)
+                    TextSpan(
+                      text: suffix,
+                      style: text.titleMedium?.copyWith(color: c.textSecondary),
+                    ),
+                ],
+              ),
+              maxLines: 1,
+            ),
+          ),
+          Text(label, style: text.bodyMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
         ],
       ),
     );
   }
 }
 
-class _ContactRow extends ConsumerWidget {
-  const _ContactRow({required this.source});
-  final ContactSource source;
+/// Nudges timeline (mockup 04): one row per alert stage — dot + line, "1 week before", its date,
+/// a badge (Sent · Next · Day-of); nag line when on; "Change" opens the alert picker.
+class _NudgesCard extends StatelessWidget {
+  const _NudgesCard({
+    required this.reminder,
+    required this.fires,
+    required this.now,
+    required this.allDay,
+    required this.prepared,
+    this.onChange,
+  });
+  final Reminder reminder;
+  final List<({AlertStage stage, DateTime at})> fires;
+  final DateTime now;
+  final bool allDay;
+  final bool prepared;
+  final VoidCallback? onChange;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = AppColors.of(context);
+    final f = Fmt.of(context);
+    final text = Theme.of(context).textTheme;
+    final color = c.kind(reminder.kind);
+    final zone = ProviderScope.containerOf(context, listen: false).read(prefsProvider).deviceTimeZone;
+    final nextIndex = fires.indexWhere((x) => x.at.isAfter(now));
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                l10n.nudgesTitle.toUpperCase(),
+                style: text.labelLarge?.copyWith(color: c.textSecondary, letterSpacing: 0.6),
+              ),
+              const Spacer(),
+              if (onChange != null)
+                TextButton(
+                  style: TextButton.styleFrom(visualDensity: VisualDensity.compact, padding: EdgeInsets.zero),
+                  onPressed: onChange,
+                  child: Text(l10n.actionChange, style: text.titleSmall?.copyWith(color: c.accent)),
+                ),
+            ],
+          ),
+          if (fires.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: Space.s),
+              child: Text(l10n.alertNone, style: text.bodyMedium),
+            ),
+          for (var i = 0; i < fires.length; i++)
+            _NudgeRow(
+              title: () {
+                final s = f.offset(fires[i].stage.offset, allDay: allDay);
+                return s[0].toUpperCase() + s.substring(1);
+              }(),
+              sub: [
+                f.when(instantToWall(fires[i].at, zone), allDay: false),
+                if (reminder.kind == Kind.occasion && fires[i].stage.offset.amount == 0)
+                  l10n.ringsEvenIfPrepared, // OCC-3
+              ].join(' · '),
+              badge: !fires[i].at.isAfter(now)
+                  ? (l10n.badgeSent, c.success)
+                  : i == nextIndex && !(prepared && fires[i].stage.isPrep)
+                  ? (l10n.badgeNext, color)
+                  : reminder.kind == Kind.occasion && fires[i].stage.offset.amount == 0
+                  ? (l10n.badgeDayOf, c.textSecondary)
+                  : null,
+              sentDot: !fires[i].at.isAfter(now),
+              nextDot: i == nextIndex,
+              color: color,
+              first: i == 0,
+              last: i == fires.length - 1,
+            ),
+          if (reminder.nagInterval != null)
+            Padding(
+              padding: const EdgeInsets.only(top: Space.s),
+              child: Text(l10n.nagThen(f.duration(reminder.nagInterval!)), style: text.bodyMedium), // ALR-9
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NudgeRow extends StatelessWidget {
+  const _NudgeRow({
+    required this.title,
+    required this.sub,
+    required this.badge,
+    required this.sentDot,
+    required this.nextDot,
+    required this.color,
+    required this.first,
+    required this.last,
+  });
+  final String title;
+  final String sub;
+  final (String, Color)? badge;
+  final bool sentDot;
+  final bool nextDot;
+  final Color color;
+  final bool first;
+  final bool last;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final text = Theme.of(context).textTheme;
+    final dot = Container(
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: sentDot ? color : Colors.transparent,
+        border: Border.all(color: sentDot || nextDot ? color : c.separator, width: 2.5),
+      ),
+      child: sentDot ? const Icon(AppIcons.check, size: 14, color: Colors.white) : null,
+    );
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: 24,
+            child: Column(
+              children: [
+                Container(
+                  width: 2,
+                  height: Space.m,
+                  color: first ? Colors.transparent : (sentDot ? color : c.separator),
+                ),
+                dot,
+                Expanded(
+                  child: Container(width: 2, color: last ? Colors.transparent : (sentDot ? color : c.separator)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: Space.m),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: Space.s, bottom: Space.s),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: text.titleMedium),
+                  Text(sub, style: text.bodyMedium),
+                ],
+              ),
+            ),
+          ),
+          if (badge case (final label, final bc))
+            Padding(
+              padding: const EdgeInsets.only(top: Space.s + 2, left: Space.s),
+              child: Align(
+                alignment: Alignment.topRight,
+                child: MiniChip(label, color: bc),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// White rounded card with page margins (mockup 04).
+class _Card extends StatelessWidget {
+  const _Card({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(Space.l, 0, Space.l, Space.m),
+    child: Container(
+      padding: const EdgeInsets.all(Space.l),
+      decoration: BoxDecoration(
+        color: AppColors.of(context).surface,
+        borderRadius: BorderRadius.circular(Radii.card + 4),
+      ),
+      child: child,
+    ),
+  );
+}
+
+/// Icon + text card (notes, time zone note, calendar source).
+class _InfoCard extends StatelessWidget {
+  const _InfoCard({required this.icon, required this.text, this.selectable = false});
+  final IconData icon;
+  final String text;
+  final bool selectable;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final style = Theme.of(context).textTheme.bodyLarge;
+    return _Card(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: c.textSecondary),
+          const SizedBox(width: Space.m),
+          Expanded(
+            child: selectable ? SelectableText(text, style: style) : Text(text, style: style),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "From Contacts" card (mockup 04): initial avatar, history of completed years; CON-6 when the
+/// contact is gone.
+class _ContactCard extends ConsumerWidget {
+  const _ContactCard({required this.reminder, required this.doneKeys});
+  final Reminder reminder;
+  final List<DateTime> doneKeys;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final c = AppColors.of(context);
+    final text = Theme.of(context).textTheme;
+    final source = reminder.source as ContactSource;
+    final years = {for (final k in doneKeys) k.year}.toList();
+    final initial = reminder.title.trim().isEmpty ? '?' : reminder.title.trim()[0].toUpperCase();
     return FutureBuilder<bool>(
       future: ref.read(servicesProvider).contacts.contactExists(source.contactId),
-      builder: (context, snap) => (snap.data ?? true)
-          ? const SizedBox.shrink()
-          : FormRow(
-              icon: AppIcons.contactRemoved,
-              color: AppColors.of(context).textSecondary,
-              label: l10n.contactRemoved, // CON-6
+      builder: (context, snap) => _Card(
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: c.event.withValues(alpha: 0.3),
+              child: Text(initial, style: text.titleMedium?.copyWith(color: Color.lerp(c.event, Colors.black, 0.45))),
             ),
+            const SizedBox(width: Space.m),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.fromContacts, style: text.titleMedium),
+                  if (!(snap.data ?? true))
+                    Text(l10n.contactRemoved, style: text.bodyMedium) // CON-6
+                  else if (years.isNotEmpty)
+                    Text(l10n.historyDoneIn(years.join(', ')), style: text.bodyMedium),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -388,7 +703,7 @@ class _DuplicateBanner extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final s = ref.read(servicesProvider);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(Space.l, 0, Space.l, Space.s),
+      padding: const EdgeInsets.fromLTRB(Space.l, 0, Space.l, Space.m),
       child: Material(
         color: AppColors.of(context).accent.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(Radii.row),
@@ -424,6 +739,8 @@ class _DuplicateBanner extends ConsumerWidget {
   }
 }
 
+/// Bottom actions (mockup 04): one big type-colored button — I'm prepared (occasion with prep),
+/// Done, Remind me (calendar) or Mark as not done — then Reschedule · Skip / Skip this year.
 class _Actions extends ConsumerWidget {
   const _Actions({required this.data, required this.state, required this.overdue});
   final DetailData data;
@@ -434,77 +751,100 @@ class _Actions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final c = AppColors.of(context);
+    final text = Theme.of(context).textTheme;
     final r = data.reminder;
+    final color = c.kind(r.kind);
     final a = OccurrenceActions(context, ref);
     final open = state == OccurrenceState.pending || state == OccurrenceState.snoozed;
-    final buttons = <Widget>[];
+    final hasPrep = r.alertPlan.any((s) => s.offset.amount < 0);
+    final yearly = (r.rrule ?? '').contains('FREQ=YEARLY');
 
+    Widget primary(String label, IconData? icon, VoidCallback onTap, {Color? bg}) => SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: FilledButton.icon(
+        style: FilledButton.styleFrom(
+          backgroundColor: bg ?? color,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.card + 4)),
+          textStyle: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        onPressed: onTap,
+        icon: icon == null ? null : Icon(icon),
+        label: Text(label),
+      ),
+    );
+    Widget secondary(String label, Color fg, VoidCallback onTap) => Expanded(
+      child: SizedBox(
+        height: 52,
+        child: FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: c.surface,
+            foregroundColor: fg,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.card + 4)),
+            textStyle: text.titleMedium,
+          ),
+          onPressed: onTap,
+          child: Text(label),
+        ),
+      ),
+    );
+
+    final children = <Widget>[];
     if (r.isCalendarEvent) {
-      buttons.add(_wide(FilledButton.icon(
-        onPressed: () => remindMeFlow(context, ref, r),
-        icon: const Icon(AppIcons.alerts),
-        label: Text(l10n.actionRemindMe),
-      )));
+      children.add(primary(l10n.actionRemindMe, AppIcons.alerts, () => remindMeFlow(context, ref, r)));
     } else if (state == OccurrenceState.done || state == OccurrenceState.skipped) {
-      buttons.add(_wide(OutlinedButton(
-        onPressed: () => ref.read(servicesProvider).service.setState(r.id, data.key, OccurrenceState.pending),
-        child: Text(l10n.actionMarkNotDone), // OCC-5
-      )));
+      children.add(
+        primary(
+          l10n.actionMarkNotDone, // OCC-5
+          AppIcons.undo,
+          () => ref.read(servicesProvider).service.setState(r.id, data.key, OccurrenceState.pending),
+          bg: c.textSecondary,
+        ),
+      );
     } else if (state != OccurrenceState.passed) {
-      if (r.completable) {
-        buttons.add(_wide(FilledButton.icon(
-          style: FilledButton.styleFrom(backgroundColor: c.success),
-          onPressed: () async {
+      if (r.kind == Kind.occasion && open && hasPrep) {
+        children.add(primary(l10n.actionPrepared, AppIcons.check, () => a.prepared(r, data.key))); // OCC-3
+      } else if (r.completable) {
+        children.add(
+          primary(l10n.actionDone, AppIcons.check, () async {
             await a.done(r, data.key);
             if (context.mounted && context.canPop()) context.pop();
-          },
-          icon: const Icon(AppIcons.check),
-          label: Text(l10n.actionDone),
-        )));
+          }),
+        );
       }
-      if (r.kind == Kind.occasion && open && r.alertPlan.any((s) => s.offset.amount < 0)) {
-        buttons.add(_wide(FilledButton.tonalIcon(
-          onPressed: () => a.prepared(r, data.key), // OCC-3
-          icon: const Icon(AppIcons.gift),
-          label: Text(l10n.actionPrepared),
-        )));
-      }
-      buttons.add(Row(
-        children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () => a.reschedule(r, data.key, currentStart: data.occurrence?.overrideStart),
-              icon: const Icon(AppIcons.reschedule),
-              label: Text(l10n.actionReschedule),
+      children.add(
+        Row(
+          children: [
+            secondary(
+              l10n.actionReschedule,
+              c.accent,
+              () => a.reschedule(r, data.key, currentStart: data.occurrence?.overrideStart),
             ),
-          ),
-          if (r.completable || r.repeats) ...[
-            const SizedBox(width: Space.m),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () async {
-                  await a.skip(r, data.key);
-                  if (context.mounted && context.canPop()) context.pop();
-                },
-                icon: const Icon(AppIcons.skip),
-                label: Text(l10n.actionSkip),
-              ),
-            ),
+            if (r.completable || r.repeats) ...[
+              const SizedBox(width: Space.m),
+              secondary(yearly ? l10n.actionSkipYear : l10n.actionSkip, c.textPrimary, () async {
+                await a.skip(r, data.key);
+                if (context.mounted && context.canPop()) context.pop();
+              }),
+            ],
           ],
-        ],
-      ));
+        ),
+      );
     }
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(Space.l, Space.xl, Space.l, 0),
-      child: Column(
-        children: [
-          for (final b in buttons) Padding(padding: const EdgeInsets.only(bottom: Space.m), child: b),
-        ],
+    if (children.isEmpty) return const SizedBox.shrink();
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(Space.l, Space.s, Space.l, Space.m),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var i = 0; i < children.length; i++) ...[if (i > 0) const SizedBox(height: Space.m), children[i]],
+          ],
+        ),
       ),
     );
   }
-
-  static Widget _wide(Widget b) => SizedBox(width: double.infinity, height: 50, child: b);
 }
 
 /// S-32 Remind me picker: presets (multi-select) + custom.
@@ -542,9 +882,11 @@ class _RemindMeSheetState extends State<_RemindMeSheet> {
           title: l10n.actionRemindMe,
           left: TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.actionCancel)),
           right: TextButton(
-            onPressed: () => Navigator.pop(context, [
-              for (final o in _chosen) AlertStage(AlertOffset.parse(o)),
-            ]..sort((a, b) => _minutes(a.offset).compareTo(_minutes(b.offset)))),
+            onPressed: () => Navigator.pop(
+              context,
+              [for (final o in _chosen) AlertStage(AlertOffset.parse(o))]
+                ..sort((a, b) => _minutes(a.offset).compareTo(_minutes(b.offset))),
+            ),
             child: Text(l10n.actionSave),
           ),
         ),
@@ -632,7 +974,10 @@ class _OffsetPickerState extends State<_OffsetPicker> {
               onPressed: _amount > 1 ? () => setState(() => _amount--) : null,
               icon: const Icon(AppIcons.minus),
             ),
-            SizedBox(width: 56, child: Text('$_amount', textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge)),
+            SizedBox(
+              width: 56,
+              child: Text('$_amount', textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge),
+            ),
             IconButton.filledTonal(
               onPressed: _amount < 99 ? () => setState(() => _amount++) : null,
               icon: const Icon(AppIcons.add),
@@ -645,7 +990,10 @@ class _OffsetPickerState extends State<_OffsetPicker> {
           child: SegmentedButton<OffsetUnit>(
             showSelectedIcon: false,
             segments: [
-              ButtonSegment(value: OffsetUnit.minutes, label: Text(l10n.relMinutes(_amount).replaceAll('$_amount ', ''))),
+              ButtonSegment(
+                value: OffsetUnit.minutes,
+                label: Text(l10n.relMinutes(_amount).replaceAll('$_amount ', '')),
+              ),
               ButtonSegment(value: OffsetUnit.hours, label: Text(l10n.relHours(_amount).replaceAll('$_amount ', ''))),
               ButtonSegment(value: OffsetUnit.days, label: Text(l10n.relDays(_amount).replaceAll('$_amount ', ''))),
               ButtonSegment(value: OffsetUnit.weeks, label: Text(l10n.relWeeks(_amount).replaceAll('$_amount ', ''))),

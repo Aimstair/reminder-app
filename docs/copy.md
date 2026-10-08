@@ -188,6 +188,8 @@ Calendars section is collapsed by default; when some are filtered out it shows "
 **Calendar event detail:** "From {calendar name}" · **Remind me**
 **Remind me picker:** 10 min before · 1 hour before · 1 day before · Custom…
 
+**Detail (mockup 04):** back link = current view name · stat cards *{n} days to go* / *{n} days late* · *{x}/{n} nudges sent* · *{n} years done* (yearly) or *{n} times done* (DS13 — never "in a row") · card **Nudges** with **Change**, badges *Sent · Next · Day-of*, day-of note *rings even if prepared*, nag line *Then every 2 hours until done* · source card **From Contacts** + *Done in 2025, 2024* · buttons **I'm prepared** / **Done**, **Reschedule**, **Skip** or **Skip this year** (yearly).
+
 **Reschedule sheet:** Later today · This evening · Tomorrow · Next week · Pick date & time
 
 **Scope dialogs (S-34):**

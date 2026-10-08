@@ -1320,4 +1320,88 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get alertOnTheDay => 'on the day';
+
+  @override
+  String statDaysToGo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'days to go',
+      one: 'day to go',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String statDaysLate(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'days late',
+      one: 'day late',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get statNudgesSent => 'nudges sent';
+
+  @override
+  String statYearsDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'years done',
+      one: 'year done',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String statTimesDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'times done',
+      one: 'time done',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get statStatus => 'status';
+
+  @override
+  String get nudgesTitle => 'Nudges';
+
+  @override
+  String get actionChange => 'Change';
+
+  @override
+  String get badgeSent => 'Sent';
+
+  @override
+  String get badgeNext => 'Next';
+
+  @override
+  String get badgeDayOf => 'Day-of';
+
+  @override
+  String get ringsEvenIfPrepared => 'rings even if prepared';
+
+  @override
+  String nagThen(String interval) {
+    return 'Then every $interval until done';
+  }
+
+  @override
+  String get fromContacts => 'From Contacts';
+
+  @override
+  String historyDoneIn(String years) {
+    return 'Done in $years';
+  }
+
+  @override
+  String get actionSkipYear => 'Skip this year';
 }

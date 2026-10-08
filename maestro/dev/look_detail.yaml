@@ -1,0 +1,9 @@
+# Dev helper: detail screens (mockup 04). Needs dev/seed_home.yaml data.
+appId: app.aimstair.reminder_app
+---
+- launchApp
+- tapOn: ".*Mom's birthday.*"
+- takeScreenshot: detail_occasion
+- tapOn: "Schedule"
+- tapOn: ".*Pay electricity bill.*"
+- takeScreenshot: detail_task

@@ -125,6 +125,14 @@ void main() {
     expect(_planner().plan([event], {}, later), isEmpty);
   });
 
+  test('ALR-2 fireTime: day offsets keep the time of day, minute offsets count from the anchor', () {
+    final mom = _r('mom', Kind.occasion, _date(2026, 10, 12));
+    final times = OccurrenceTimes.of(mom, DateTime.utc(2026, 10, 12), _prefs);
+    final p = _planner();
+    expect(_local(p.fireTime(mom, times, const AlertStage(AlertOffset(-7, OffsetUnit.days)))), '2026-10-05T09:00');
+    expect(_local(p.fireTime(mom, times, const AlertStage(AlertOffset(-10, OffsetUnit.minutes)))), '2026-10-12T08:50');
+  });
+
   test('SCH-6 alerts already shown are not planned again', () {
     final mom = _r('mom', Kind.occasion, _date(2026, 10, 12), rrule: 'FREQ=YEARLY');
     final start = DateTime.utc(2026, 10, 12);

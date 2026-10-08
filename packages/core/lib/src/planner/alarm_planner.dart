@@ -167,7 +167,7 @@ class AlarmPlanner {
 
     final fires = <DateTime>[];
     for (var i = 0; i < stages.length; i++) {
-      final at = _fireTime(r, times, stages[i]);
+      final at = fireTime(r, times, stages[i]);
       fires.add(at);
       final key = '$occId:$i:0';
       if (inWindow(at) && !sent.contains(key)) out.add(make(key, at, AlertKind.stage, stage: stages[i]));
@@ -211,7 +211,9 @@ class AlarmPlanner {
   }
 
   /// ALR-2/ALR-3: minutes/hours add to the instant; days/weeks/months move the wall date, keeping the time.
-  DateTime _fireTime(Reminder r, OccurrenceTimes times, AlertStage s) {
+  /// When [s] fires for an occurrence with [times] (ALR-2): minute/hour offsets from the anchor instant,
+  /// day/week/month offsets on the wall calendar so the time of day stays put.
+  DateTime fireTime(Reminder r, OccurrenceTimes times, AlertStage s) {
     final o = s.offset;
     switch (o.unit) {
       case OffsetUnit.minutes:

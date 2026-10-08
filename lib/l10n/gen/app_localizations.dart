@@ -2319,6 +2319,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'on the day'**
   String get alertOnTheDay;
+
+  /// copy.md §6 detail — stat card label
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{day to go} other{days to go}}'**
+  String statDaysToGo(int count);
+
+  /// copy.md §6 detail — stat card label
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{day late} other{days late}}'**
+  String statDaysLate(int count);
+
+  /// copy.md §6 detail — stat card label
+  ///
+  /// In en, this message translates to:
+  /// **'nudges sent'**
+  String get statNudgesSent;
+
+  /// copy.md §6 detail — stat card label (DS13: factual, not a streak)
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{year done} other{years done}}'**
+  String statYearsDone(int count);
+
+  /// copy.md §6 detail — stat card label
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{time done} other{times done}}'**
+  String statTimesDone(int count);
+
+  /// copy.md §6 detail — stat card label
+  ///
+  /// In en, this message translates to:
+  /// **'status'**
+  String get statStatus;
+
+  /// copy.md §6 detail — card caption
+  ///
+  /// In en, this message translates to:
+  /// **'Nudges'**
+  String get nudgesTitle;
+
+  /// copy.md §6 detail — link on the Nudges card
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get actionChange;
+
+  /// copy.md §6 detail — nudge badge
+  ///
+  /// In en, this message translates to:
+  /// **'Sent'**
+  String get badgeSent;
+
+  /// copy.md §6 detail — nudge badge
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get badgeNext;
+
+  /// copy.md §6 detail — nudge badge
+  ///
+  /// In en, this message translates to:
+  /// **'Day-of'**
+  String get badgeDayOf;
+
+  /// copy.md §6 detail — day-of nudge note (OCC-3)
+  ///
+  /// In en, this message translates to:
+  /// **'rings even if prepared'**
+  String get ringsEvenIfPrepared;
+
+  /// copy.md §6 detail — under the nudges when Nag is on
+  ///
+  /// In en, this message translates to:
+  /// **'Then every {interval} until done'**
+  String nagThen(String interval);
+
+  /// copy.md §6 detail — source card
+  ///
+  /// In en, this message translates to:
+  /// **'From Contacts'**
+  String get fromContacts;
+
+  /// copy.md §6 detail — source card history line
+  ///
+  /// In en, this message translates to:
+  /// **'Done in {years}'**
+  String historyDoneIn(String years);
+
+  /// copy.md §6 detail — yearly items' Skip button
+  ///
+  /// In en, this message translates to:
+  /// **'Skip this year'**
+  String get actionSkipYear;
 }
 
 class _AppLocalizationsDelegate
