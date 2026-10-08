@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:reminder_core/reminder_core.dart';
 
 import '../l10n/gen/app_localizations.dart';
+import '../ui/money_format.dart';
 
 class NotificationTextBuilder {
   NotificationTextBuilder({required this.l10n, required this.prefs, String? locale})
@@ -38,6 +39,8 @@ class NotificationTextBuilder {
     final String body;
     if (c.alertKind == AlertKind.nag) {
       body = dayDiff >= 0 ? l10n.notifNagToday : l10n.notifNagSince(date(anchorWall)); // notif.nag
+    } else if (r.kind == Kind.bill && c.stage?.label == null) {
+      body = _billBody(r, when(anchorWall)); // BIL-4
     } else if (c.stage?.label != null) {
       body = l10n.notifStartBy(isDate ? date(anchorWall) : '${date(anchorWall)} ${time(anchorWall)}'); // ALR-5
     } else {
@@ -49,6 +52,20 @@ class NotificationTextBuilder {
       }
     }
     return (title: r.title, body: body);
+  }
+
+  /// BIL-4: "$1,200.00 · due tomorrow", "Renews Fri, Oct 9 · $11.99", "Trial ends today · then $15.49".
+  String _billBody(Reminder r, String when) {
+    // "Today" / "Tomorrow" sit mid-sentence here.
+    for (final w in [l10n.dayToday, l10n.dayTomorrow]) {
+      if (when.startsWith(w)) when = w.toLowerCase() + when.substring(w.length);
+    }
+    final amount = r.amount == null ? null : formatMoney(r.amount!, _locale);
+    return switch (r.billKind) {
+      BillKind.payment => amount == null ? l10n.notifBillDueNoAmount(when) : l10n.notifBillDue(amount, when),
+      BillKind.subscription => amount == null ? l10n.notifRenewsNoAmount(when) : l10n.notifRenews(when, amount),
+      BillKind.trial => amount == null ? l10n.notifTrialEndsNoAmount(when) : l10n.notifTrialEnds(when, amount),
+    };
   }
 
   /// "10 min", "2 hours", "1 day", "1 week", "6 months".

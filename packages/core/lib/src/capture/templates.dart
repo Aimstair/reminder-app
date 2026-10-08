@@ -5,27 +5,36 @@ import '../model/wall_time.dart';
 import '../parser/parse_result.dart';
 import '../time/calendar.dart';
 
-enum Template { birthday, billDue, renewal, freeTrial, nightOut, appointment }
+/// TPL-1 order on the capture sheet.
+enum Template { birthday, billDue, subscription, freeTrial, renewal, nightOut, appointment }
 
 /// TPL-3 definitions.
 extension TemplateDef on Template {
   Kind get kind => switch (this) {
     Template.birthday => Kind.occasion,
-    Template.billDue || Template.renewal || Template.freeTrial => Kind.task,
+    Template.billDue || Template.subscription || Template.freeTrial => Kind.bill, // BIL-1
+    Template.renewal => Kind.task,
     Template.nightOut || Template.appointment => Kind.event,
+  };
+
+  BillKind get billKind => switch (this) {
+    Template.subscription => BillKind.subscription,
+    Template.freeTrial => BillKind.trial,
+    _ => BillKind.payment,
   };
 
   String? get rrule => switch (this) {
     Template.birthday || Template.renewal => 'FREQ=YEARLY',
-    Template.billDue => 'FREQ=MONTHLY',
+    Template.billDue || Template.subscription => 'FREQ=MONTHLY',
     _ => null,
   };
 
   List<String> get alerts => switch (this) {
     Template.birthday => const ['-7d', '-1d', '0'],
     Template.billDue => const ['-2d', '0'],
+    Template.subscription => const ['-1d'],
     Template.renewal => const ['-1mo', '-1w', '0'],
-    Template.freeTrial => const ['-1d'],
+    Template.freeTrial => const ['-3d', '-1d'],
     Template.nightOut => const ['-1d', '-1h'],
     Template.appointment => const ['-1d', '-1h'], // −1d is moved to 20:00 the evening before in apply()
   };
@@ -52,7 +61,8 @@ ParseResult applyTemplate(Template t, ParseResult p, {required String input, req
       }
       if (noDateTyped) flags.add(ParseFlag.dateMissing); // a birthday needs its date
     case Template.freeTrial:
-      if (title.isNotEmpty && !title.toLowerCase().startsWith('cancel')) title = 'Cancel $title trial';
+      // "Netflix" → "Netflix free trial"; the date is the day it ends (BIL-1).
+      if (title.isNotEmpty && !title.toLowerCase().contains('trial')) title = '$title free trial';
       if (timing == null || noDateTyped) {
         timing = ParsedTiming(type: TimingType.date, start: formatWallDate(addDays(dateOnly(now), 7)));
       }
@@ -60,7 +70,7 @@ ParseResult applyTemplate(Template t, ParseResult p, {required String input, req
       if (timing != null && timing.type == TimingType.date) {
         timing = ParsedTiming(type: TimingType.datetime, start: '${timing.start}T19:00', tz: timing.tz);
       }
-    case Template.billDue || Template.renewal || Template.appointment:
+    case Template.billDue || Template.subscription || Template.renewal || Template.appointment:
       break;
   }
 
@@ -84,6 +94,8 @@ ParseResult applyTemplate(Template t, ParseResult p, {required String input, req
     rrule: t.rrule ?? p.rrule,
     repeatMode: t.rrule != null ? RecurrenceMode.fixed : p.repeatMode,
     alerts: alerts,
-    nag: t.nag ?? p.nag,
+    nag: t.nag ?? (t.kind == Kind.bill ? null : p.nag),
+    amount: t.kind == Kind.bill ? p.amount : null,
+    billKind: t.billKind,
   );
 }

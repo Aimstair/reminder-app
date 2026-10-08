@@ -133,7 +133,53 @@ const meetingPhrases = [
   'demo with',
 ];
 
-/// PRS-29 (3) Action verbs that make an input a Task even with an Event word.
+/// PRS-29 (3) Bill words (BIL-1). Trial and subscription words win over action verbs.
+const trialWords = ['free trial', 'trial'];
+const subscriptionWords = ['subscription', 'renews', 'auto-renews', 'autorenews'];
+const paymentWords = [
+  'bill',
+  'bills',
+  'rent',
+  'mortgage',
+  'tuition',
+  'credit card',
+  'loan',
+  'premium',
+  'payment',
+  'utilities',
+];
+
+/// PRS-37 currency symbols (null = the default dollar), codes and words.
+const currencySymbols = <String, String?>{
+  r'$': null,
+  '€': 'EUR',
+  '£': 'GBP',
+  '¥': 'JPY',
+  '₱': 'PHP',
+  '₹': 'INR',
+  '₩': 'KRW',
+  '₺': 'TRY',
+};
+const currencyCodes = [
+  'usd', 'eur', 'gbp', 'jpy', 'php', 'inr', 'cad', 'aud', 'nzd', 'sgd', 'hkd', 'mxn', 'chf', 'cny', //
+  'krw', 'try', 'brl', 'zar', 'sek', 'nok', 'dkk', 'pln',
+];
+
+/// Word → currency; null = the default dollar, 'peso' = the default peso.
+const currencyWords = <String, String?>{
+  'dollars': null,
+  'dollar': null,
+  'bucks': null,
+  'euros': 'EUR',
+  'euro': 'EUR',
+  'pesos': 'peso',
+  'yen': 'JPY',
+  'rupees': 'INR',
+};
+const dollarCurrencies = {'USD', 'CAD', 'AUD', 'NZD', 'SGD', 'HKD', 'MXN'};
+const pesoCurrencies = {'PHP', 'MXN', 'ARS', 'CLP', 'COP'};
+
+/// PRS-29 (4) Action verbs that make an input a Task even with an Event word.
 const taskVerbs = [
   'buy',
   'order',
@@ -158,7 +204,7 @@ const taskVerbs = [
   'remind',
 ];
 
-/// PRS-29 (4) Event keywords.
+/// PRS-29 (5) Event keywords.
 const eventWords = [
   'dinner',
   'lunch',

@@ -6,7 +6,25 @@ import '../capture/templates.dart';
 import '../model/enums.dart';
 import '../model/reminder.dart';
 
-enum ItemGlyph { task, meeting, video, event, gift, bill, shopping, call, tooth, medical, food, document, fitness, travel, renewal, trial, nightOut }
+enum ItemGlyph {
+  task,
+  meeting,
+  video,
+  event,
+  gift,
+  bill,
+  shopping,
+  call,
+  tooth,
+  medical,
+  food,
+  document,
+  fitness,
+  travel,
+  renewal,
+  trial,
+  nightOut,
+}
 
 /// Keyword groups, checked in order; first hit wins. Whole words, lowercase.
 const _keywords = <(ItemGlyph, List<String>)>[
@@ -15,9 +33,15 @@ const _keywords = <(ItemGlyph, List<String>)>[
   (ItemGlyph.tooth, ['dentist', 'dental', 'teeth']),
   (ItemGlyph.medical, ['doctor', 'clinic', 'meds', 'medicine', 'pills', 'pharmacy', 'vet', 'checkup', 'hospital']),
   (ItemGlyph.call, ['call', 'phone', 'ring', 'facetime']),
-  (ItemGlyph.shopping, ['buy', 'shop', 'shopping', 'groceries', 'grocery', 'return', 'pickup', 'order', 'milk', 'store', 'cleaning']),
+  (
+    ItemGlyph.shopping,
+    ['buy', 'shop', 'shopping', 'groceries', 'grocery', 'return', 'pickup', 'order', 'milk', 'store', 'cleaning'],
+  ),
   (ItemGlyph.food, ['lunch', 'dinner', 'breakfast', 'brunch', 'restaurant', 'coffee']),
-  (ItemGlyph.document, ['report', 'doc', 'document', 'deck', 'slides', 'proposal', 'contract', 'email', 'write', 'review']),
+  (
+    ItemGlyph.document,
+    ['report', 'doc', 'document', 'deck', 'slides', 'proposal', 'contract', 'email', 'write', 'review'],
+  ),
   (ItemGlyph.fitness, ['gym', 'workout', 'run', 'yoga', 'swim', 'training']),
   (ItemGlyph.travel, ['flight', 'trip', 'travel', 'airport', 'hotel', 'passport', 'visa']),
 ];
@@ -30,7 +54,7 @@ ItemGlyph glyphFor(Reminder r) {
       return ItemGlyph.gift;
     case Template.billDue:
       return ItemGlyph.bill;
-    case Template.renewal:
+    case Template.renewal || Template.subscription:
       return ItemGlyph.renewal;
     case Template.freeTrial:
       return ItemGlyph.trial;
@@ -44,6 +68,12 @@ ItemGlyph glyphFor(Reminder r) {
   final words = r.title.toLowerCase().split(RegExp(r"[^a-z0-9']+")).where((w) => w.isNotEmpty).toSet();
   if (r.kind == Kind.meeting) return words.any(_videoWords.contains) ? ItemGlyph.video : ItemGlyph.meeting;
   if (r.kind == Kind.occasion) return ItemGlyph.gift;
+  if (r.kind == Kind.bill) {
+    // BIL-1: subscriptions and trials have their own glyphs; payments keep the receipt.
+    if (r.billKind == BillKind.subscription) return ItemGlyph.renewal;
+    if (r.billKind == BillKind.trial) return ItemGlyph.trial;
+    return ItemGlyph.bill;
+  }
   for (final (glyph, list) in _keywords) {
     if (list.any(words.contains)) return glyph;
   }

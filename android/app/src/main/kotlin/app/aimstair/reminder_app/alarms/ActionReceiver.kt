@@ -31,7 +31,8 @@ class ActionReceiver : BroadcastReceiver() {
         when (action) {
             DONE -> {
                 cancelSiblings(context, key, keepDayOf = false) // OCC-4
-                Notifications.showUndo(context, alarm, R.string.notif_confirm_done) // NTF-9
+                val verb = if (alarm.kind == "bill") R.string.notif_confirm_paid else R.string.notif_confirm_done
+                Notifications.showUndo(context, alarm, verb) // NTF-9, BIL-4
             }
             PREPARED -> {
                 cancelSiblings(context, key, keepDayOf = true) // OCC-3: day-of alert still rings

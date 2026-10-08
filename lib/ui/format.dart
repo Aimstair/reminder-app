@@ -6,12 +6,12 @@ import 'package:intl/intl.dart';
 import 'package:reminder_core/reminder_core.dart';
 
 import '../l10n/gen/app_localizations.dart';
+import 'money_format.dart';
 
 class Fmt {
   Fmt(this.l10n, this.locale);
 
-  factory Fmt.of(BuildContext context) =>
-      Fmt(AppLocalizations.of(context), Localizations.localeOf(context).toString());
+  factory Fmt.of(BuildContext context) => Fmt(AppLocalizations.of(context), Localizations.localeOf(context).toString());
 
   final AppLocalizations l10n;
   final String locale;
@@ -40,8 +40,8 @@ class Fmt {
     final day = d == t
         ? l10n.groupToday
         : d == addDays(t, 1)
-            ? l10n.groupTomorrow
-            : date(wall, today: t);
+        ? l10n.groupTomorrow
+        : date(wall, today: t);
     if (allDay) return '$day · ${l10n.allDay}';
     final range = end == null ? time(wall) : l10n.timeRange(time(wall), time(end));
     return '$day · $range';
@@ -106,8 +106,7 @@ class Fmt {
     final parts = [for (final s in plan) offset(s.offset, allDay: allDay)];
     // "2 days before, on the day": lowercase after the first item, capitalized when alone.
     return [
-      for (var i = 0; i < parts.length; i++)
-        i == 0 ? parts[i][0].toUpperCase() + parts[i].substring(1) : parts[i],
+      for (var i = 0; i < parts.length; i++) i == 0 ? parts[i][0].toUpperCase() + parts[i].substring(1) : parts[i],
     ].join(', ');
   }
 
@@ -115,12 +114,18 @@ class Fmt {
   String ordinal(int n) {
     if (!locale.startsWith('en')) return '$n';
     final tens = n % 100;
-    final suffix = tens >= 11 && tens <= 13 ? 'th' : switch (n % 10) { 1 => 'st', 2 => 'nd', 3 => 'rd', _ => 'th' };
+    final suffix = tens >= 11 && tens <= 13
+        ? 'th'
+        : switch (n % 10) {
+            1 => 'st',
+            2 => 'nd',
+            3 => 'rd',
+            _ => 'th',
+          };
     return '$n$suffix';
   }
 
-  String duration(Duration d) =>
-      d.inMinutes % 60 == 0 ? l10n.relHours(d.inHours) : l10n.relMinutes(d.inMinutes);
+  String duration(Duration d) => d.inMinutes % 60 == 0 ? l10n.relHours(d.inHours) : l10n.relMinutes(d.inMinutes);
 
   String state(OccurrenceState s, {bool overdue = false}) {
     if (overdue) return l10n.stateOverdue;
@@ -139,7 +144,18 @@ class Fmt {
     Kind.meeting => l10n.typeMeeting,
     Kind.event => l10n.typeEvent,
     Kind.occasion => l10n.typeOccasion,
+    Kind.bill => l10n.typeBill,
   };
+
+  /// BIL-1
+  String billKind(BillKind b) => switch (b) {
+    BillKind.payment => l10n.billPayment,
+    BillKind.subscription => l10n.billSubscription,
+    BillKind.trial => l10n.billTrial,
+  };
+
+  /// BIL-2: "$1,200.00".
+  String money(Money m) => formatMoney(m, locale);
 
   String context(ReminderContext c) => c == ReminderContext.work ? l10n.ctxWork : l10n.ctxPersonal;
 

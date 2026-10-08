@@ -175,6 +175,7 @@ Values follow Apple's system palette closely so the app feels familiar to Apple-
 | Meeting | `#5856D6` indigo | `#5E5CE6` |
 | Event | `#FF9500` orange | `#FF9F0A` |
 | Occasion | `#FF2D55` pink | `#FF375F` |
+| Bill (`BIL-1`) | `#34C759` green | `#30D158` |
 
 All text/background pairs must meet WCAG AA contrast (4.5:1 body, 3:1 large text); type colors are never the only signal — each type also has an icon.
 

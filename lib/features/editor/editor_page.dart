@@ -60,6 +60,8 @@ class _EditorPageState extends ConsumerState<EditorPage> {
   late final _title = TextEditingController(text: widget.reminder.title);
   late final _notes = TextEditingController(text: widget.reminder.notes ?? '');
   late Kind _kind = widget.reminder.kind;
+  late BillKind _billKind = widget.reminder.billKind; // BIL-1
+  late Money? _amount = widget.reminder.amount; // BIL-2
   late ReminderContext _context = widget.reminder.context;
   late bool _allDay = widget.reminder.timing.type == TimingType.date;
   late DateTime _start = widget.reminder.timing.start;
@@ -89,7 +91,10 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     super.dispose();
   }
 
-  bool get _completable => _kind == Kind.task || _kind == Kind.occasion;
+  bool get _completable => _kind == Kind.task || _kind == Kind.occasion || _kind == Kind.bill;
+
+  /// Nagging fits payments, not subscriptions or trials (BIL-3).
+  bool get _canNag => _completable && !(_kind == Kind.bill && _billKind != BillKind.payment);
 
   Reminder _build() {
     final start = _allDay ? dateOnly(_start) : _start;
@@ -98,6 +103,8 @@ class _EditorPageState extends ConsumerState<EditorPage> {
       title: _title.text.trim(),
       notes: () => _notes.text.trim().isEmpty ? null : _notes.text.trim(),
       attachments: _attachments,
+      amount: () => _kind == Kind.bill ? _amount : null,
+      billKind: _billKind,
       kind: _kind,
       context: _context,
       timing: Timing(
@@ -110,7 +117,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
       alertPlan: _alerts,
       rrule: () => _rrule,
       repeatMode: _completable ? _mode : RecurrenceMode.fixed, // REC-10
-      nagInterval: () => _completable ? _nag : null, // ALR-9
+      nagInterval: () => _canNag ? _nag : null, // ALR-9
     );
   }
 
@@ -261,7 +268,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                     if (v != null) setState(() => _alerts = v);
                   },
                 ),
-                if (_completable)
+                if (_canNag)
                   FormRow(
                     icon: AppIcons.nag,
                     color: c.success,
@@ -282,6 +289,42 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                 selected: _kind,
                 onChanged: (k) => setState(() => _kind = k),
               ),
+            ),
+            // BIL-1 / BIL-2: bill kind and amount.
+            AnimatedSize(
+              duration: Motion.standard,
+              curve: Curves.easeOutCubic,
+              child: _kind != Kind.bill
+                  ? const SizedBox(width: double.infinity)
+                  : Column(
+                      children: [
+                        const SizedBox(height: Space.m),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: Space.l),
+                          child: SegmentedPills<BillKind>(
+                            items: [for (final b in BillKind.values) (value: b, label: f.billKind(b), dot: null)],
+                            selected: _billKind,
+                            onChanged: (b) => setState(() => _billKind = b),
+                          ),
+                        ),
+                        const SizedBox(height: Space.m),
+                        InsetGroup(
+                          indent: 56,
+                          children: [
+                            FormRow(
+                              icon: AppIcons.bill,
+                              color: c.bill,
+                              label: l10n.rowAmount,
+                              value: _amount == null ? l10n.amountAdd : f.money(_amount!),
+                              onTap: () async {
+                                final v = await pickAmount(context, _amount);
+                                if (v != null) setState(() => _amount = v.amount);
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
             ),
             const SizedBox(height: Space.m),
             Padding(

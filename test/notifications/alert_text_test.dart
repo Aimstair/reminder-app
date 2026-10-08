@@ -28,6 +28,20 @@ List<String> _bodies(Reminder r, {DateTime? now}) {
 void main() {
   setUpAll(() => NotificationTextBuilder.init('en'));
 
+  test('BIL-4 bill bodies: amount and due date, renewals, trial ends', () {
+    Reminder bill(BillKind b, {Money? amount}) => _r(
+      Kind.bill,
+      Timing(type: TimingType.date, start: DateTime.utc(2026, 10, 9)),
+      const [AlertStage(AlertOffset(-2, OffsetUnit.days)), AlertStage(AlertOffset.zero)],
+    ).copyWith(billKind: b, amount: () => amount);
+    expect(_bodies(bill(BillKind.payment, amount: const Money(120000, 'USD'))), [
+      '\$1,200.00 · due Fri, Oct 9',
+      '\$1,200.00 · due today',
+    ]);
+    expect(_bodies(bill(BillKind.subscription, amount: const Money(1199, 'USD'))).last, 'Renews today · \$11.99');
+    expect(_bodies(bill(BillKind.trial)).first, 'Trial ends Fri, Oct 9 · keep it or cancel?');
+  });
+
   test('meeting: "In 10 min · 10:00 AM" (copy.md notif.meeting)', () {
     final r = _r(
       Kind.meeting,

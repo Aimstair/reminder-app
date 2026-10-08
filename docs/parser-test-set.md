@@ -6,7 +6,7 @@ Related: [`behavior-spec.md`](behavior-spec.md) §8 (`CAP-*` rules) · [`product
 
 **v0 exit criterion:** ≥ 90% of counted cases pass. **v1.0 release:** ≥ 95%. Stretch cases (§S) are not counted.
 
-**Status (2026-10-08):** ✅ **137 / 137 pass** — implementation `packages/core/lib/src/parser/`, tests `packages/core/test/parser/` (cases generated from this file: `cd packages/core && dart run tool/gen_parser_cases.dart`). Stretch cases S1–S6 not yet supported.
+**Status (2026-10-09):** ✅ **147 / 147 pass** — implementation `packages/core/lib/src/parser/`, tests `packages/core/test/parser/` (cases generated from this file: `cd packages/core && dart run tool/gen_parser_cases.dart`). Stretch cases S1–S6 not yet supported.
 
 ---
 
@@ -106,10 +106,16 @@ A row **passes** when every field shown in the row matches. Title comparison ign
 - **PRS-29** Type keywords (first match in this order wins):
   1. **Occasion:** *birthday, bday, anniversary* — unless followed by *party / dinner / drinks* (then Event)
   2. **Meeting:** *meeting, call with, standup, sync, 1:1, interview, sprint planning, retro, demo with*
-  3. **Task (action verb at the start):** *buy, order, book, call, email, text, pay, send, submit, pick up, prepare, finish, review, renew, cancel, return, clean, fix, check, follow up, remind…* — an input starting with one of these is a Task even if it contains an Event word ("book table for dinner")
-  4. **Event:** *dinner, lunch, brunch, breakfast, drinks, party, concert, game, flight, appointment, dentist, doctor, physio, haircut, wedding, date night, webinar, workshop, class, practice*
-  5. Otherwise **Task**
+  3. **Bill** (`BIL-1`):
+     - *free trial, trial* → Bill · free trial; *subscription, renews, auto-renews* → Bill · subscription — these win over action verbs ("cancel Netflix trial")
+     - Bill · payment when the input **starts with *pay*** or contains *bill, rent, mortgage, tuition, credit card, loan, premium, payment, utilities* — unless it starts with another action verb ("email the landlord about rent" is a Task)
+     - an **amount** (`PRS-37`) with no action verb at the start → Bill · payment ("Netflix $15.49 on the 12th")
+  4. **Task (action verb at the start):** *buy, order, book, call, email, text, pay, send, submit, pick up, prepare, finish, review, renew, cancel, return, clean, fix, check, follow up, remind…* — an input starting with one of these is a Task even if it contains an Event word ("book table for dinner")
+  5. **Event:** *dinner, lunch, brunch, breakfast, drinks, party, concert, game, flight, appointment, dentist, doctor, physio, haircut, wedding, date night, webinar, workshop, class, practice*
+  6. Otherwise **Task**
 - **PRS-30** Occasions get `FREQ=YEARLY` automatically (contextual default).
+- **PRS-37** **Amounts:** a currency symbol or code with a number — *$1,200 · $15.49 · €450 · £9.99 · ₱500 · USD 320 · 85 usd · 85 dollars · 500 pesos · 20 euros* — becomes the bill's amount and is removed from the title. "$" means the default currency when that currency uses "$" (USD, CAD, AUD, NZD, SGD, HKD, MXN), otherwise USD. On a non-Bill the amount stays in the title ("Buy shoes $80").
+- **PRS-38** **Bill defaults:** payments get `nag 2h` (`BIL-3`); a subscription without a repeat gets `FREQ=MONTHLY` (with the day of month when a date was given); a free trial without a date ends **in 7 days** and sets `ambiguous_date`.
 - **PRS-31** Work context keywords: *client, team, report, invoice, deck, slides, contract, timesheet, board, sprint, manager, office, roadmap, candidate, webinar, workshop, budget*. Meetings default to Work regardless.
 - **PRS-32** Explicit prefixes *work:* / *personal:* set the context and are removed from the title.
 
@@ -123,6 +129,8 @@ A row **passes** when every field shown in the row matches. Title comparison ign
 
 ## 4. Test cases
 
+Type letters: **T** Task · **M** Meeting · **E** Event · **O** Occasion · **B** Bill (payment unless the Repeat column says `bill: subscription` / `bill: trial`). Amounts: `amount USD 1200.00`.
+
 Notation for **When**: `Oct 11 18:00` = datetime · `Oct 12 (date)` = date-only · `Oct 6 14:00–16:00` = range · year 2026 unless shown · `[PT]` = zone differs from default.
 Types: **T** Task · **M** Meeting · **E** Event · **O** Occasion. Context: **P** Personal · **W** Work.
 
@@ -131,7 +139,7 @@ Types: **T** Task · **M** Meeting · **E** Event · **O** Occasion. Context: **
 |---|---|---|---|---|---|---|---|
 | A1 | call mom Sunday 6pm | Call mom | Oct 11 18:00 | T | P | | |
 | A2 | dentist Oct 20 at 2:30pm | Dentist | Oct 20 14:30–15:30 | E | P | | |
-| A3 | pay electricity bill on the 15th | Pay electricity bill | Oct 15 (date) | T | P | | PRS-8 |
+| A3 | pay electricity bill on the 15th | Pay electricity bill | Oct 15 (date) | B | P | nag 2h | PRS-8 |
 | A4 | submit report Friday 5pm | Submit report | Oct 9 17:00 | T | W | | |
 | A5 | buy flowers tomorrow | Buy flowers | Oct 6 (date) | T | P | | CAP-2 |
 | A6 | team meeting tomorrow at 10am | Team meeting | Oct 6 10:00–10:30 | M | W | | |
@@ -152,10 +160,10 @@ Types: **T** Task · **M** Meeting · **E** Event · **O** Occasion. Context: **
 | B2 | stretch in 30 minutes | Stretch | Oct 5 14:30 | T | P | | |
 | B3 | check oven in 2 hours | Check oven | Oct 5 16:00 | T | P | | |
 | B4 | follow up with John in 3 days | Follow up with John | Oct 8 (date) | T | P | | |
-| B5 | cancel Netflix trial in 7 days | Cancel Netflix trial | Oct 12 (date) | T | P | | |
+| B5 | cancel Netflix trial in 7 days | Cancel Netflix trial | Oct 12 (date) | B | P | bill: trial | Trial word beats the verb |
 | B6 | call grandma next week | Call grandma | Oct 12 (date) | T | P | | PRS-6 |
 | B7 | clean garage this weekend | Clean garage | Oct 10 (date) | T | P | | |
-| B8 | pay credit card end of month | Pay credit card | Oct 31 (date) | T | P | | |
+| B8 | pay credit card end of month | Pay credit card | Oct 31 (date) | B | P | nag 2h | |
 | B9 | finish slides end of week | Finish slides | Oct 9 (date) | T | W | | |
 | B10 | water plants tomorrow morning | Water plants | Oct 6 09:00 | T | P | | morning = day time |
 | B11 | call the bank this afternoon | Call the bank | Oct 5 15:00 | T | P | | |
@@ -207,15 +215,15 @@ Types: **T** Task · **M** Meeting · **E** Event · **O** Occasion. Context: **
 | F2 | daily standup 9:30am | Standup | Oct 6 09:30–10:00 | M | W | `FREQ=DAILY` | |
 | F3 | every weekday 9am check email | Check email | Oct 6 09:00 | T | P | `FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR` | |
 | F4 | timesheet every Friday 3pm | Timesheet | Oct 9 15:00 | T | W | `FREQ=WEEKLY;BYDAY=FR` | |
-| F5 | pay rent on the 1st every month | Pay rent | Nov 1 (date) | T | P | `FREQ=MONTHLY;BYMONTHDAY=1` | |
-| F6 | pay rent monthly on the 31st | Pay rent | Oct 31 (date) | T | P | `FREQ=MONTHLY;BYMONTHDAY=31` | Clamp in short months (REC-3) |
+| F5 | pay rent on the 1st every month | Pay rent | Nov 1 (date) | B | P | `FREQ=MONTHLY;BYMONTHDAY=1` · nag 2h | |
+| F6 | pay rent monthly on the 31st | Pay rent | Oct 31 (date) | B | P | `FREQ=MONTHLY;BYMONTHDAY=31` · nag 2h | Clamp in short months (REC-3) |
 | F7 | invoice ACME last business day of the month | Invoice ACME | Oct 30 (date) | T | W | `FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1` | |
 | F8 | trash every Tuesday night | Trash | Oct 6 20:00 | T | P | `FREQ=WEEKLY;BYDAY=TU` | |
 | F9 | every other Monday 1:1 with Dana 3pm | 1:1 with Dana | Oct 5 15:00–15:30 | M | W | `FREQ=WEEKLY;INTERVAL=2;BYDAY=MO` | "1:1" is not a time |
 | F10 | water plants every 3 days | Water plants | Oct 6 (date) | T | P | `FREQ=DAILY;INTERVAL=3` | PRS-22 |
-| F11 | car insurance renews every year on March 3 | Car insurance renews | 2027-03-03 (date) | T | P | `FREQ=YEARLY` | |
+| F11 | car insurance renews every year on March 3 | Car insurance renews | 2027-03-03 (date) | B | P | `FREQ=YEARLY` · bill: subscription | |
 | F12 | every 2 weeks clean fridge | Clean fridge | Oct 6 (date) | T | P | `FREQ=WEEKLY;INTERVAL=2` | |
-| F13 | quarterly tax payment Jan 15 | Tax payment | 2027-01-15 (date) | T | P | `FREQ=MONTHLY;INTERVAL=3` | |
+| F13 | quarterly tax payment Jan 15 | Tax payment | 2027-01-15 (date) | B | P | `FREQ=MONTHLY;INTERVAL=3` · nag 2h | |
 | F14 | every Mon and Thu 6pm soccer practice | Soccer practice | Oct 5 18:00–19:00 | E | P | `FREQ=WEEKLY;BYDAY=MO,TH` | |
 | F15 | review goals weekly on Sunday 7pm | Review goals | Oct 11 19:00 | T | P | `FREQ=WEEKLY;BYDAY=SU` | |
 | F16 | standup every weekday at 9:30am until Dec 31 | Standup | Oct 6 09:30–10:00 | M | W | `FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;UNTIL=20261231` | |
@@ -239,7 +247,7 @@ Types: **T** Task · **M** Meeting · **E** Event · **O** Occasion. Context: **
 | H4 | dinner with parents Saturday | Dinner with parents | Oct 10 19:00–20:00 | E | P | | PRS-14 |
 | H5 | concert Nov 14 8pm | Concert | Nov 14 20:00–21:00 | E | P | | |
 | H6 | prepare deck for board Tuesday | Prepare deck for board | Oct 6 (date) | T | W | | |
-| H7 | pay water bill Friday | Pay water bill | Oct 9 (date) | T | P | | |
+| H7 | pay water bill Friday | Pay water bill | Oct 9 (date) | B | P | nag 2h | |
 | H8 | sprint planning Monday 10am | Sprint planning | Oct 12 10:00–10:30 | M | W | | |
 | H9 | date night Friday 7pm | Date night | Oct 9 19:00–20:00 | E | P | | |
 | H10 | 1:1 with manager Wed 4pm | 1:1 with manager | Oct 7 16:00–16:30 | M | W | | "1:1" is not a time |
@@ -266,7 +274,7 @@ Types: **T** Task · **M** Meeting · **E** Event · **O** Occasion. Context: **
 | J1 | Mom's birthday Oct 12 remind me 2 weeks before | Mom's birthday | Oct 12 (date) | O | P | `FREQ=YEARLY` · alerts −14d, 0 | PRS-24 |
 | J2 | dentist Friday 10am remind me 30 minutes before | Dentist | Oct 9 10:00–11:00 | E | P | alerts −30m | |
 | J3 | report due Friday start Wednesday | Report | Oct 9 (date) | T | W | alerts −2d (Start by), 0 | PRS-26 |
-| J4 | pay rent on the 1st every month nag me | Pay rent | Nov 1 (date) | T | P | `FREQ=MONTHLY;BYMONTHDAY=1` · nag 2h | PRS-27 |
+| J4 | pay rent on the 1st every month nag me | Pay rent | Nov 1 (date) | B | P | `FREQ=MONTHLY;BYMONTHDAY=1` · nag 2h | PRS-27 |
 | J5 | passport expires June 2027 remind me 6 months before | Passport expires | 2027-06-01 (date) | T | P | alerts −6mo | `ambiguous_date` |
 | J6 | flight Friday 6am remind me the night before | Flight | Oct 9 06:00–07:00 | E | P | alerts −10h (Thu 20:00) | PRS-25 |
 | J7 | dinner Friday 7pm no alert | Dinner | Oct 9 19:00–20:00 | E | P | alerts *(none)* | PRS-28 |
@@ -292,7 +300,7 @@ Types: **T** Task · **M** Meeting · **E** Event · **O** Occasion. Context: **
 |---|---|---|---|---|---|---|---|
 | L1 | dentist 10/12 | Dentist | Oct 12 (date) | E | P | | en-US |
 | L2 | `[en-GB]` dentist 10/12 | Dentist | Dec 10 (date) | E | P | | en-GB day/month |
-| L3 | `[en-GB]` pay rent 5 Nov | Pay rent | Nov 5 (date) | T | P | | |
+| L3 | `[en-GB]` pay rent 5 Nov | Pay rent | Nov 5 (date) | B | P | nag 2h | |
 | L4 | `[en-GB]` meeting 14:00 Friday | Meeting | Oct 9 14:00–14:30 | M | W | | |
 | L5 | `[en-GB]` dentist 2026-12-10 | Dentist | Dec 10 (date) | E | P | | ISO is locale-independent |
 
@@ -304,7 +312,7 @@ Types: **T** Task · **M** Meeting · **E** Event · **O** Occasion. Context: **
 | M3 | order 10 pizzas for the party Saturday | Order 10 pizzas for the party | Oct 10 (date) | T | P | | Action verb beats "party" |
 | M4 | room 404 meeting at 3pm | Room 404 meeting | Oct 5 15:00–15:30 | M | W | | |
 | M5 | watch Ocean's 11 Friday 9pm | Watch Ocean's 11 | Oct 9 21:00 | T | P | | |
-| M6 | pay May rent | Pay May rent | Oct 6 (date) | T | P | | PRS-4 |
+| M6 | pay May rent | Pay May rent | Oct 6 (date) | B | P | nag 2h | PRS-4 |
 | M7 | march band practice Thursday | March band practice | Oct 8 (date) | E | P | | PRS-4 |
 | M8 | buy a 3-pack of socks | Buy a 3-pack of socks | Oct 6 (date) | T | P | | |
 | M9 | 5 minute meditation tonight | 5 minute meditation | Oct 5 20:00 | T | P | | PRS-12 |
@@ -313,11 +321,25 @@ Types: **T** Task · **M** Meeting · **E** Event · **O** Occasion. Context: **
 | # | Input | Title | When | Type | Ctx | Repeat / alerts | Flags · notes |
 |---|---|---|---|---|---|---|---|
 | N1 | Mar 3 car registration | Car registration | 2027-03-03 (date) | T | P | | `past_date_rolled` |
-| N2 | pay invoice Oct 1 | Pay invoice | 2027-10-01 (date) | T | W | | `past_date_rolled` (4 days ago) |
+| N2 | pay invoice Oct 1 | Pay invoice | 2027-10-01 (date) | B | W | nag 2h | `past_date_rolled` (4 days ago) |
 | N3 | call mom today 1pm | Call mom | Oct 5 13:00 | T | P | | `time_in_past` PRS-15 |
-| N4 | Nov 1 1:30am pay bill | Pay bill | Nov 1 01:30 (EDT, first) | T | P | | DST overlap (TIM-14) |
+| N4 | Nov 1 1:30am pay bill | Pay bill | Nov 1 01:30 (EDT, first) | B | P | nag 2h | DST overlap (TIM-14) |
 | N5 | Mar 14 2027 2:30am backup server | Backup server | 2027-03-14 03:30 | T | P | | DST gap (TIM-13) |
 | N6 | tomorrow tomorrow buy milk | Buy milk | Oct 6 (date) | T | P | | PRS-35 |
+
+### O. Bills & amounts
+| # | Input | Title | When | Type | Ctx | Repeat / alerts | Flags · notes |
+|---|---|---|---|---|---|---|---|
+| O1 | pay rent $1,200 on the 1st every month | Pay rent | Nov 1 (date) | B | P | `FREQ=MONTHLY;BYMONTHDAY=1` · nag 2h · amount USD 1200.00 | |
+| O2 | Netflix $15.49 on the 12th | Netflix | Oct 12 (date) | B | P | nag 2h · amount USD 15.49 | Amount, no verb → Bill |
+| O3 | Spotify subscription $11.99 renews on the 20th | Spotify subscription renews | Oct 20 (date) | B | P | `FREQ=MONTHLY;BYMONTHDAY=20` · bill: subscription · amount USD 11.99 | PRS-38 monthly |
+| O4 | Disney+ free trial ends Friday | Disney+ free trial ends | Oct 9 (date) | B | P | bill: trial | |
+| O5 | Hulu free trial | Hulu free trial | Oct 12 (date) | B | P | bill: trial | `ambiguous_date` PRS-38 |
+| O6 | buy shoes $80 Saturday | Buy shoes $80 | Oct 10 (date) | T | P | | Amount stays on a Task |
+| O7 | electricity bill 85 dollars due Friday | Electricity bill | Oct 9 (date) | B | P | nag 2h · amount USD 85.00 | |
+| O8 | pay tuition €450 Nov 30 | Pay tuition | Nov 30 (date) | B | P | nag 2h · amount EUR 450.00 | |
+| O9 | email the landlord about rent tomorrow | Email the landlord about rent | Oct 6 (date) | T | P | | Verb beats "rent" |
+| O10 | gym membership renews Nov 5 USD 49 | Gym membership renews | Nov 5 (date) | B | P | `FREQ=MONTHLY;BYMONTHDAY=5` · bill: subscription · amount USD 49.00 | |
 
 ### S. Stretch (not counted toward pass rate)
 | # | Input | Expected |

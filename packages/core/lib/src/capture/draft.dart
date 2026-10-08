@@ -31,11 +31,13 @@ Reminder reminderFromParse(ParseResult p, {required RecordMeta meta, required Us
     context: p.context,
     timing: timing,
     alertPlan: p.alerts == null
-        ? prefs.alertPlanFor(p.kind, t.type)
+        ? prefs.alertPlanFor(p.kind, t.type, bill: p.billKind)
         : [for (final a in p.alerts!) AlertStage(AlertOffset.parse(a))],
     rrule: p.rrule,
     repeatMode: p.repeatMode ?? RecurrenceMode.fixed,
     nagInterval: p.nag == null ? null : _duration(AlertOffset.parse(p.nag!)),
+    amount: p.kind == Kind.bill ? p.amount : null, // BIL-2
+    billKind: p.billKind,
   );
 }
 

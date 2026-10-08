@@ -14,6 +14,7 @@ import 'package:reminder_core/reminder_core.dart';
 import '../../app/providers.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../ui/format.dart';
+import '../../ui/money_format.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
 import '../../native/platform_gateway.dart';
@@ -88,6 +89,11 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
   List<AlertStage>? _lockAlerts;
   bool? _lockNag;
 
+  /// BIL-1 / BIL-2 locks: bill kind, and an amount set ([_lockAmount]) or removed ([_lockNoAmount]).
+  BillKind? _lockBillKind;
+  Money? _lockAmount;
+  bool _lockNoAmount = false;
+
   @override
   void initState() {
     super.initState();
@@ -144,6 +150,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
         locale: Localizations.localeOf(context).toLanguageTag(),
         dayTimeHour: prefs.dayTime.hour,
         dayTimeMinute: prefs.dayTime.minute,
+        currency: deviceCurrency(), // BIL-2
       ),
     );
     var p = parser.parse(text);
@@ -202,22 +209,40 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
       );
     }
     final kind = _lockKind ?? p.kind;
+    // BIL-3: a bill kind picked by hand brings its own repeat, alerts and nag defaults.
+    final bill = _lockBillKind ?? (p.kind == Kind.bill ? p.billKind : BillKind.payment);
+    final billChanged = kind == Kind.bill && (p.kind != Kind.bill || bill != p.billKind);
+    var rrule = _lockRepeat != null ? _lockRepeat!.rrule : p.rrule;
+    var repeatMode = _lockRepeat?.mode ?? p.repeatMode;
+    if (billChanged && _lockRepeat == null) {
+      rrule = switch (bill) {
+        BillKind.subscription => rrule ?? 'FREQ=MONTHLY',
+        BillKind.trial => null,
+        BillKind.payment => rrule,
+      };
+      repeatMode = rrule == null ? null : RecurrenceMode.fixed;
+    }
+    final defaultNag = kind == Kind.bill
+        ? (bill == BillKind.payment ? (billChanged ? '2h' : p.nag) : null)
+        : (_lockKind != null && p.kind == Kind.bill ? null : p.nag);
     return ParseResult(
       title: p.title,
+      amount: kind != Kind.bill || _lockNoAmount ? null : (_lockAmount ?? p.amount),
+      billKind: bill,
       timing: timing,
       kind: kind,
       context: _lockContext ?? p.context,
       flags: flags,
-      rrule: _lockRepeat != null ? _lockRepeat!.rrule : p.rrule,
-      repeatMode: _lockRepeat?.mode ?? p.repeatMode,
+      rrule: rrule,
+      repeatMode: repeatMode,
       // A type chosen by hand brings its own default plan, unless alerts were set too.
       alerts: _lockAlerts != null
           ? [for (final s in _lockAlerts!) s.offset.toString()]
-          : (_lockKind != null && _lockKind != p.kind ? null : p.alerts),
+          : ((_lockKind != null && _lockKind != p.kind) || billChanged ? null : p.alerts),
       nag: switch (_lockNag) {
-        true => p.nag ?? '2h',
+        true => defaultNag ?? '2h',
         false => null,
-        null => p.nag,
+        null => defaultNag,
       },
     );
   }
@@ -274,6 +299,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
     setState(() {
       _template = t;
       _lockKind = null;
+      _lockBillKind = null;
       _lockRepeat = null;
       _lockAlerts = null;
       _lockNag = null;
@@ -312,6 +338,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
   String _placeholder(AppLocalizations l10n) => switch (_template) {
     Template.birthday => l10n.tplPhBirthday,
     Template.billDue => l10n.tplPhBill,
+    Template.subscription => l10n.tplPhSubscription,
     Template.renewal => l10n.tplPhRenewal,
     Template.freeTrial => l10n.tplPhTrial,
     Template.nightOut => l10n.tplPhNightOut,
@@ -322,6 +349,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
   static String templateLabel(AppLocalizations l10n, Template t) => switch (t) {
     Template.birthday => l10n.tplBirthday,
     Template.billDue => l10n.tplBill,
+    Template.subscription => l10n.tplSubscription,
     Template.renewal => l10n.tplRenewal,
     Template.freeTrial => l10n.tplTrial,
     Template.nightOut => l10n.tplNightOut,
@@ -331,7 +359,8 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
   static IconData templateIcon(Template t) => switch (t) {
     Template.birthday => AppIcons.birthday,
     Template.billDue => AppIcons.bill,
-    Template.renewal => AppIcons.renewal,
+    Template.subscription => AppIcons.renewal,
+    Template.renewal => AppIcons.calendarCheck,
     Template.freeTrial => AppIcons.precise,
     Template.nightOut => AppIcons.nightOut,
     Template.appointment => AppIcons.appointment,
@@ -521,6 +550,21 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
               margin: EdgeInsets.zero,
               indent: 56,
               children: [
+                if (p.kind == Kind.bill)
+                  FormRow(
+                    icon: AppIcons.bill,
+                    color: c.bill,
+                    label: l10n.rowAmount,
+                    value: p.amount == null ? l10n.amountAdd : f.money(p.amount!),
+                    onTap: () async {
+                      final v = await pickAmount(context, p.amount);
+                      if (v == null) return;
+                      setState(() {
+                        _lockAmount = v.amount;
+                        _lockNoAmount = v.amount == null;
+                      });
+                    },
+                  ),
                 FormRow(
                   icon: AppIcons.calendar,
                   color: c.danger,
@@ -597,7 +641,9 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                     if (v != null) setState(() => _lockAlerts = v);
                   },
                 ),
-                if (p.kind == Kind.task || p.kind == Kind.occasion)
+                if (p.kind == Kind.task ||
+                    p.kind == Kind.occasion ||
+                    (p.kind == Kind.bill && p.billKind == BillKind.payment))
                   SwitchRow(
                     icon: AppIcons.time,
                     color: c.warning,
@@ -629,6 +675,21 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                   items: [for (final k in Kind.values) (value: k, label: f.kind(k), dot: c.kind(k))],
                   selected: p.kind,
                   onChanged: (k) => setState(() => _lockKind = k),
+                ),
+                // BIL-1: payment / subscription / free trial.
+                AnimatedSize(
+                  duration: Motion.standard,
+                  curve: Curves.easeOutCubic,
+                  child: p.kind != Kind.bill
+                      ? const SizedBox(width: double.infinity)
+                      : Padding(
+                          padding: const EdgeInsets.only(top: Space.m),
+                          child: SegmentedPills<BillKind>(
+                            items: [for (final b in BillKind.values) (value: b, label: f.billKind(b), dot: null)],
+                            selected: p.billKind,
+                            onChanged: (b) => setState(() => _lockBillKind = b),
+                          ),
+                        ),
                 ),
                 const SizedBox(height: Space.m),
                 SegmentedPills<ReminderContext>(
@@ -688,7 +749,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
 
   List<AlertStage> _plan(ParseResult p) =>
       p.alerts?.map((o) => AlertStage(AlertOffset.parse(o))).toList() ??
-      ref.read(prefsProvider).alertPlanFor(p.kind, p.timing?.type ?? TimingType.date);
+      ref.read(prefsProvider).alertPlanFor(p.kind, p.timing?.type ?? TimingType.date, bill: p.billKind);
 
   /// One-line "first alert" summary.
   String? _firstAlert(ParseResult p, Fmt f) {

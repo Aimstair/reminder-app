@@ -10,9 +10,14 @@
     <string name="notif_snooze_5m">Snooze 5m</string>
     <string name="notif_snooze_1m">Snooze 1m</string>
     <string name="notif_open">Open</string>
+    <!-- BIL-4 -->
+    <string name="notif_paid">Paid</string>
+    <string name="notif_got_it">Got it</string>
+    <string name="notif_decide">Decide</string>
     <string name="notif_undo">Undo</string>
     <string name="notif_confirm_done">Done</string>
     <string name="notif_confirm_prepared">Prepared</string>
+    <string name="notif_confirm_paid">Paid</string>
     <!-- SCH-7: appended to a late alert's body -->
     <string name="notif_late_suffix">" · late"</string>
 

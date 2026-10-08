@@ -25,11 +25,12 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.event,
     required this.occasion,
     required this.purple,
+    required this.bill,
   });
 
   final Color bgGrouped, surface, surfaceElevated, textPrimary, textSecondary, separator;
   final Color accent, danger, success, warning;
-  final Color task, meeting, event, occasion;
+  final Color task, meeting, event, occasion, bill;
 
   /// Extra accent for form icons (alerts row in mockup 03).
   final Color purple;
@@ -50,6 +51,7 @@ class AppColors extends ThemeExtension<AppColors> {
     event: Color(0xFFFF9500),
     occasion: Color(0xFFFF2D55),
     purple: Color(0xFFAF52DE),
+    bill: Color(0xFF34C759), // BIL-1 green
   );
 
   static const dark = AppColors(
@@ -68,6 +70,7 @@ class AppColors extends ThemeExtension<AppColors> {
     event: Color(0xFFFF9F0A),
     occasion: Color(0xFFFF375F),
     purple: Color(0xFFBF5AF2),
+    bill: Color(0xFF30D158),
   );
 
   static AppColors of(BuildContext context) => Theme.of(context).extension<AppColors>()!;
@@ -78,6 +81,7 @@ class AppColors extends ThemeExtension<AppColors> {
     Kind.meeting => meeting,
     Kind.event => event,
     Kind.occasion => occasion,
+    Kind.bill => bill,
   };
 
   @override
@@ -92,6 +96,7 @@ IconData kindIcon(Kind k) => switch (k) {
   Kind.meeting => AppIcons.meeting,
   Kind.event => AppIcons.event,
   Kind.occasion => AppIcons.birthday,
+  Kind.bill => AppIcons.bill,
 };
 
 /// Spacing (4-pt grid) and radii.

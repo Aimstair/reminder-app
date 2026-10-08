@@ -1003,7 +1003,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tplPhRenewal => 'What renews? When?';
 
   @override
-  String get tplPhTrial => 'Which trial?';
+  String get tplPhTrial => 'Which trial? Ends when?';
 
   @override
   String get tplPhNightOut => 'Where and when?';
@@ -1650,4 +1650,128 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchHero => 'Find any reminder by its name or notes.';
+
+  @override
+  String get typeBill => 'Bill';
+
+  @override
+  String get filterBills => 'Bills';
+
+  @override
+  String get billPayment => 'Payment';
+
+  @override
+  String get billSubscription => 'Subscription';
+
+  @override
+  String get billTrial => 'Free trial';
+
+  @override
+  String get rowAmount => 'Amount';
+
+  @override
+  String get amountAdd => 'Add';
+
+  @override
+  String get amountDialogTitle => 'Amount';
+
+  @override
+  String get amountHint => '0.00';
+
+  @override
+  String get fieldCurrency => 'Currency';
+
+  @override
+  String get actionPaid => 'Paid';
+
+  @override
+  String get actionGotIt => 'Got it';
+
+  @override
+  String get actionStopSubscription => 'I cancelled it';
+
+  @override
+  String get actionKeepIt => 'Keep it';
+
+  @override
+  String get actionCancelledTrial => 'I cancelled';
+
+  @override
+  String get trialKeepTitle => 'How often will it charge?';
+
+  @override
+  String trialDecide(String when) {
+    return 'Your trial ends $when. Keep it, or cancel before then.';
+  }
+
+  @override
+  String trialDecideAmount(String when, String amount) {
+    return 'Your trial ends $when, then it\'s $amount. Keep it, or cancel before then.';
+  }
+
+  @override
+  String get snackTrialKept => 'Kept · now a subscription';
+
+  @override
+  String get snackTrialCancelled => 'Trial cancelled';
+
+  @override
+  String get snackSubscriptionStopped => 'Subscription ended';
+
+  @override
+  String get billsDueMonth => 'Due this month';
+
+  @override
+  String billsUnpaid(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n unpaid',
+      one: '1 unpaid',
+      zero: 'All paid',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get billsNothingDue => 'Nothing due this month';
+
+  @override
+  String get statAmount => 'amount';
+
+  @override
+  String get tplSubscription => 'Subscription';
+
+  @override
+  String get tplPhSubscription => 'Which subscription? Renews on the…';
+
+  @override
+  String notifBillDue(String amount, String when) {
+    return '$amount · due $when';
+  }
+
+  @override
+  String notifBillDueNoAmount(String when) {
+    return 'Due $when';
+  }
+
+  @override
+  String notifRenews(String when, String amount) {
+    return 'Renews $when · $amount';
+  }
+
+  @override
+  String notifRenewsNoAmount(String when) {
+    return 'Renews $when';
+  }
+
+  @override
+  String notifTrialEnds(String when, String amount) {
+    return 'Trial ends $when · then $amount';
+  }
+
+  @override
+  String notifTrialEndsNoAmount(String when) {
+    return 'Trial ends $when · keep it or cancel?';
+  }
 }

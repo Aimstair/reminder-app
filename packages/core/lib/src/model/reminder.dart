@@ -7,6 +7,7 @@ library;
 import 'alert.dart';
 import 'attachment.dart';
 import 'enums.dart';
+import 'money.dart';
 
 /// Fields every synced row carries (DAT-1, DAT-4).
 class RecordMeta {
@@ -130,6 +131,8 @@ class Reminder {
     required this.alertPlan,
     this.notes,
     this.attachments = const [],
+    this.amount,
+    this.billKind = BillKind.payment,
     this.rawInput,
     this.rrule,
     this.repeatMode = RecurrenceMode.fixed,
@@ -145,6 +148,12 @@ class Reminder {
 
   /// Links and files (ATT-1).
   final List<Attachment> attachments;
+
+  /// BIL-2: optional amount (bills only).
+  final Money? amount;
+
+  /// BIL-1: payment / subscription / free trial (bills only).
+  final BillKind billKind;
 
   /// Original typed/spoken text (CAP-8).
   final String? rawInput;
@@ -165,9 +174,10 @@ class Reminder {
 
   String get id => meta.id;
 
-  /// Completable types (Terms §0): Task always, Occasion per occurrence. CAL-3: imported calendar
+  /// Completable types (Terms §0): Task and Bill (BIL-1) always, Occasion per occurrence. CAL-3: imported calendar
   /// events never are.
-  bool get completable => (kind == Kind.task || kind == Kind.occasion) && source is! DeviceCalendarSource;
+  bool get completable =>
+      (kind == Kind.task || kind == Kind.occasion || kind == Kind.bill) && source is! DeviceCalendarSource;
 
   bool get repeats => rrule != null;
 
@@ -179,6 +189,8 @@ class Reminder {
     String? title,
     String? Function()? notes,
     List<Attachment>? attachments,
+    Money? Function()? amount,
+    BillKind? billKind,
     Kind? kind,
     ReminderContext? context,
     Timing? timing,
@@ -194,6 +206,8 @@ class Reminder {
     title: title ?? this.title,
     notes: notes != null ? notes() : this.notes,
     attachments: attachments ?? this.attachments,
+    amount: amount != null ? amount() : this.amount,
+    billKind: billKind ?? this.billKind,
     rawInput: rawInput,
     kind: kind ?? this.kind,
     context: context ?? this.context,

@@ -2,8 +2,9 @@
 library;
 
 import '../model/enums.dart';
+import '../model/money.dart';
 
-export '../model/enums.dart' show Kind, ReminderContext, RecurrenceMode, TimingType;
+export '../model/enums.dart' show BillKind, Kind, ReminderContext, RecurrenceMode, TimingType;
 
 /// Which preview chips to highlight (CAP-7, PRS-*).
 enum ParseFlag { ambiguousTime, ambiguousDate, pastDateRolled, timeInPast, titleMissing, dateMissing }
@@ -35,6 +36,8 @@ class ParseResult {
     this.repeatMode,
     this.alerts,
     this.nag,
+    this.amount,
+    this.billKind = BillKind.payment,
   });
 
   /// Empty when nothing is left after extraction (PRS-36).
@@ -54,12 +57,18 @@ class ParseResult {
 
   /// Nag interval, e.g. `2h` (PRS-27).
   final String? nag;
+
+  /// PRS-37: bills only.
+  final Money? amount;
+
+  /// BIL-1: meaningful when [kind] is [Kind.bill].
+  final BillKind billKind;
   final Set<ParseFlag> flags;
 
   @override
   String toString() =>
       'ParseResult(title: "$title", timing: $timing, kind: $kind, context: $context, rrule: $rrule, '
-      'repeatMode: $repeatMode, alerts: $alerts, nag: $nag, flags: $flags)';
+      'repeatMode: $repeatMode, alerts: $alerts, nag: $nag, amount: $amount, billKind: $billKind, flags: $flags)';
 }
 
 /// Inputs the parser needs besides the text.
@@ -70,6 +79,7 @@ class ParseContext {
     this.locale = 'en-US',
     this.dayTimeHour = 9,
     this.dayTimeMinute = 0,
+    this.currency = 'USD',
   });
 
   /// Current wall time in [defaultTimeZone]. Only the calendar fields are used.
@@ -84,4 +94,7 @@ class ParseContext {
   /// Day time for date-only items and "morning" (PRF-3).
   final int dayTimeHour;
   final int dayTimeMinute;
+
+  /// ISO 4217 default currency (BIL-2, the phone's region) for "$" and bare "dollars".
+  final String currency;
 }

@@ -14,6 +14,8 @@ import '../../data/prefs_repository.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../ui/bell.dart';
 import '../../ui/format.dart';
+import '../../ui/money_format.dart';
+import '../../ui/art.dart';
 import '../../ui/icons.dart';
 import '../../ui/motion.dart';
 import '../../ui/tokens.dart';
@@ -23,7 +25,7 @@ import '../digest/digest_card.dart';
 import '../month/month_view.dart' show firstWeekday, showMiniMonth;
 
 /// Quick filter chips on Schedule (mockup 02). Session-only; the drawer filters (VW-2) still apply.
-enum QuickFilter { all, personal, work, occasions, events, meetings }
+enum QuickFilter { all, personal, work, bills, occasions, events, meetings }
 
 class QuickFilterNotifier extends Notifier<QuickFilter> {
   @override
@@ -37,6 +39,7 @@ bool _passes(QuickFilter f, Reminder r) => switch (f) {
   QuickFilter.all => true,
   QuickFilter.personal => r.context == ReminderContext.personal,
   QuickFilter.work => r.context == ReminderContext.work,
+  QuickFilter.bills => r.kind == Kind.bill, // BIL-6
   QuickFilter.occasions => r.kind == Kind.occasion,
   QuickFilter.events => r.kind == Kind.event,
   QuickFilter.meetings => r.kind == Kind.meeting,
@@ -76,6 +79,7 @@ class SchedulePage extends ConsumerWidget {
           ),
           const SliverToBoxAdapter(child: _WeekStrip()),
           const SliverToBoxAdapter(child: _FilterChips()),
+          if (quick == QuickFilter.bills) const SliverToBoxAdapter(child: _BillsSummaryCard()),
           if (digest != null) const SliverToBoxAdapter(child: DigestCard()),
           if (all.isEmpty && progress.done == 0)
             SliverFillRemaining(
@@ -375,7 +379,7 @@ class _WeekStrip extends ConsumerWidget {
   }
 }
 
-/// Filter chips (mockup 02): All · Personal · Work · Occasions · Events · Meetings.
+/// Filter chips (mockup 02): All · Personal · Work · Bills · Occasions · Events · Meetings.
 class _FilterChips extends ConsumerWidget {
   const _FilterChips();
 
@@ -391,6 +395,7 @@ class _FilterChips extends ConsumerWidget {
       (QuickFilter.all, l10n.filterAll, null),
       (QuickFilter.personal, f.context(ReminderContext.personal), c.task),
       (QuickFilter.work, f.context(ReminderContext.work), c.meeting),
+      (QuickFilter.bills, l10n.filterBills, c.bill),
       (QuickFilter.occasions, l10n.filterOccasions, c.occasion),
       (QuickFilter.events, l10n.filterEvents, c.event),
       (QuickFilter.meetings, l10n.filterMeetings, c.meeting),
@@ -775,4 +780,67 @@ class _SwipeRow extends ConsumerWidget {
 
   static String _short(AppLocalizations l10n, Duration d) =>
       d.inMinutes % 60 == 0 ? l10n.hoursShort(d.inHours) : l10n.minutesShort(d.inMinutes);
+}
+
+/// BIL-6: "Due this month" total and how many bills are unpaid, shown with the Bills filter.
+class _BillsSummaryCard extends ConsumerWidget {
+  const _BillsSummaryCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final c = AppColors.of(context);
+    final f = Fmt.of(context);
+    final text = Theme.of(context).textTheme;
+    final today = ref.watch(todayProvider);
+    final monthEnd = DateTime.utc(today.year, today.month + 1, 0);
+    final items = ref.watch(rangeProvider((from: today, to: monthEnd))) ?? const <DayItem>[];
+    final s = billsSummary(items, preferred: deviceCurrency());
+    final total = s.totals.isEmpty ? null : f.money(s.totals.first);
+    final more = s.totals.skip(1).map(f.money).join(' + ');
+    return FadeSlideIn(
+      child: Container(
+        height: 88,
+        margin: const EdgeInsets.fromLTRB(Space.l, 0, Space.l, Space.s),
+        padding: const EdgeInsets.symmetric(horizontal: Space.l),
+        decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(Radii.card)),
+        child: Row(
+          children: [
+            GlyphBadge(icon: AppIcons.bill, color: c.bill, size: 48),
+            const SizedBox(width: Space.m + 2),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (s.unpaid > 0)
+                    Text(l10n.billsDueMonth, style: text.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(
+                    s.unpaid == 0 ? l10n.billsNothingDue : (total ?? l10n.billsUnpaid(s.unpaid)),
+                    style: s.unpaid == 0 || total == null ? text.titleMedium : text.headlineSmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (more.isNotEmpty)
+                    Text('+ $more', style: text.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
+            if (s.unpaid > 0 && total != null) ...[
+              const SizedBox(width: Space.s),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 110),
+                child: Text(
+                  l10n.billsUnpaid(s.unpaid),
+                  style: text.bodyMedium?.copyWith(color: c.warning),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 }

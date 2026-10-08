@@ -12,6 +12,7 @@ import 'package:reminder_core/reminder_core.dart';
 import '../../app/home_shell.dart' show HomeShell;
 import '../../app/providers.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../../ui/art.dart';
 import '../../ui/format.dart';
 import '../../ui/icons.dart';
 import '../../ui/motion.dart';
@@ -126,7 +127,9 @@ class DetailPage extends ConsumerWidget {
                         ),
                         const SizedBox(width: Space.m),
                         Expanded(
-                          child: _StatCard(value: '$sent', suffix: '/${fires.length}', label: l10n.statNudgesSent),
+                          child: r.kind == Kind.bill && r.amount != null
+                              ? _StatCard(value: f.money(r.amount!), label: l10n.statAmount, color: c.bill, small: true)
+                              : _StatCard(value: '$sent', suffix: '/${fires.length}', label: l10n.statNudgesSent),
                         ),
                         const SizedBox(width: Space.m),
                         Expanded(
@@ -201,7 +204,10 @@ class DetailPage extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: Space.l),
                 child: SegmentedPills<Kind>(
-                  items: [for (final k in Kind.values) (value: k, label: f.kind(k), dot: c.kind(k))],
+                  items: [
+                    for (final k in Kind.values)
+                      if (k != Kind.bill) (value: k, label: f.kind(k), dot: c.kind(k)),
+                  ],
                   selected: r.kind,
                   onChanged: (k) => ref.read(servicesProvider).calendar.correct(r, kind: k), // CAL-5
                 ),
@@ -820,8 +826,37 @@ class _Actions extends ConsumerWidget {
         ),
       );
     } else if (state != OccurrenceState.passed) {
-      if (r.kind == Kind.occasion && open && hasPrep) {
+      final trial = r.kind == Kind.bill && r.billKind == BillKind.trial;
+      final subscription = r.kind == Kind.bill && r.billKind == BillKind.subscription;
+      if (trial) {
+        // BIL-5: decide before the trial ends.
+        final f = Fmt.of(context);
+        final when = f.date(data.key);
+        children.add(
+          Text(
+            r.amount == null ? l10n.trialDecide(when) : l10n.trialDecideAmount(when, f.money(r.amount!)),
+            style: text.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+        );
+        children.add(
+          primary(l10n.actionKeepIt, AppIcons.renewal, () async {
+            final yearly = await _askCadence(context);
+            if (yearly == null) return;
+            await a.keepTrial(r, data.key, yearly: yearly);
+            if (context.mounted && context.canPop()) context.pop();
+          }),
+        );
+      } else if (r.kind == Kind.occasion && open && hasPrep) {
         children.add(primary(l10n.actionPrepared, AppIcons.check, () => a.prepared(r, data.key))); // OCC-3
+      } else if (r.kind == Kind.bill) {
+        // BIL-1: Paid / Got it.
+        children.add(
+          primary(subscription ? l10n.actionGotIt : l10n.actionPaid, AppIcons.check, () async {
+            await a.done(r, data.key);
+            if (context.mounted && context.canPop()) context.pop();
+          }),
+        );
       } else if (r.completable) {
         children.add(
           primary(l10n.actionDone, AppIcons.check, () async {
@@ -838,7 +873,13 @@ class _Actions extends ConsumerWidget {
               c.accent,
               () => a.reschedule(r, data.key, currentStart: data.occurrence?.overrideStart),
             ),
-            if (r.completable || r.repeats) ...[
+            if (trial || subscription) ...[
+              const SizedBox(width: Space.m),
+              secondary(trial ? l10n.actionCancelledTrial : l10n.actionStopSubscription, c.danger, () async {
+                trial ? await a.cancelTrial(r, data.key) : await a.stopSubscription(r, data.key);
+                if (context.mounted && context.canPop()) context.pop();
+              }),
+            ] else if (r.completable || r.repeats) ...[
               const SizedBox(width: Space.m),
               secondary(yearly ? l10n.actionSkipYear : l10n.actionSkip, c.textPrimary, () async {
                 await a.skip(r, data.key);
@@ -863,6 +904,43 @@ class _Actions extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// BIL-5 "How often will it charge?" → true = yearly, false = monthly, null = cancelled.
+Future<bool?> _askCadence(BuildContext context) {
+  final l10n = AppLocalizations.of(context);
+  final c = AppColors.of(context);
+  return showAppSheet<bool>(
+    context,
+    (ctx) => Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(l10n.trialKeepTitle, style: Theme.of(ctx).textTheme.titleMedium),
+        const SizedBox(height: Space.m),
+        InsetGroup(
+          indent: 56,
+          color: c.bgGrouped,
+          children: [
+            ChoiceRow(
+              icon: AppIcons.calendarCheck,
+              color: c.success,
+              label: l10n.repeatMonthly,
+              selected: false,
+              onTap: () => Navigator.pop(ctx, false),
+            ),
+            ChoiceRow(
+              icon: AppIcons.star,
+              color: c.occasion,
+              label: l10n.repeatYearly,
+              selected: false,
+              onTap: () => Navigator.pop(ctx, true),
+            ),
+          ],
+        ),
+        const SizedBox(height: Space.xl),
+      ],
+    ),
+  );
 }
 
 /// S-32 Remind me picker: presets (multi-select) + custom.

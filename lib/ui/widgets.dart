@@ -8,6 +8,7 @@ import 'package:reminder_core/reminder_core.dart';
 
 import '../l10n/gen/app_localizations.dart';
 import 'bell.dart';
+import 'format.dart';
 import 'motion.dart';
 import 'tokens.dart';
 import 'icons.dart';
@@ -234,7 +235,22 @@ class ReminderRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: Space.m),
-              trailing ?? IconTile.item(context, r),
+              trailing ??
+                  (r.kind == Kind.bill && r.amount != null
+                      // BIL-2: a bill shows its amount where other rows show their icon, like a price.
+                      ? ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 120),
+                          child: Text(
+                            Fmt.of(context).money(r.amount!),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: done ? c.textSecondary : c.textPrimary,
+                              fontFeatures: const [FontFeature.tabularFigures()],
+                            ),
+                          ),
+                        )
+                      : IconTile.item(context, r)),
             ],
           ),
         ),
@@ -329,6 +345,8 @@ class SegmentedPills<T> extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final dark = Theme.of(context).brightness == Brightness.dark;
     final index = items.indexWhere((i) => i.value == selected);
+    // Five or more segments (Task … Bill): smaller text, dot only on the selected one, so labels fit.
+    final crowded = items.length > 4;
     return Container(
       height: 36,
       padding: const EdgeInsets.all(2),
@@ -363,7 +381,7 @@ class SegmentedPills<T> extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    if (i.dot != null) ...[
+                    if (i.dot != null && (!crowded || on)) ...[
                       Container(
                         width: 7,
                         height: 7,
@@ -375,7 +393,7 @@ class SegmentedPills<T> extends StatelessWidget {
                       child: AnimatedDefaultTextStyle(
                         duration: Motion.micro,
                         style: text.titleSmall!.copyWith(
-                          fontSize: 14,
+                          fontSize: crowded ? 12.5 : 14,
                           fontWeight: on ? FontWeight.w600 : FontWeight.w500,
                           color: on ? c.textPrimary : c.textPrimary.withValues(alpha: 0.75),
                         ),

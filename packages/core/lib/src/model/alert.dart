@@ -84,8 +84,8 @@ class AlertStage {
   int get hashCode => Object.hash(offset, label, Object.hashAllUnordered(channels));
 }
 
-/// ALR-4 default alert plans per type (PRF-9 can override).
-List<AlertStage> defaultAlertPlan(Kind kind, TimingType timing) => switch (kind) {
+/// ALR-4 default alert plans per type (PRF-9 can override; for bills only the payment plan, BIL-3).
+List<AlertStage> defaultAlertPlan(Kind kind, TimingType timing, {BillKind bill = BillKind.payment}) => switch (kind) {
   Kind.meeting => const [AlertStage(AlertOffset(-10, OffsetUnit.minutes))],
   Kind.event => const [AlertStage(AlertOffset(-1, OffsetUnit.hours))],
   Kind.occasion => const [
@@ -94,4 +94,12 @@ List<AlertStage> defaultAlertPlan(Kind kind, TimingType timing) => switch (kind)
     AlertStage(AlertOffset.zero),
   ],
   Kind.task => const [AlertStage(AlertOffset.zero)],
+  Kind.bill => switch (bill) {
+    BillKind.payment => const [AlertStage(AlertOffset(-2, OffsetUnit.days)), AlertStage(AlertOffset.zero)],
+    BillKind.subscription => const [AlertStage(AlertOffset(-1, OffsetUnit.days))],
+    BillKind.trial => const [
+      AlertStage(AlertOffset(-3, OffsetUnit.days)),
+      AlertStage(AlertOffset(-1, OffsetUnit.days)),
+    ],
+  },
 };

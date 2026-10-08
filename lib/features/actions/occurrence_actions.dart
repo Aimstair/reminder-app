@@ -95,6 +95,88 @@ class OccurrenceActions {
     return today.length == 1 && today.single.reminder.id == r.id && today.single.occurrenceKey == key;
   }
 
+  /// BIL-5 Keep it: the free trial becomes a subscription repeating from the day it ends, with the
+  /// same amount; this occurrence (the decision) is done.
+  Future<void> keepTrial(Reminder r, DateTime key, {required bool yearly}) async {
+    final s = ref.read(servicesProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = this.l10n;
+    final d = r.timing.start;
+    final rule = yearly ? 'FREQ=YEARLY;BYMONTH=${d.month};BYMONTHDAY=${d.day}' : 'FREQ=MONTHLY;BYMONTHDAY=${d.day}';
+    await s.service.edit(
+      r.copyWith(
+        title: subscriptionTitleFromTrial(r.title),
+        billKind: BillKind.subscription,
+        rrule: () => rule,
+        repeatMode: RecurrenceMode.fixed,
+        alertPlan: s.prefs.current.alertPlanFor(Kind.bill, r.timing.type, bill: BillKind.subscription),
+        nagInterval: () => null,
+      ),
+    );
+    await s.service.setState(r.id, key, OccurrenceState.done);
+    s.feedback.tap();
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(l10n.snackTrialKept),
+          duration: const Duration(seconds: 5),
+          persist: false,
+          action: SnackBarAction(
+            label: l10n.actionUndo,
+            onPressed: () async {
+              await s.service.edit(r);
+              await s.service.setState(r.id, key, OccurrenceState.pending);
+            },
+          ),
+        ),
+      );
+  }
+
+  /// BIL-5 I cancelled: the trial is resolved and never repeats.
+  Future<void> cancelTrial(Reminder r, DateTime key) async {
+    final s = ref.read(servicesProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = this.l10n;
+    final before = await s.service.act(r.id, key, JournalActionType.done);
+    s.feedback.done(sound: s.prefs.current.completionSounds);
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(l10n.snackTrialCancelled),
+          duration: const Duration(seconds: 5),
+          persist: false,
+          action: SnackBarAction(label: l10n.actionUndo, onPressed: () => s.service.setState(r.id, key, before)),
+        ),
+      );
+  }
+
+  /// BIL-1 "I cancelled it": the subscription ends here — this charge is done and the series archived.
+  Future<void> stopSubscription(Reminder r, DateTime key) async {
+    final s = ref.read(servicesProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = this.l10n;
+    final before = await s.service.act(r.id, key, JournalActionType.done);
+    await s.service.edit(r.copyWith(status: ReminderStatus.archived));
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(l10n.snackSubscriptionStopped),
+          duration: const Duration(seconds: 5),
+          persist: false,
+          action: SnackBarAction(
+            label: l10n.actionUndo,
+            onPressed: () async {
+              await s.service.edit(r);
+              await s.service.setState(r.id, key, before);
+            },
+          ),
+        ),
+      );
+  }
+
   Future<void> prepared(Reminder r, DateTime key) async {
     final s = ref.read(servicesProvider);
     final before = await s.service.act(r.id, key, JournalActionType.prepared);

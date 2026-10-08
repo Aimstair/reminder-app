@@ -158,7 +158,7 @@ class AlarmPlanner {
         fireAt: at,
         title: t.title,
         body: t.body,
-        kind: _buttons(r.kind, stage, ak),
+        kind: _buttons(r.kind, stage, ak, bill: r.billKind),
         lateCutoff: cutoff,
       );
     }
@@ -178,9 +178,7 @@ class AlarmPlanner {
     // fired (or were missed) — no fallback then, or every alert would ring twice.
     final edited = occ != null && (occ.overrideStart != null || occ.overrideAlertPlan != null);
     final savedAt = edited && occ.meta.updatedAt.isAfter(r.meta.updatedAt) ? occ.meta.updatedAt : r.meta.updatedAt;
-    if (stages.isNotEmpty &&
-        fires.every((f) => !f.isAfter(savedAt) && !f.isAfter(now)) &&
-        times.anchor.isAfter(now)) {
+    if (stages.isNotEmpty && fires.every((f) => !f.isAfter(savedAt) && !f.isAfter(now)) && times.anchor.isAfter(now)) {
       final key = '$occId:anchor:0';
       if (inWindow(times.anchor) && !sent.contains(key)) out.add(make(key, times.anchor, AlertKind.anchorFallback));
     }
@@ -253,11 +251,18 @@ class AlarmPlanner {
   }
 
   /// NTF-2: which buttons the notification gets.
-  static String _buttons(Kind kind, AlertStage? stage, AlertKind ak) => switch (kind) {
-    Kind.meeting || Kind.event => 'meeting',
-    Kind.occasion => (stage?.isPrep ?? false) ? 'occasion_prep' : 'occasion_day',
-    Kind.task => 'task',
-  };
+  static String _buttons(Kind kind, AlertStage? stage, AlertKind ak, {BillKind bill = BillKind.payment}) =>
+      switch (kind) {
+        Kind.meeting || Kind.event => 'meeting',
+        Kind.occasion => (stage?.isPrep ?? false) ? 'occasion_prep' : 'occasion_day',
+        Kind.task => 'task',
+        // BIL-4
+        Kind.bill => switch (bill) {
+          BillKind.payment => 'bill',
+          BillKind.subscription => 'bill_subscription',
+          BillKind.trial => 'bill_trial',
+        },
+      };
 }
 
 /// Smallest gap between consecutive alarms — handy for diagnostics.

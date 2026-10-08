@@ -27,6 +27,9 @@ class Reminders extends Table with Synced {
   TextColumn get title => text()();
   TextColumn get notes => text().nullable()();
   TextColumn get attachments => text().nullable()(); // JSON list of Attachment (ATT-1); null = none
+  IntColumn get amountMinor => integer().nullable()(); // BIL-2, in the currency's minor units
+  TextColumn get currency => text().nullable()(); // BIL-2, ISO 4217
+  TextColumn get billKind => text().nullable()(); // BIL-1: payment / subscription / trial; null = payment
   TextColumn get rawInput => text().nullable()();
   TextColumn get kind => textEnum<Kind>()();
   TextColumn get context => textEnum<ReminderContext>()();
@@ -101,12 +104,24 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'app'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onUpgrade: (m, from, to) async {
       if (from < 2) await m.addColumn(reminders, reminders.attachments); // ATT-1
+      if (from < 3) {
+        await m.addColumn(reminders, reminders.amountMinor);
+        await m.addColumn(reminders, reminders.currency);
+        await m.addColumn(reminders, reminders.billKind);
+        // BIL-7: reminders made with the Bill due / Free trial templates become bills.
+        await customStatement(
+          "UPDATE reminders SET kind = 'bill', bill_kind = 'payment' WHERE template_id = 'billDue'",
+        );
+        await customStatement(
+          "UPDATE reminders SET kind = 'bill', bill_kind = 'trial' WHERE template_id = 'freeTrial'",
+        );
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

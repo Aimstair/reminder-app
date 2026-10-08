@@ -120,6 +120,9 @@ Related: [`reminder-app-concept.md`](../reminder-app-concept.md) (concepts, data
 | Task (date) | `0` (= day time) |
 | Event | `−1h` |
 | Occasion | `−7d`, `−1d`, `0` (= day time on the day) |
+| Bill · payment | `−2d`, `0` · nag until done **on** (2h) |
+| Bill · subscription | `−1d` |
+| Bill · free trial | `−3d`, `−1d` |
 
 - **ALR-5** "Start by" preset (Tasks with a due date): adds one stage at a user-chosen lead time (e.g. `−2d`) labelled "Start by" in the notification.
 - **ALR-6** **Past stages at save time:** stages whose fire time is already past when a reminder is created or edited are dropped for that occurrence. If that leaves no stages and the anchor is still in the future, one alert is scheduled at the anchor.
@@ -204,16 +207,17 @@ Detailed parser rules and examples live in `parser-test-set.md`. These are the d
 
 ## 8b. Templates (`TPL`)
 
-- **TPL-1** The capture sheet shows template chips when the input is empty: **Birthday · Bill due · Renewal · Free trial · Night out · Appointment**.
+- **TPL-1** The capture sheet shows template chips when the input is empty: **Birthday · Bill due · Subscription · Free trial · Renewal · Night out · Appointment**.
 - **TPL-2** Tapping a template sets and **locks** (`CAP-11`) its type, repeat, and alert fields, then focuses the input with a template-specific placeholder. The user types the rest (who/what/when); the parser fills only unlocked fields.
 - **TPL-3** Template definitions (v1.0, fixed set):
 
 | Template | Type | Repeat | Alerts | Extras | Placeholder |
 |---|---|---|---|---|---|
 | Birthday | Occasion | Yearly | −7d, −1d, 0 | Title gets "'s birthday" appended if the user types only a name | *Whose birthday? When?* |
-| Bill due | Task | Monthly | −2d, 0 | Nag until done **on** (2h) | *Which bill? Due on the…* |
+| Bill due | Bill · payment | Monthly | −2d, 0 | Nag until done **on** (2h) | *Which bill? Due on the…* |
 | Renewal | Task | Yearly | −1 month, −1 week, 0 | — | *What renews? When?* |
-| Free trial | Task | None | −1d | Date defaults to **in 7 days**; title gets "Cancel … trial" | *Which trial?* |
+| Free trial | Bill · free trial | None | −3d, −1d | Date (the day it ends) defaults to **in 7 days**; title gets "… free trial" | *Which trial? Ends when?* |
+| Subscription | Bill · subscription | Monthly | −1d | — | *Which subscription? Renews on the…* |
 | Night out | Event | None | −1d, −1h | Time defaults to 19:00 | *Where and when?* |
 | Appointment | Event | None | −1d (20:00 the evening before), −1h | — | *What and when?* |
 
@@ -274,6 +278,19 @@ Detailed parser rules and examples live in `parser-test-set.md`. These are the d
 - **DAT-4** Every record has `id` (UUID generated on device), `created_at`, `updated_at`, `device_id` — required for v1.1 sync *(v1.1+)*.
 - **DAT-5** **Local backup:** export all data to a file and import it back. Import merges by `id`; on conflict, the newer `updated_at` wins.
 
+### Bills (`BIL`)
+
+- **BIL-1** **Bill** is the fifth type (completable). Color green, receipt icon. A bill is one of three kinds:
+  - **Payment** (default) — something you pay: rent, a credit card, a utility bill. The action is **Paid**.
+  - **Subscription** — charged automatically on a schedule; the reminder is a heads-up ("Spotify renews tomorrow · $11.99"). Repeats **monthly** unless the text or the user says otherwise. The action is **Got it** (that charge is acknowledged; the series continues). **Stop** ends the series ("I cancelled it").
+  - **Free trial** — ends on a date, after which it starts charging. The reminder's date is **the day the trial ends**. Before then the user decides (`BIL-5`).
+- **BIL-2** **Amount (optional):** a number and a currency (ISO 4217), stored in the currency's minor units. Default currency: the phone's region (en-US → USD). Shown in rows, the detail page, notifications and the widget ("$1,200.00"). Only bills have amounts.
+- **BIL-3** **Defaults per kind:** alerts per `ALR-4`; a payment nags until done (2h) unless turned off; a subscription without a repeat gets `FREQ=MONTHLY` on its date; a free trial never repeats. The Bill row in Settings → Default alerts sets the payment plan; subscription and trial plans use the fixed defaults (editable per reminder).
+- **BIL-4** **Notification buttons:** payment → **Tomorrow · Paid**; subscription → **Got it** · Open; free trial → **Tomorrow** · **Decide** (opens the reminder). Body: "{amount} · due {when}" / "Renews {when} · {amount}" / "Trial ends {when} · then {amount}".
+- **BIL-5** **Free trial decision** (detail page, when the trial is unresolved): **Keep it** → choose *monthly* or *yearly*; the reminder becomes a Subscription repeating from the trial's end date with the same amount, its title loses the trial wording ("Netflix free trial ends" → "Netflix"), and the trial occurrence is marked done. **I cancelled** → the occurrence is done and the reminder never repeats (archived per `DAT-3`). Snooze/Tomorrow just postpone the question.
+- **BIL-6** **Bills filter** on Schedule (chip next to Occasions). With it on, a summary card shows **"Due this month: {total}"** and **"{n} unpaid"** — the sum of unresolved payment and subscription occurrences from today to the end of the month, per currency (the default currency first; other currencies listed after it). Free trials count as $0.
+- **BIL-7** Reminders created with the **Bill due** or **Free trial** templates before bills existed become Bills (payment / free trial) on upgrade. Others keep their type; the user can change it in the editor.
+
 ### Notes, links & files (`ATT`)
 
 - **ATT-1** A reminder can carry **notes** (free text) and any number of **attachments**: web links and files. Attachments are stored with the reminder (name, address or file, type, size) and shown on the capture sheet, the editor and the detail page; rows with attachments show a 📎. Search matches attachment names (S-40).
@@ -312,6 +329,7 @@ Every user-adjustable default the rules above depend on. **Onboarding** settings
 
 | Date | Rule(s) | Decision |
 |---|---|---|
+| 2026-10-09 | `BIL-1`–`BIL-7`, `ALR-4`, `TPL-1`/`TPL-3`, `PRS-29`, `PRS-37`, `PRS-38`, `CAP-13`, S-61 | User decision: a fifth type **Bill** (payment / subscription / free trial) with an **optional amount**; subscriptions and free trials live inside Bill; a free trial asks "Keep it / I cancelled" before it ends. Capture gets a separate **Ends** row (`CAP-13`). Widget defaults to **4×2** with the tall Add button from mockup 05. |
 | 2026-10-08 | `ATT-1`–`ATT-6`, `PRS-13`, DS15 | User request after device testing: **links and files on reminders** move from the cut list into v1.0 (notes already existed; links in notes become tappable). Files are copied into app storage, not backed up. Parser: ranges written with "to / until / till / through" ("9pm to 10pm") — real-world miss, cases K9–K12. Design DS15: graphics on every screen (page heroes, picture pickers, icon rows). |
 | 2026-10-05 | `TIM-2`–`TIM-9` | Time zones work like Google Calendar: each timed reminder has a zone; user-set default zone; per-reminder override; option to move upcoming reminders when the default changes. Date-only reminders have no zone. |
 | 2026-10-05 | `ALR-11`, `PRF-4` | Nag hours are user-adjustable in onboarding; default 08:00–22:00. |

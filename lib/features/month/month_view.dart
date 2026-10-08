@@ -97,7 +97,7 @@ class _MonthPage extends ConsumerWidget {
     // Month summary chips (mockup 08): occasions · bills due · meetings in this month.
     final inMonth = items.where((i) => i.day.month == month.month && i.day.year == month.year).toList();
     final occasions = inMonth.where((i) => i.reminder.kind == Kind.occasion).length;
-    final bills = inMonth.where((i) => glyphFor(i.reminder) == ItemGlyph.bill).length;
+    final bills = inMonth.where((i) => i.reminder.kind == Kind.bill || glyphFor(i.reminder) == ItemGlyph.bill).length;
     final meetings = inMonth.where((i) => i.reminder.kind == Kind.meeting).length;
     final dayItems = selected == null ? const <DayItem>[] : (byDay[selected] ?? const <DayItem>[]);
     final notifier = ref.read(homeProvider.notifier);

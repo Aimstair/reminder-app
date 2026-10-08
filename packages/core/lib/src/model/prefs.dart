@@ -71,5 +71,8 @@ class UserPrefs {
   /// PRF-9: user-set default alert plans; missing types use ALR-4.
   final Map<Kind, List<AlertStage>> alertDefaults;
 
-  List<AlertStage> alertPlanFor(Kind kind, TimingType timing) => alertDefaults[kind] ?? defaultAlertPlan(kind, timing);
+  /// BIL-3: the user's Bill default applies to payments; subscriptions and trials use fixed defaults.
+  List<AlertStage> alertPlanFor(Kind kind, TimingType timing, {BillKind bill = BillKind.payment}) =>
+      (kind == Kind.bill && bill != BillKind.payment ? null : alertDefaults[kind]) ??
+      defaultAlertPlan(kind, timing, bill: bill);
 }

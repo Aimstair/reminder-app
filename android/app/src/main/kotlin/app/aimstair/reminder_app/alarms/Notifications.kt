@@ -77,6 +77,10 @@ object Notifications {
             R.string.notif_prepared to ActionReceiver.PREPARED, R.string.notif_done to ActionReceiver.DONE)
         "occasion_day" -> listOf(R.string.notif_snooze_1h to ActionReceiver.SNOOZE, R.string.notif_done to ActionReceiver.DONE)
         "meeting" -> listOf(R.string.notif_snooze_5m to ActionReceiver.SNOOZE, R.string.notif_open to OPEN)
+        // BIL-4: bills
+        "bill" -> listOf(R.string.notif_tomorrow to ActionReceiver.TOMORROW, R.string.notif_paid to ActionReceiver.DONE)
+        "bill_subscription" -> listOf(R.string.notif_got_it to ActionReceiver.DONE, R.string.notif_open to OPEN)
+        "bill_trial" -> listOf(R.string.notif_tomorrow to ActionReceiver.TOMORROW, R.string.notif_decide to OPEN)
         "digest" -> emptyList() // DIG-3: tap opens the app
         "test" -> listOf(R.string.notif_snooze_1m to ActionReceiver.SNOOZE, R.string.notif_done to ActionReceiver.DONE)
         else -> listOf(R.string.notif_snooze_1h to ActionReceiver.SNOOZE,

@@ -77,6 +77,8 @@ Title is always the reminder title. Body = **stage label · when**. Buttons per 
 > In 10 min · 10:00 AM
 > [Snooze 5m] [Open]
 
+**Bills (BIL-4):** payment "{amount} · due {when}" (no amount: "Due {when}") — buttons Tomorrow · **Paid** · subscription "Renews {when} · {amount}" — buttons **Got it** · Open · free trial "Trial ends {when} · then {amount}" (no amount: "Trial ends {when} · keep it or cancel?") — buttons Tomorrow · **Decide** (opens the reminder).
+
 ### Summary & system notifications
 | Key | Title | Body | Buttons |
 |---|---|---|---|
@@ -147,6 +149,11 @@ Placeholders: *Whose birthday? When?* · *Which bill? Due on the…* · *What re
 **Shared text (CAP-12):** under the input when links or long text went to notes — "Shared text and links saved in notes"
 
 **Notes, links & files (ATT, S-20 / S-22 / S-30):** caption *Notes, links & files* · rows **Add note** · **Add link** · **Add file** · remove button "Remove".
+
+**Bills (BIL, S-20 / S-22 / S-30):** type label *Bill* · kinds *Payment · Subscription · Free trial* · row *Amount* (empty: *Add*) · amount dialog *Amount* with *Currency* · actions **Paid** (payment), **Got it** / **I cancelled it** (subscription), **Keep it** / **I cancelled** (free trial; Keep it asks *How often will it charge?* → Every month / Every year).
+Free trial detail line: "Your trial ends {when}, then it's {amount}. Keep it, or cancel before then." (without amount: "Your trial ends {when}. Keep it, or cancel before then.") · snackbars "Kept · now a subscription" · "Trial cancelled" · "Subscription ended".
+Bills filter chip *Bills*; summary card *Due this month* {total} · "{n} unpaid" / "All paid" · empty: "Nothing due this month".
+Template *Subscription* — placeholder *Which subscription? Renews on the…*; Free trial placeholder becomes *Which trial? Ends when?*
 Add link dialog: title *Add link* · fields *Link* (hint *example.com*) and *Title (optional)* · buttons Cancel / Add. A link without a title shows its site ("example.com").
 Files show their name and size ("240 KB", "1.2 MB"). Tapping a link opens the browser; tapping a file opens it in another app.
 

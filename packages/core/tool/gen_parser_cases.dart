@@ -30,7 +30,7 @@ const _defaultYear = 2026;
 
 void main() {
   final doc = File('../../docs/parser-test-set.md').readAsLinesSync();
-  final rowRe = RegExp(r'^\| ([A-N]\d+) \|');
+  final rowRe = RegExp(r'^\| ([A-O]\d+) \|');
   final cases = <String>[];
   final errors = <String>[];
 
@@ -77,7 +77,8 @@ String _case(String id, String input, String title, String when, String type, St
   if (input == '*(empty string)*') input = '';
   if (title == '*(empty)*') title = '';
 
-  final kind = {'T': 'task', 'M': 'meeting', 'E': 'event', 'O': 'occasion'}[type] ?? (throw 'bad type $type');
+  final kind =
+      {'T': 'task', 'M': 'meeting', 'E': 'event', 'O': 'occasion', 'B': 'bill'}[type] ?? (throw 'bad type $type');
   final context = {'P': 'personal', 'W': 'work'}[ctx] ?? (throw 'bad ctx $ctx');
 
   // Repeat / alerts column
@@ -97,6 +98,11 @@ String _case(String id, String input, String title, String when, String type, St
               .toList();
   }
   final nag = RegExp(r'nag (\w+)').firstMatch(repeat)?.group(1);
+  // BIL-1 / PRS-37
+  final billKind = kind != 'bill'
+      ? null
+      : (RegExp(r'bill: (subscription|trial)').firstMatch(repeat)?.group(1) ?? 'payment');
+  final amount = RegExp(r'amount ([A-Z]{3} [\d.]+)').firstMatch(repeat)?.group(1);
 
   final flags = RegExp(r'`(\w+)`').allMatches(notes).map((m) => m.group(1)!).where(_flags.contains).toList();
 
@@ -104,7 +110,8 @@ String _case(String id, String input, String title, String when, String type, St
       'timing: ${_timing(when)}, kind: ${_q(kind)}, context: ${_q(context)}, '
       'rrule: ${rrule == null ? 'null' : _q(rrule)}, afterCompletion: $afterCompletion, '
       'alerts: ${alerts == null ? 'null' : '[${alerts.map(_q).join(', ')}]'}, '
-      'nag: ${nag == null ? 'null' : _q(nag)}, flags: {${flags.map(_q).join(', ')}}),';
+      'nag: ${nag == null ? 'null' : _q(nag)}, '
+      'billKind: ${billKind == null ? 'null' : _q(billKind)}, amount: ${amount == null ? 'null' : _q(amount)}, flags: {${flags.map(_q).join(', ')}}),';
 }
 
 /// "Oct 11 18:00" · "Oct 12 (date)" · "2027-03-01 (date)" · "Oct 6 14:00–16:00"

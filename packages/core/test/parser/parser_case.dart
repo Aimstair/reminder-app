@@ -12,6 +12,8 @@ class ParserCase {
     required this.afterCompletion,
     required this.alerts,
     required this.nag,
+    required this.billKind,
+    required this.amount,
     required this.flags,
   });
 
@@ -28,6 +30,12 @@ class ParserCase {
   /// Null = the row doesn't state alerts (type defaults apply, parser returns null).
   final List<String>? alerts;
   final String? nag;
+
+  /// Bills only: payment / subscription / trial (BIL-1).
+  final String? billKind;
+
+  /// 'USD 1200.00' (PRS-37); null = no amount.
+  final String? amount;
   final Set<String> flags;
 }
 

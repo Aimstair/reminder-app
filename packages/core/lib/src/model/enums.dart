@@ -2,7 +2,10 @@
 library;
 
 /// Reminder type — a behavior preset (concept §Core Concepts 1).
-enum Kind { task, meeting, event, occasion }
+enum Kind { task, meeting, event, occasion, bill }
+
+/// BIL-1: what kind of bill (only meaningful when the type is [Kind.bill]).
+enum BillKind { payment, subscription, trial }
 
 /// Personal / Work context (concept §Core Concepts 6).
 enum ReminderContext { personal, work }

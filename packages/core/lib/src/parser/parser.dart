@@ -5,6 +5,7 @@
 /// date/time with the CAP rules. Pure Dart; calendar math uses UTC DateTimes as wall-clock containers.
 library;
 
+import '../model/money.dart';
 import '../time/zones.dart';
 import 'parse_result.dart';
 import 'vocab.dart';
@@ -95,6 +96,10 @@ class _Run {
   bool dayBefore = false;
   int? startByWeekday;
 
+  /// PRS-37: amount found in the text, and the characters it used (given back on non-bills).
+  Money? amount;
+  List<int> amountSpan = const [];
+
   // ---- span helpers ----
 
   bool _free(int s, int e) {
@@ -137,6 +142,7 @@ class _Run {
 
   ParseResult run() {
     _prefixes();
+    _amount(); // first, so "$15.49" never reads as a time
     _alerts();
     _recurrence();
     _relativeTime();
@@ -144,8 +150,16 @@ class _Run {
     _times();
     _dates();
 
-    final title = _title();
-    final kind = _kind(title);
+    var title = _title();
+    final (kind, billKind) = _kind(title);
+    if (kind != Kind.bill && amount != null) {
+      // PRS-37: an amount only belongs to a bill; elsewhere it stays in the title.
+      for (final i in amountSpan) {
+        used[i] = false;
+      }
+      amount = null;
+      title = _title();
+    }
     final context =
         contextOverride ??
         (kind == Kind.meeting || _hasAny(title.toLowerCase(), workWords)
@@ -164,6 +178,24 @@ class _Run {
 
     // PRS-30: occasions repeat yearly
     if (kind == Kind.occasion && rec == null) rec = _Recurrence()..freq = 'YEARLY';
+    // PRS-38: bill defaults
+    if (kind == Kind.bill) {
+      switch (billKind) {
+        case BillKind.payment:
+          untilDoneNag = true;
+        case BillKind.subscription:
+          if (rec == null) {
+            rec = _Recurrence()..freq = 'MONTHLY';
+            if (date?.kind == _DateKind.absolute && date!.day != null) rec!.byMonthDay = date!.day!.day;
+          }
+        case BillKind.trial:
+          rec = null;
+          if (date == null && time == null && relative == null) {
+            date = _DateSpec(_DateKind.relative, day: today.add(const Duration(days: 7)));
+            flags.add(ParseFlag.ambiguousDate);
+          }
+      }
+    }
     if (rec != null && rec!.freq == 'WEEKLY' && rec!.byDay.isEmpty && date?.kind == _DateKind.weekday) {
       rec!.byDay = [date!.weekday!]; // "weekly on Sunday"
     }
@@ -191,9 +223,56 @@ class _Run {
       repeatMode: rec == null ? null : (rec!.afterCompletion ? RecurrenceMode.afterCompletion : RecurrenceMode.fixed),
       alerts: alerts,
       nag: untilDoneNag ? '2h' : null,
+      amount: amount,
+      billKind: billKind,
       flags: flags,
     );
   }
+
+  /// PRS-37: "$1,200", "€450", "USD 320", "85 dollars"…
+  void _amount() {
+    const number = r'(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?)';
+    final symbols = currencySymbols.keys.map(RegExp.escape).join('|');
+    final codes = currencyCodes.join('|');
+    final words = currencyWords.keys.join('|');
+    final patterns = [
+      RegExp('($symbols)\\s?$number'),
+      RegExp('\\b($codes)\\s?$number\\b'),
+      RegExp('\\b$number\\s?($codes|$words)\\b'),
+    ];
+    for (final (i, re) in patterns.indexed) {
+      final m = re.firstMatch(lower);
+      if (m == null || !_free(m.start, m.end)) continue;
+      final unit = i == 2 ? m.group(2)! : m.group(1)!;
+      final digits = i == 2 ? m.group(1)! : m.group(2)!;
+      final money = Money.parse(digits, _currencyFor(unit));
+      if (money == null) continue;
+      final before = [...used];
+      _use(m.start, m.end);
+      amountSpan = [
+        for (var j = 0; j < used.length; j++)
+          if (used[j] && !before[j]) j,
+      ];
+      amount = money;
+      return;
+    }
+  }
+
+  String _currencyFor(String unit) {
+    final u = unit.toLowerCase();
+    if (currencySymbols.containsKey(u)) return currencySymbols[u] ?? _dollar;
+    if (currencyWords.containsKey(u)) {
+      return switch (currencyWords[u]) {
+        null => _dollar,
+        'peso' => pesoCurrencies.contains(ctx.currency) ? ctx.currency : 'PHP',
+        final c => c,
+      };
+    }
+    return u.toUpperCase();
+  }
+
+  /// "$" means the default currency when it is a dollar, else USD (PRS-37).
+  String get _dollar => dollarCurrencies.contains(ctx.currency) ? ctx.currency : 'USD';
 
   void _prefixes() {
     // PRS-32: "work:" / "personal:"
@@ -593,16 +672,29 @@ class _Run {
   static bool _hasAny(String s, List<String> words) =>
       words.any((w) => RegExp('(?<![a-z0-9])${RegExp.escape(w)}(?![a-z0-9])').hasMatch(s));
 
-  Kind _kind(String title) {
-    if (rec?.afterCompletion ?? false) return Kind.task; // REC-10
+  (Kind, BillKind) _kind(String title) {
+    const pay = BillKind.payment;
+    if (rec?.afterCompletion ?? false) return (Kind.task, pay); // REC-10
     final t = title.toLowerCase();
-    if (RegExp(r'\b(birthday|bday|anniversary)\b(?!\s+(party|dinner|drinks)\b)').hasMatch(t)) return Kind.occasion;
-    if (_hasAny(t, meetingPhrases)) return Kind.meeting;
-    for (final v in taskVerbs) {
-      if (t == v || t.startsWith('$v ')) return Kind.task;
+    if (RegExp(r'\b(birthday|bday|anniversary)\b(?!\s+(party|dinner|drinks)\b)').hasMatch(t)) {
+      return (Kind.occasion, pay);
     }
-    if (_hasAny(t, eventWords)) return Kind.event;
-    return Kind.task;
+    if (_hasAny(t, meetingPhrases)) return (Kind.meeting, pay);
+    // PRS-29 (3) bills: trial and subscription words win over verbs; payment words don't.
+    if (_hasAny(t, trialWords)) return (Kind.bill, BillKind.trial);
+    if (_hasAny(t, subscriptionWords)) return (Kind.bill, BillKind.subscription);
+    String? verb;
+    for (final v in taskVerbs) {
+      if (t == v || t.startsWith('$v ')) {
+        verb = v;
+        break;
+      }
+    }
+    if (verb == 'pay') return (Kind.bill, pay);
+    if (verb == null && (amount != null || _hasAny(t, paymentWords))) return (Kind.bill, pay);
+    if (verb != null) return (Kind.task, pay);
+    if (_hasAny(t, eventWords)) return (Kind.event, pay);
+    return (Kind.task, pay);
   }
 
   // ---- timing ----

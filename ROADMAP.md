@@ -53,7 +53,8 @@ Sizing: **S** = small, **M** = medium, **L** = large. No calendar dates — each
 | **Share-sheet capture** — share text from any app → pre-filled capture | S |
 | Home-screen widget (quick add + next 3 reminders) | M |
 | Quick Settings tile | S |
-| **Templates** in capture: Birthday, Bill due, Renewal, Free trial, Night out, Appointment *(moved up from v1.2)* | S |
+| **Templates** in capture: Birthday, Bill due, Subscription, Free trial, Renewal, Night out, Appointment *(moved up from v1.2)* | S |
+| **Bill type** (payment · subscription · free trial) with optional amount, "Paid", free-trial "Keep it / I cancelled", Bills filter with this month's total (`BIL-*`, added 2026-10-09) | M |
 
 ### Reminder engine
 | Feature | Size |

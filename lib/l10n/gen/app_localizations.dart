@@ -1921,7 +1921,7 @@ abstract class AppLocalizations {
   /// No description provided for @tplPhTrial.
   ///
   /// In en, this message translates to:
-  /// **'Which trial?'**
+  /// **'Which trial? Ends when?'**
   String get tplPhTrial;
 
   /// No description provided for @tplPhNightOut.
@@ -2745,6 +2745,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Find any reminder by its name or notes.'**
   String get searchHero;
+
+  /// copy.md §4 type
+  ///
+  /// In en, this message translates to:
+  /// **'Bill'**
+  String get typeBill;
+
+  /// copy.md §5 filter chip
+  ///
+  /// In en, this message translates to:
+  /// **'Bills'**
+  String get filterBills;
+
+  /// copy.md §4 bill kind
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get billPayment;
+
+  /// copy.md §4 bill kind
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription'**
+  String get billSubscription;
+
+  /// copy.md §4 bill kind
+  ///
+  /// In en, this message translates to:
+  /// **'Free trial'**
+  String get billTrial;
+
+  /// copy.md §4 Details row
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get rowAmount;
+
+  /// copy.md §4 Details row, no amount yet
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get amountAdd;
+
+  /// copy.md §4 amount dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get amountDialogTitle;
+
+  /// copy.md §4 amount dialog
+  ///
+  /// In en, this message translates to:
+  /// **'0.00'**
+  String get amountHint;
+
+  /// copy.md §4 amount dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get fieldCurrency;
+
+  /// copy.md §6 bill action (BIL-1)
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get actionPaid;
+
+  /// copy.md §6 subscription action (BIL-1)
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get actionGotIt;
+
+  /// copy.md §6 subscription stop (BIL-1)
+  ///
+  /// In en, this message translates to:
+  /// **'I cancelled it'**
+  String get actionStopSubscription;
+
+  /// copy.md §6 free trial (BIL-5)
+  ///
+  /// In en, this message translates to:
+  /// **'Keep it'**
+  String get actionKeepIt;
+
+  /// copy.md §6 free trial (BIL-5)
+  ///
+  /// In en, this message translates to:
+  /// **'I cancelled'**
+  String get actionCancelledTrial;
+
+  /// copy.md §6 free trial (BIL-5)
+  ///
+  /// In en, this message translates to:
+  /// **'How often will it charge?'**
+  String get trialKeepTitle;
+
+  /// copy.md §6 free trial (BIL-5)
+  ///
+  /// In en, this message translates to:
+  /// **'Your trial ends {when}. Keep it, or cancel before then.'**
+  String trialDecide(String when);
+
+  /// copy.md §6 free trial (BIL-5)
+  ///
+  /// In en, this message translates to:
+  /// **'Your trial ends {when}, then it\'s {amount}. Keep it, or cancel before then.'**
+  String trialDecideAmount(String when, String amount);
+
+  /// copy.md §7 (BIL-5)
+  ///
+  /// In en, this message translates to:
+  /// **'Kept · now a subscription'**
+  String get snackTrialKept;
+
+  /// copy.md §7 (BIL-5)
+  ///
+  /// In en, this message translates to:
+  /// **'Trial cancelled'**
+  String get snackTrialCancelled;
+
+  /// copy.md §7 (BIL-1)
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription ended'**
+  String get snackSubscriptionStopped;
+
+  /// copy.md §5 Bills summary (BIL-6)
+  ///
+  /// In en, this message translates to:
+  /// **'Due this month'**
+  String get billsDueMonth;
+
+  /// copy.md §5 Bills summary (BIL-6)
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =0{All paid} =1{1 unpaid} other{{n} unpaid}}'**
+  String billsUnpaid(int n);
+
+  /// copy.md §5 Bills summary (BIL-6)
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing due this month'**
+  String get billsNothingDue;
+
+  /// copy.md §6 detail stat
+  ///
+  /// In en, this message translates to:
+  /// **'amount'**
+  String get statAmount;
+
+  /// copy.md §4 template
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription'**
+  String get tplSubscription;
+
+  /// copy.md §4 template placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Which subscription? Renews on the…'**
+  String get tplPhSubscription;
+
+  /// copy.md §2 bill notification (BIL-4)
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} · due {when}'**
+  String notifBillDue(String amount, String when);
+
+  /// copy.md §2 bill notification (BIL-4)
+  ///
+  /// In en, this message translates to:
+  /// **'Due {when}'**
+  String notifBillDueNoAmount(String when);
+
+  /// copy.md §2 subscription notification (BIL-4)
+  ///
+  /// In en, this message translates to:
+  /// **'Renews {when} · {amount}'**
+  String notifRenews(String when, String amount);
+
+  /// copy.md §2 subscription notification (BIL-4)
+  ///
+  /// In en, this message translates to:
+  /// **'Renews {when}'**
+  String notifRenewsNoAmount(String when);
+
+  /// copy.md §2 trial notification (BIL-4)
+  ///
+  /// In en, this message translates to:
+  /// **'Trial ends {when} · then {amount}'**
+  String notifTrialEnds(String when, String amount);
+
+  /// copy.md §2 trial notification (BIL-4)
+  ///
+  /// In en, this message translates to:
+  /// **'Trial ends {when} · keep it or cancel?'**
+  String notifTrialEndsNoAmount(String when);
 }
 
 class _AppLocalizationsDelegate

@@ -43,6 +43,8 @@ List<String> check(ParserCase c, ParseResult r) {
   eq('afterCompletion', c.afterCompletion, r.repeatMode == RecurrenceMode.afterCompletion);
   if (c.alerts != null) eq('alerts', c.alerts!.join(','), r.alerts?.join(','));
   eq('nag', c.nag, r.nag);
+  eq('billKind', c.billKind, r.kind == Kind.bill ? r.billKind.name : null);
+  eq('amount', c.amount, r.amount?.toString());
   eq('flags', (c.flags.toList()..sort()).join(','), (r.flags.map((f) => _flagNames[f]!).toList()..sort()).join(','));
   return errs;
 }

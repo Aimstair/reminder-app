@@ -114,6 +114,8 @@ class ReminderRepository {
     title: r.title,
     notes: r.notes,
     attachments: r.attachments,
+    amount: r.amount,
+    billKind: r.billKind,
     rawInput: r.rawInput,
     kind: r.kind,
     context: r.context,
@@ -138,6 +140,9 @@ class ReminderRepository {
     title: r.title,
     notes: r.notes,
     attachments: r.attachments.isEmpty ? null : jsonEncode(r.attachments.map((a) => a.toJson()).toList()),
+    amountMinor: r.kind == Kind.bill ? r.amount?.minor : null,
+    currency: r.kind == Kind.bill ? r.amount?.currency : null,
+    billKind: r.kind == Kind.bill ? r.billKind.name : null,
     rawInput: r.rawInput,
     kind: r.kind,
     context: r.context,
@@ -169,6 +174,8 @@ class ReminderRepository {
     attachments: row.attachments == null
         ? const []
         : (jsonDecode(row.attachments!) as List).map((j) => Attachment.fromJson((j as Map).cast())).toList(),
+    amount: row.amountMinor == null || row.currency == null ? null : Money(row.amountMinor!, row.currency!),
+    billKind: BillKind.values.asNameMap()[row.billKind] ?? BillKind.payment,
     rawInput: row.rawInput,
     kind: row.kind,
     context: row.context,

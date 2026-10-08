@@ -51,11 +51,32 @@ void main() {
     expect(a, hasLength(36));
   });
 
+  test('BIL-1 BIL-2 a bill keeps its kind and amount; other types never store one', () async {
+    final rent = (await birthday()).copyWith(
+      kind: Kind.bill,
+      billKind: BillKind.subscription,
+      amount: () => const Money(120000, 'USD'),
+    );
+    await repo.insert(rent);
+    final back = (await repo.byId(rent.id))!;
+    expect([back.kind, back.billKind, back.amount], [Kind.bill, BillKind.subscription, const Money(120000, 'USD')]);
+
+    final task = (await meeting()).copyWith(amount: () => const Money(5, 'USD'));
+    await repo.insert(task);
+    expect((await repo.byId(task.id))!.amount, isNull);
+  });
+
   test('ATT-1 links and files round-trip; none stays an empty list', () async {
     final m = (await meeting()).copyWith(
       attachments: [
         Attachment.link('zoom.us/j/123', name: 'Zoom'),
-        const Attachment(kind: AttachmentKind.file, uri: '/files/a/agenda.pdf', name: 'Agenda.pdf', mime: 'application/pdf', size: 42),
+        const Attachment(
+          kind: AttachmentKind.file,
+          uri: '/files/a/agenda.pdf',
+          name: 'Agenda.pdf',
+          mime: 'application/pdf',
+          size: 42,
+        ),
       ],
     );
     await repo.insert(m);

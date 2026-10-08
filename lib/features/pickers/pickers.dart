@@ -8,6 +8,7 @@ import 'package:reminder_core/reminder_core.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../ui/art.dart';
 import '../../ui/format.dart';
+import '../../ui/money_format.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
 import '../detail/detail_page.dart' show alertSortKey, pickOffset;
@@ -370,4 +371,100 @@ Future<Duration?> pickNag(BuildContext context, Duration? current) async {
     ),
   );
   return picked;
+}
+
+/// BIL-2 amount dialog. Returns null when cancelled, `(amount: null)` when removed.
+Future<({Money? amount})?> pickAmount(BuildContext context, Money? current) => showDialog<({Money? amount})>(
+  context: context,
+  builder: (_) => _AmountDialog(current: current),
+);
+
+class _AmountDialog extends StatefulWidget {
+  const _AmountDialog({required this.current});
+  final Money? current;
+
+  @override
+  State<_AmountDialog> createState() => _AmountDialogState();
+}
+
+class _AmountDialogState extends State<_AmountDialog> {
+  late String _currency = widget.current?.currency ?? deviceCurrency();
+  late final _text = TextEditingController(
+    text: widget.current == null ? '' : widget.current!.value.toStringAsFixed(widget.current!.decimals),
+  );
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  /// "1,200" and "1200.50" read as usual; "15,49" (comma + 2 digits, no dot) as a decimal comma.
+  Money? get _value {
+    final t = _text.text.trim();
+    final decimalComma = !t.contains('.') && RegExp(r',\d{1,2}$').hasMatch(t);
+    return Money.parse(t, _currency, decimalComma: decimalComma);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = AppColors.of(context);
+    final text = Theme.of(context).textTheme;
+    final valid = _value != null;
+    return AlertDialog(
+      title: Text(l10n.amountDialogTitle),
+      content: Row(
+        children: [
+          Container(
+            height: 52,
+            padding: const EdgeInsets.symmetric(horizontal: Space.s),
+            decoration: BoxDecoration(color: c.bgGrouped, borderRadius: BorderRadius.circular(Radii.chip)),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _currency,
+                style: text.bodyLarge,
+                items: [for (final cur in currencyChoices(_currency)) DropdownMenuItem(value: cur, child: Text(cur))],
+                onChanged: (v) => setState(() => _currency = v ?? _currency),
+              ),
+            ),
+          ),
+          const SizedBox(width: Space.s),
+          Expanded(
+            child: TextField(
+              controller: _text,
+              autofocus: true,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              style: text.titleLarge,
+              onChanged: (_) => setState(() {}),
+              onSubmitted: (_) {
+                if (valid) Navigator.pop(context, (amount: _value));
+              },
+              decoration: InputDecoration(
+                hintText: l10n.amountHint,
+                filled: true,
+                fillColor: c.bgGrouped,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(Radii.chip),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        if (widget.current != null)
+          TextButton(
+            onPressed: () => Navigator.pop(context, (amount: null)),
+            child: Text(l10n.actionRemove, style: TextStyle(color: c.danger)),
+          ),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.actionCancel)),
+        TextButton(
+          onPressed: valid ? () => Navigator.pop(context, (amount: _value)) : null,
+          child: Text(l10n.pickerDone),
+        ),
+      ],
+    );
+  }
 }
