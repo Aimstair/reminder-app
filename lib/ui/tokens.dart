@@ -3,6 +3,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:reminder_core/reminder_core.dart';
+
 import 'icons.dart';
 
 /// Colors not covered by Material's ColorScheme, read with `AppColors.of(context)`.
@@ -107,4 +108,7 @@ abstract final class Motion {
   static const micro = Duration(milliseconds: 150); // chips, checkbox, toggles
   static const standard = Duration(milliseconds: 280); // sheets, row move, view switch
   static const emphasized = Duration(milliseconds: 450); // saved item flying in, view transitions
+
+  /// iOS-like spring: fast start, a hint of overshoot, soft landing (sliding highlights, presses).
+  static const spring = Cubic(0.2, 0.9, 0.25, 1.06);
 }

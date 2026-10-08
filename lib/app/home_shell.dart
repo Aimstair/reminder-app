@@ -19,6 +19,7 @@ import '../ui/tokens.dart';
 import '../ui/widgets.dart';
 import 'providers.dart';
 import '../ui/icons.dart';
+import '../ui/motion.dart';
 
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key, this.openCapture = false});
@@ -86,15 +87,12 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             ),
           ] else
             Padding(
-              padding: const EdgeInsets.only(right: Space.l),
-              child: FilledButton.tonal(
-                style: FilledButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  backgroundColor: AppColors.of(context).accent.withValues(alpha: 0.12),
-                  foregroundColor: AppColors.of(context).accent,
-                ),
+              padding: const EdgeInsets.only(right: Space.s),
+              // iOS Calendar style: a plain accent "Today" in the bar.
+              child: TextButton(
+                style: TextButton.styleFrom(textStyle: Theme.of(context).textTheme.titleMedium),
                 onPressed: notifier.today, // VW-9
-                child: Text(l10n.topToday),
+                child: Text(l10n.topToday, maxLines: 1),
               ),
             ),
         ],
@@ -105,19 +103,27 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         child: Column(
           children: [
             const _Banners(),
+            // Views cross-fade with a small slide in the direction of the menu order.
             Expanded(
-              child: switch (home.view) {
-                HomeView.schedule => const SchedulePage(),
-                HomeView.day => const DayView(),
-                HomeView.month => const MonthView(),
-              },
+              child: SwapFade(
+                slide: const Offset(0, 0.015),
+                child: KeyedSubtree(
+                  key: ValueKey(home.view),
+                  child: switch (home.view) {
+                    HomeView.schedule => const SchedulePage(),
+                    HomeView.day => const DayView(),
+                    HomeView.month => const MonthView(),
+                  },
+                ),
+              ),
             ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
         tooltip: l10n.newReminder,
-        onPressed: () => showCaptureSheet(context, day: home.view == HomeView.schedule || home.date == today ? null : home.date),
+        onPressed: () =>
+            showCaptureSheet(context, day: home.view == HomeView.schedule || home.date == today ? null : home.date),
         child: const Icon(AppIcons.add, size: 30),
       ),
     );
@@ -152,18 +158,43 @@ class _ViewPill extends StatelessWidget {
             ),
           ),
       ],
+      // The pill resizes smoothly and its icon + name cross-fade when the view changes.
       child: Container(
-        padding: const EdgeInsets.fromLTRB(Space.l, Space.s, Space.m, Space.s),
-        decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(Radii.sheet)),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(HomeShell.viewIcon(view), size: 20, color: c.textPrimary),
-            const SizedBox(width: Space.s),
-            Text(HomeShell.viewName(l10n, view), style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(width: Space.xs),
-            Icon(AppIcons.dropDown, size: 16, color: c.textPrimary),
+        height: 36,
+        padding: const EdgeInsets.fromLTRB(Space.m, 0, Space.s + 2, 0),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 1)),
           ],
+        ),
+        child: AnimatedSize(
+          duration: Motion.standard,
+          curve: Motion.spring,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedSwitcher(
+                duration: Motion.standard,
+                transitionBuilder: (child, a) => FadeTransition(
+                  opacity: a,
+                  child: ScaleTransition(scale: Tween(begin: 0.6, end: 1.0).animate(a), child: child),
+                ),
+                child: Row(
+                  key: ValueKey(view),
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(HomeShell.viewIcon(view), size: 18, color: c.accent),
+                    const SizedBox(width: Space.s),
+                    Text(HomeShell.viewName(l10n, view), maxLines: 1, style: Theme.of(context).textTheme.titleMedium),
+                  ],
+                ),
+              ),
+              const SizedBox(width: Space.xs),
+              Icon(AppIcons.dropDown, size: 14, color: c.textSecondary),
+            ],
+          ),
         ),
       ),
     );
@@ -212,11 +243,20 @@ class _Banners extends ConsumerWidget {
   }
 }
 
-class _Drawer extends ConsumerWidget {
+class _Drawer extends ConsumerStatefulWidget {
   const _Drawer();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_Drawer> createState() => _DrawerState();
+}
+
+/// iOS-style grouped drawer: every row is 48dp; filters show an animated check (VW-2).
+class _DrawerState extends ConsumerState<_Drawer> {
+  // Collapsed by default: people with several Google accounts can have 30+ calendars (VW-2).
+  bool _calendarsOpen = false;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final c = AppColors.of(context);
     final f = Fmt.of(context);
@@ -227,6 +267,7 @@ class _Drawer extends ConsumerWidget {
     ref.watch(calendarRemindersProvider);
     final calendar = ref.read(servicesProvider).calendar;
     final selectedCals = calendar.calendars.where((cal) => calendar.selected.contains(cal.id)).toList();
+    final hiddenCals = selectedCals.where((cal) => filters.hiddenCalendars.contains(cal.id)).length;
 
     Future<void> toggle(String key, Set<String> hidden, String value) async {
       final next = {...hidden};
@@ -234,100 +275,215 @@ class _Drawer extends ConsumerWidget {
       await prefs.set(key, next.toList());
     }
 
-    Widget header(String t) => Padding(
-      padding: const EdgeInsets.fromLTRB(Space.xl, Space.l, Space.l, Space.xs),
-      child: Text(t.toUpperCase(), style: text.labelSmall?.copyWith(letterSpacing: 0.5)),
-    );
-
     void go(String path) {
       Navigator.pop(context);
       context.push(path);
     }
 
+    const margin = EdgeInsets.symmetric(horizontal: Space.m);
     return Drawer(
-      backgroundColor: c.bgGrouped,
       child: SafeArea(
         child: ListView(
+          padding: const EdgeInsets.only(bottom: Space.xl),
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(Space.xl, Space.l, Space.l, Space.s),
-              child: Text(l10n.appName, style: text.titleLarge),
+              padding: const EdgeInsets.fromLTRB(Space.xl, Space.l, Space.l, Space.m),
+              child: Text(l10n.appName, style: text.headlineLarge, maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
-            for (final v in HomeView.values)
-              ListTile(
-                leading: Icon(HomeShell.viewIcon(v)),
-                title: Text(HomeShell.viewName(l10n, v)),
-                selected: home.view == v,
-                onTap: () {
-                  ref.read(homeProvider.notifier).setView(v);
-                  Navigator.pop(context);
-                },
+            InsetGroup(
+              margin: margin,
+              indent: 52,
+              children: [
+                for (final v in HomeView.values)
+                  _DrawerRow(
+                    icon: HomeShell.viewIcon(v),
+                    iconColor: c.accent,
+                    label: HomeShell.viewName(l10n, v),
+                    bold: home.view == v,
+                    trailing: AnimatedOpacity(
+                      opacity: home.view == v ? 1 : 0,
+                      duration: Motion.micro,
+                      child: Icon(AppIcons.check, size: 18, color: c.accent),
+                    ),
+                    onTap: () {
+                      ref.read(homeProvider.notifier).setView(v);
+                      Navigator.pop(context);
+                    },
+                  ),
+              ],
+            ),
+            GroupCaption(l10n.drawerTypes),
+            InsetGroup(
+              margin: margin,
+              indent: 52,
+              children: [
+                for (final k in Kind.values)
+                  _DrawerRow(
+                    icon: kindIcon(k),
+                    iconColor: c.kind(k),
+                    label: f.kind(k),
+                    trailing: CheckCircle(color: c.kind(k), checked: !filters.hiddenKinds.contains(k.name)),
+                    onTap: () => toggle(PrefKeys.hiddenKinds, filters.hiddenKinds, k.name),
+                  ),
+              ],
+            ),
+            GroupCaption(l10n.drawerContext),
+            InsetGroup(
+              margin: margin,
+              indent: 52,
+              children: [
+                for (final x in ReminderContext.values)
+                  _DrawerRow(
+                    icon: x == ReminderContext.work ? AppIcons.work : AppIcons.personal,
+                    iconColor: x == ReminderContext.work ? c.meeting : c.task,
+                    label: f.context(x),
+                    trailing: CheckCircle(color: c.accent, checked: !filters.hiddenContexts.contains(x.name)),
+                    onTap: () => toggle(PrefKeys.hiddenContexts, filters.hiddenContexts, x.name),
+                  ),
+              ],
+            ),
+            if (selectedCals.isNotEmpty) ...[
+              GroupCaption(l10n.drawerCalendars),
+              InsetGroup(
+                margin: margin,
+                indent: 52,
+                children: [
+                  _DrawerRow(
+                    icon: AppIcons.calendar,
+                    iconColor: c.danger,
+                    label: hiddenCals == 0
+                        ? '${selectedCals.length} ${l10n.drawerCalendars.toLowerCase()}'
+                        : l10n.drawerCalendarsHidden(hiddenCals),
+                    trailing: AnimatedRotation(
+                      turns: _calendarsOpen ? 0.25 : 0,
+                      duration: Motion.standard,
+                      curve: Motion.spring,
+                      child: Icon(AppIcons.next, size: 18, color: c.textSecondary),
+                    ),
+                    onTap: () => setState(() => _calendarsOpen = !_calendarsOpen),
+                  ),
+                  AnimatedSize(
+                    duration: Motion.standard,
+                    curve: Curves.easeOutCubic,
+                    alignment: Alignment.topCenter,
+                    child: !_calendarsOpen
+                        ? const SizedBox(width: double.infinity)
+                        : Column(
+                            children: [
+                              for (final cal in selectedCals)
+                                _DrawerRow(
+                                  icon: AppIcons.dot,
+                                  iconSize: 12,
+                                  iconColor: Color(cal.color | 0xFF000000),
+                                  label: cal.name,
+                                  // Same-named calendars (e.g. holidays) come from different accounts.
+                                  sub: cal.accountName.isEmpty || cal.accountName == cal.name ? null : cal.accountName,
+                                  trailing: CheckCircle(
+                                    color: Color(cal.color | 0xFF000000),
+                                    checked: !filters.hiddenCalendars.contains(cal.id),
+                                  ),
+                                  onTap: () => toggle(PrefKeys.hiddenCalendars, filters.hiddenCalendars, cal.id),
+                                ),
+                            ],
+                          ),
+                  ),
+                ],
               ),
-            header(l10n.drawerTypes),
-            for (final k in Kind.values)
-              CheckboxListTile(
-                dense: true,
-                value: !filters.hiddenKinds.contains(k.name),
-                activeColor: c.kind(k),
-                secondary: Icon(kindIcon(k), color: c.kind(k)),
-                title: Text(f.kind(k)),
-                onChanged: (_) => toggle(PrefKeys.hiddenKinds, filters.hiddenKinds, k.name),
+            ],
+            const SizedBox(height: Space.xl),
+            InsetGroup(
+              margin: margin,
+              indent: 52,
+              children: [
+                _DrawerRow(
+                  icon: AppIcons.done,
+                  iconColor: c.success,
+                  label: l10n.drawerCompleted,
+                  chevron: true,
+                  onTap: () => go('/completed'),
+                ),
+                _DrawerRow(
+                  icon: AppIcons.settings,
+                  iconColor: c.textSecondary,
+                  label: l10n.drawerSettings,
+                  chevron: true,
+                  onTap: () => go('/settings'),
+                ),
+                _DrawerRow(
+                  icon: AppIcons.help,
+                  iconColor: c.accent,
+                  label: l10n.drawerHelp,
+                  chevron: true,
+                  onTap: () => go('/settings/about'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One 48dp drawer row (52dp with a second line): icon, label (truncated), trailing check or chevron.
+class _DrawerRow extends StatelessWidget {
+  const _DrawerRow({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.onTap,
+    this.sub,
+    this.trailing,
+    this.bold = false,
+    this.chevron = false,
+    this.iconSize = 20,
+  });
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final String? sub;
+  final VoidCallback onTap;
+  final Widget? trailing;
+  final bool bold;
+  final bool chevron;
+  final double iconSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final text = Theme.of(context).textTheme;
+    return Semantics(
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        child: SizedBox(
+          height: sub == null ? 48 : 56,
+          child: Row(
+            children: [
+              SizedBox(
+                width: 52,
+                child: Icon(icon, size: iconSize, color: iconColor),
               ),
-            header(l10n.drawerContext),
-            for (final x in ReminderContext.values)
-              CheckboxListTile(
-                dense: true,
-                value: !filters.hiddenContexts.contains(x.name),
-                secondary: Icon(x == ReminderContext.work ? AppIcons.work : AppIcons.personal),
-                title: Text(f.context(x)),
-                onChanged: (_) => toggle(PrefKeys.hiddenContexts, filters.hiddenContexts, x.name),
-              ),
-            // Collapsed by default: people with several Google accounts can have 30+ calendars (VW-2).
-            if (selectedCals.isNotEmpty)
-              Theme(
-                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                child: ExpansionTile(
-                  tilePadding: const EdgeInsets.fromLTRB(Space.xl, 0, Space.l, 0),
-                  title: Text(l10n.drawerCalendars.toUpperCase(), style: text.labelSmall?.copyWith(letterSpacing: 0.5)),
-                  subtitle: filters.hiddenCalendars.isEmpty
-                      ? null
-                      : Text(l10n.drawerCalendarsHidden(
-                          selectedCals.where((cal) => filters.hiddenCalendars.contains(cal.id)).length,
-                        )),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    for (final cal in selectedCals)
-                      CheckboxListTile(
-                        dense: true,
-                        value: !filters.hiddenCalendars.contains(cal.id),
-                        activeColor: Color(cal.color | 0xFF000000),
-                        secondary: Icon(AppIcons.dot, size: 14, color: Color(cal.color | 0xFF000000)),
-                        title: Text(cal.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-                        // Same-named calendars (e.g. holidays) come from different accounts.
-                        subtitle: cal.accountName.isEmpty || cal.accountName == cal.name
-                            ? null
-                            : Text(cal.accountName, maxLines: 1, overflow: TextOverflow.ellipsis),
-                        onChanged: (_) => toggle(PrefKeys.hiddenCalendars, filters.hiddenCalendars, cal.id),
-                      ),
+                    Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: text.bodyLarge?.copyWith(fontWeight: bold ? FontWeight.w600 : FontWeight.w400),
+                    ),
+                    if (sub != null) Text(sub!, maxLines: 1, overflow: TextOverflow.ellipsis, style: text.bodySmall),
                   ],
                 ),
               ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(AppIcons.done),
-              title: Text(l10n.drawerCompleted),
-              onTap: () => go('/completed'),
-            ),
-            ListTile(
-              leading: const Icon(AppIcons.settings),
-              title: Text(l10n.drawerSettings),
-              onTap: () => go('/settings'),
-            ),
-            ListTile(
-              leading: const Icon(AppIcons.help),
-              title: Text(l10n.drawerHelp),
-              onTap: () => go('/settings/about'),
-            ),
-          ],
+              if (trailing != null) ...[const SizedBox(width: Space.s), trailing!],
+              if (chevron) Icon(AppIcons.next, size: 18, color: c.textSecondary.withValues(alpha: 0.6)),
+              SizedBox(width: trailing is CheckCircle ? Space.xs : Space.m),
+            ],
+          ),
         ),
       ),
     );

@@ -1,111 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- S-61 home-screen widget (mockup 05): MON 5 · N left, the next 3 items with type-colored bars,
-     big [+ Add] on the right. -->
+<!-- S-61 home-screen widget (mockup 05, iOS-widget layout): day + date and "N left" on top with a
+     round [+] in the corner, then the next 3 items with type-colored bars. Everything has a fixed
+     size and single-line text so nothing overlaps at 2×2. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
-    android:orientation="horizontal"
-    android:padding="16dp">
+    android:orientation="vertical"
+    android:padding="14dp">
 
     <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:gravity="bottom"
-            android:orientation="horizontal">
+            android:layout_weight="1"
+            android:orientation="vertical">
 
             <TextView
                 android:id="@+id/widget_day"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:textColor="@color/widget_accent"
-                android:textSize="15sp"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/widget_date"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:textColor="@color/widget_text"
-                android:textSize="26sp"
-                android:textStyle="bold" />
+                android:gravity="bottom"
+                android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/widget_left"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="end"
-                android:paddingBottom="4dp"
-                android:textColor="@color/widget_text_secondary"
-                android:textSize="14sp" />
-        </LinearLayout>
+                <TextView
+                    android:id="@+id/widget_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:textColor="@color/widget_text"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/widget_empty"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="@string/widget_empty"
-            android:textColor="@color/widget_text_secondary"
-            android:textSize="13sp" />
-
-        <LinearLayout android:id="@+id/widget_row1" style="@style/WidgetRow">
-            <ImageView android:id="@+id/widget_row1_bar" style="@style/WidgetBar" />
-            <LinearLayout style="@style/WidgetRowText">
-                <TextView android:id="@+id/widget_row1_title" style="@style/WidgetRowTitle" />
-                <TextView android:id="@+id/widget_row1_when" style="@style/WidgetRowWhen" />
+                <TextView
+                    android:id="@+id/widget_left"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:paddingBottom="2dp"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:textColor="@color/widget_text_secondary"
+                    android:textSize="12sp" />
             </LinearLayout>
         </LinearLayout>
 
-        <LinearLayout android:id="@+id/widget_row2" style="@style/WidgetRow">
-            <ImageView android:id="@+id/widget_row2_bar" style="@style/WidgetBar" />
-            <LinearLayout style="@style/WidgetRowText">
-                <TextView android:id="@+id/widget_row2_title" style="@style/WidgetRowTitle" />
-                <TextView android:id="@+id/widget_row2_when" style="@style/WidgetRowWhen" />
-            </LinearLayout>
-        </LinearLayout>
+        <FrameLayout
+            android:id="@+id/widget_add"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/widget_add_background"
+            android:contentDescription="@string/widget_add">
 
-        <LinearLayout android:id="@+id/widget_row3" style="@style/WidgetRow">
-            <ImageView android:id="@+id/widget_row3_bar" style="@style/WidgetBar" />
-            <LinearLayout style="@style/WidgetRowText">
-                <TextView android:id="@+id/widget_row3_title" style="@style/WidgetRowTitle" />
-                <TextView android:id="@+id/widget_row3_when" style="@style/WidgetRowWhen" />
-            </LinearLayout>
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_add" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/widget_empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:text="@string/widget_empty"
+        android:textColor="@color/widget_text_secondary"
+        android:textSize="13sp" />
+
+    <LinearLayout android:id="@+id/widget_row1" style="@style/WidgetRow">
+        <ImageView android:id="@+id/widget_row1_bar" style="@style/WidgetBar" />
+        <LinearLayout style="@style/WidgetRowText">
+            <TextView android:id="@+id/widget_row1_title" style="@style/WidgetRowTitle" />
+            <TextView android:id="@+id/widget_row1_when" style="@style/WidgetRowWhen" />
         </LinearLayout>
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/widget_add"
-        android:layout_width="96dp"
-        android:layout_height="match_parent"
-        android:layout_marginStart="12dp"
-        android:background="@drawable/widget_add_tall"
-        android:contentDescription="@string/widget_add"
-        android:gravity="center"
-        android:orientation="vertical">
+    <LinearLayout android:id="@+id/widget_row2" style="@style/WidgetRow">
+        <ImageView android:id="@+id/widget_row2_bar" style="@style/WidgetBar" />
+        <LinearLayout style="@style/WidgetRowText">
+            <TextView android:id="@+id/widget_row2_title" style="@style/WidgetRowTitle" />
+            <TextView android:id="@+id/widget_row2_when" style="@style/WidgetRowWhen" />
+        </LinearLayout>
+    </LinearLayout>
 
-        <ImageView
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:importantForAccessibility="no"
-            android:src="@drawable/ic_add" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="@string/widget_add_label"
-            android:textColor="#FFFFFFFF"
-            android:textSize="15sp"
-            android:textStyle="bold" />
+    <LinearLayout android:id="@+id/widget_row3" style="@style/WidgetRow">
+        <ImageView android:id="@+id/widget_row3_bar" style="@style/WidgetBar" />
+        <LinearLayout style="@style/WidgetRowText">
+            <TextView android:id="@+id/widget_row3_title" style="@style/WidgetRowTitle" />
+            <TextView android:id="@+id/widget_row3_when" style="@style/WidgetRowWhen" />
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

@@ -9,8 +9,11 @@ name: FL-2 capture, swipe Done, Undo
       TEXT: "Call mom tomorrow 6pm"
 - assertVisible: "Tomorrow"
 - assertVisible: ".*Call mom.*"
+# The row under "Tomorrow", not an "Up next" card (shown when it is within 12 hours).
 - swipe:
-    from: ".*Call mom.*"
+    from:
+      text: ".*Call mom.*"
+      below: "Tomorrow"
     direction: RIGHT
 # First completion ever: "Your first one!" celebration, then the Undo snackbar (OCC-5).
 - tapOn:

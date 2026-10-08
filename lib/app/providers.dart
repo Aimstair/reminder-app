@@ -64,9 +64,7 @@ final manualRemindersProvider = StreamProvider<List<Reminder>>(
 );
 
 /// Active + archived (search S-40, Completed S-42).
-final allRemindersProvider = StreamProvider<List<Reminder>>(
-  (ref) => ref.watch(servicesProvider).reminders.watchAll(),
-);
+final allRemindersProvider = StreamProvider<List<Reminder>>((ref) => ref.watch(servicesProvider).reminders.watchAll());
 
 /// Imported calendar events (CAL-*), in memory.
 final calendarRemindersProvider = StreamProvider<List<Reminder>>((ref) async* {
@@ -139,10 +137,12 @@ final todayProgressProvider = Provider<({int done, int total})>((ref) {
   final zone = ref.watch(prefsProvider).deviceTimeZone;
   final today = dateOnly(instantToWall(now, zone));
   final done = saved.values
-      .where((o) =>
-          o.state == OccurrenceState.done &&
-          o.resolvedAt != null &&
-          dateOnly(instantToWall(o.resolvedAt!, zone)) == today)
+      .where(
+        (o) =>
+            o.state == OccurrenceState.done &&
+            o.resolvedAt != null &&
+            dateOnly(instantToWall(o.resolvedAt!, zone)) == today,
+      )
       .length;
   // Only things you can complete (tasks, occasions); meetings and events just pass.
   final open = items
@@ -158,7 +158,9 @@ final missedCountProvider = FutureProvider<int>((ref) async {
   ref.watch(nowProvider);
   try {
     final since = DateTime.now().toUtc().subtract(const Duration(days: 1));
-    return (await s.alarms.fireLog(since)).where((f) => f.outcome == 'missed' && !f.alarmKey.startsWith('test~')).length;
+    return (await s.alarms.fireLog(since))
+        .where((f) => f.outcome == 'missed' && !f.alarmKey.startsWith('test~'))
+        .length;
   } catch (_) {
     return 0;
   }

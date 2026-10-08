@@ -16,6 +16,7 @@ import '../../data/prefs_repository.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../ui/format.dart';
 import '../../ui/icons.dart';
+import '../../ui/motion.dart';
 import '../../ui/tokens.dart';
 import '../actions/occurrence_actions.dart';
 import '../capture/capture_sheet.dart';
@@ -83,7 +84,7 @@ class _DayPageState extends ConsumerState<_DayPage> {
     final hour = widget.day == today
         ? math.max(0, instantToWall(DateTime.now().toUtc(), prefs.deviceTimeZone).hour - 1)
         : prefs.dayTime.hour;
-    _scroll = ScrollController(initialScrollOffset: hour * _hourHeight);
+    _scroll = ScrollController(initialScrollOffset: math.max(0, hour * _hourHeight - 14)); // label not clipped
   }
 
   @override
@@ -106,14 +107,19 @@ class _DayPageState extends ConsumerState<_DayPage> {
     final allDay = all.where((i) => i.allDay).toList();
     final timed = all.where((i) => !i.allDay).toList();
     final overdue = isToday
-        ? (ref.watch(scheduleProvider) ?? const <ScheduleItem>[]).where((i) => i.overdue && i.start.isBefore(day)).toList()
+        ? (ref.watch(scheduleProvider) ?? const <ScheduleItem>[])
+              .where((i) => i.overdue && i.start.isBefore(day))
+              .toList()
         : const <ScheduleItem>[];
+
+    final nowWall = instantToWall(DateTime.now().toUtc(), ref.watch(prefsProvider).deviceTimeZone);
+    final nowMinutes = nowWall.hour * 60 + nowWall.minute;
 
     return Column(
       children: [
         _Header(day: day, items: all.length, busyMinutes: _busyMinutes(timed, day)),
         _DayStrip(selected: day),
-        if (isToday) const DigestCard(),
+        if (isToday) const DigestBar(),
         if (allDay.isNotEmpty || overdue.isNotEmpty)
           Container(
             decoration: BoxDecoration(
@@ -196,7 +202,9 @@ class _DayPageState extends ConsumerState<_DayPage> {
                 builder: (context, box) => Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    for (var h = 0; h < 24; h++) _HourLine(hour: h),
+                    // Like iOS Calendar: the hour label next to the now pill is hidden.
+                    for (var h = 0; h < 24; h++)
+                      _HourLine(hour: h, hideLabel: isToday && (nowMinutes - h * 60).abs() < 16),
                     // Empty-slot taps → capture at that time (VW-8, CAP-11 locked).
                     Positioned.fill(
                       left: _gutter,
@@ -227,7 +235,12 @@ class _DayPageState extends ConsumerState<_DayPage> {
   int _busyMinutes(List<DayItem> timed, DateTime day) {
     final spans = [
       for (final i in timed)
-        (i.start, (i.end ?? i.start.add(const Duration(minutes: 30))).isAfter(i.start) ? (i.end ?? i.start.add(const Duration(minutes: 30))) : i.start),
+        (
+          i.start,
+          (i.end ?? i.start.add(const Duration(minutes: 30))).isAfter(i.start)
+              ? (i.end ?? i.start.add(const Duration(minutes: 30)))
+              : i.start,
+        ),
     ]..sort((a, b) => a.$1.compareTo(b.$1));
     var total = 0;
     DateTime? curStart, curEnd;
@@ -277,13 +290,15 @@ class _DayPageState extends ConsumerState<_DayPage> {
           final top = (i.start.hour * 60 + i.start.minute) / 60 * _hourHeight;
           final height = endOf(i).difference(i.start).inMinutes / 60 * _hourHeight;
           final hidden = ci == 2 && cols.length > 3 ? cols.skip(3).expand((x) => x).length : 0;
-          out.add(Positioned(
-            top: top + 1,
-            left: _gutter + Space.xs + ci * w,
-            width: w - 4,
-            height: math.max(height - 3, 24),
-            child: _Block(item: i, end: endOf(i), more: hidden),
-          ));
+          out.add(
+            Positioned(
+              top: top + 1,
+              left: _gutter + Space.xs + ci * w,
+              width: w - 4,
+              height: math.max(height - 3, 24),
+              child: _Block(item: i, end: endOf(i), more: hidden),
+            ),
+          );
         }
       }
       cluster = [];
@@ -315,7 +330,7 @@ class _Header extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
     final busy = busyMinutes < 60 ? l10n.minutesShort(busyMinutes) : l10n.hoursShort((busyMinutes / 60).round());
     return Padding(
-      padding: const EdgeInsets.fromLTRB(Space.l, Space.xs, Space.l, Space.s),
+      padding: const EdgeInsets.fromLTRB(Space.l, Space.m, Space.l, Space.s),
       child: Row(
         children: [
           Expanded(
@@ -327,14 +342,17 @@ class _Header extends ConsumerWidget {
               },
               child: Row(
                 children: [
-                  Text('${day.day}', style: text.displayLarge?.copyWith(fontWeight: FontWeight.w700, height: 1)),
+                  SizedBox(
+                    width: 48,
+                    child: Text('${day.day}', maxLines: 1, style: text.displayLarge?.copyWith(height: 1)),
+                  ),
                   const SizedBox(width: Space.m),
                   Flexible(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(f.weekdayLong(day), style: text.titleLarge, maxLines: 1, overflow: TextOverflow.ellipsis),
-                        Text(f.monthYear(day), style: text.titleMedium?.copyWith(color: AppColors.of(context).textSecondary, fontWeight: FontWeight.w400)),
+                        Text(f.monthYear(day), style: text.bodyMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
                       ],
                     ),
                   ),
@@ -360,21 +378,36 @@ class _Pill extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final text = Theme.of(context).textTheme;
+    // Fixed 60 × 48 so both pills match; values shrink rather than overflow.
     return Container(
-      constraints: const BoxConstraints(minWidth: 64),
-      padding: const EdgeInsets.symmetric(horizontal: Space.m, vertical: Space.s),
-      decoration: BoxDecoration(color: c.separator.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(Radii.card)),
+      width: 60,
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: Space.xs),
+      decoration: BoxDecoration(color: c.bgGrouped, borderRadius: BorderRadius.circular(Radii.row)),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(value, style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-          Text(label, style: text.labelSmall),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: CountText(
+              int.tryParse(value) ?? 0,
+              format: (n) => int.tryParse(value) == null ? value : '$n',
+              style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700, height: 1.1),
+            ),
+          ),
+          Text(
+            label,
+            style: text.labelSmall?.copyWith(fontSize: 11, height: 1.2),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );
   }
 }
 
-/// The selected day's week (mockup 06): circled selected day, type-colored dots; tap selects.
+/// The selected day's week (mockup 06): the blue circle slides to the chosen day; type-colored dots.
 class _DayStrip extends ConsumerWidget {
   const _DayStrip({required this.selected});
   final DateTime selected;
@@ -384,65 +417,83 @@ class _DayStrip extends ConsumerWidget {
     final c = AppColors.of(context);
     final f = Fmt.of(context);
     final text = Theme.of(context).textTheme;
+    final today = ref.watch(todayProvider);
     final start = addDays(selected, -((selected.weekday - firstWeekday(context) + 7) % 7));
     final items = ref.watch(rangeProvider((from: start, to: addDays(start, 6)))) ?? const <DayItem>[];
     return Padding(
       padding: const EdgeInsets.fromLTRB(Space.m, 0, Space.m, Space.s),
-      child: Row(
-        children: [
-          for (var i = 0; i < 7; i++)
-            Expanded(
-              child: Builder(builder: (context) {
-                final day = addDays(start, i);
-                final kinds = items.where((x) => x.day == day && !x.resolved).map((x) => x.reminder.kind).toSet();
-                final isSel = day == selected;
-                return InkWell(
-                  customBorder: const CircleBorder(),
-                  onTap: () => ref.read(homeProvider.notifier).setDate(day),
-                  child: Column(
+      child: SlidingCells(
+        count: 7,
+        selected: selected.difference(start).inDays,
+        height: 74,
+        // Fixed rows: 16 weekday + 4 + 40 circle + 4 + 6 dots + 4.
+        inset: const EdgeInsets.only(top: 20, bottom: 14),
+        highlight: Center(
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: c.accent,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(color: c.accent.withValues(alpha: 0.35), blurRadius: 10, offset: const Offset(0, 3)),
+              ],
+            ),
+          ),
+        ),
+        cell: (context, i) {
+          final day = addDays(start, i);
+          final kinds = items.where((x) => x.day == day && !x.resolved).map((x) => x.reminder.kind).toSet();
+          final isSel = day == selected;
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => ref.read(homeProvider.notifier).setDate(day),
+            child: Column(
+              children: [
+                SizedBox(height: 16, child: Text(f.weekdayNarrow(day), style: text.labelSmall)),
+                const SizedBox(height: Space.xs),
+                SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: Center(
+                    child: AnimatedDefaultTextStyle(
+                      duration: Motion.standard,
+                      style: text.titleMedium!.copyWith(
+                        color: isSel ? Colors.white : (day == today ? c.accent : c.textPrimary),
+                      ),
+                      child: Text('${day.day}', maxLines: 1),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: Space.xs),
+                SizedBox(
+                  height: 6,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(f.weekdayNarrow(day), style: text.labelSmall),
-                      const SizedBox(height: Space.xs),
-                      Container(
-                        width: 40,
-                        height: 40,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(color: isSel ? c.accent : null, shape: BoxShape.circle),
-                        child: Text(
-                          '${day.day}',
-                          style: text.titleMedium?.copyWith(color: isSel ? Colors.white : c.textPrimary, fontWeight: FontWeight.w600),
+                      for (final k in Kind.values.where(kinds.contains).take(3))
+                        Container(
+                          width: 5,
+                          height: 5,
+                          margin: const EdgeInsets.symmetric(horizontal: 1),
+                          decoration: BoxDecoration(color: c.kind(k), shape: BoxShape.circle),
                         ),
-                      ),
-                      const SizedBox(height: Space.xs),
-                      SizedBox(
-                        height: 6,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            for (final k in Kind.values.where(kinds.contains))
-                              Container(
-                                width: 5,
-                                height: 5,
-                                margin: const EdgeInsets.symmetric(horizontal: 1),
-                                decoration: BoxDecoration(color: c.kind(k), shape: BoxShape.circle),
-                              ),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
-                );
-              }),
+                ),
+              ],
             ),
-        ],
+          );
+        },
       ),
     );
   }
 }
 
 class _HourLine extends StatelessWidget {
-  const _HourLine({required this.hour});
+  const _HourLine({required this.hour, this.hideLabel = false});
   final int hour;
+  final bool hideLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -457,7 +508,7 @@ class _HourLine extends StatelessWidget {
         children: [
           SizedBox(
             width: _gutter,
-            child: hour == 0
+            child: hour == 0 || hideLabel
                 ? null
                 : Transform.translate(
                     offset: const Offset(0, -9),
@@ -498,7 +549,8 @@ class _NowLine extends StatelessWidget {
               decoration: BoxDecoration(color: c.danger, borderRadius: BorderRadius.circular(Radii.chip)),
               child: Text(
                 f.time(now).replaceAll(RegExp(r'\s?[AaPp]\.?[Mm]\.?$'), ''),
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
+                style: Theme.of(context).textTheme.labelSmall
+                    ?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
               ),
             ),
             Expanded(child: Container(height: 1.5, color: c.danger)),
@@ -566,7 +618,8 @@ class _Block extends StatelessWidget {
                           if (r.alertPlan.isNotEmpty && !done) Icon(AppIcons.alert, size: 15, color: color),
                         ],
                       ),
-                      if (box.maxHeight > 40) Text(range, style: text.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      if (box.maxHeight > 40)
+                        Text(range, style: text.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
                     ],
                   ),
                 ),

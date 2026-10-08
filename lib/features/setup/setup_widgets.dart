@@ -18,7 +18,10 @@ import '../pickers/pickers.dart';
 import '../../ui/icons.dart';
 
 Future<ClockTime?> pickClockTime(BuildContext context, ClockTime current) async {
-  final t = await showTimePicker(context: context, initialTime: TimeOfDay(hour: current.hour, minute: current.minute));
+  final t = await showTimePicker(
+    context: context,
+    initialTime: TimeOfDay(hour: current.hour, minute: current.minute),
+  );
   return t == null ? null : ClockTime(t.hour, t.minute);
 }
 
@@ -51,7 +54,8 @@ class ScheduleSettings extends ConsumerWidget {
           color: c.meeting,
           label: l10n.rowTimeZone,
           value: Fmt.city(p.defaultTimeZone),
-          onTap: onZoneTap ??
+          onTap:
+              onZoneTap ??
               () async {
                 final z = await pickTimeZone(context, p.defaultTimeZone);
                 if (z != null) await save(PrefKeys.defaultTimeZone, z);
@@ -179,11 +183,11 @@ class _TestReminderPanelState extends ConsumerState<TestReminderPanel> with Widg
       TestState.waiting => (AppIcons.waiting, c.accent, l10n.testWaiting, l10n.testSub),
       TestState.ok => (AppIcons.ok, c.success, l10n.testOk, null),
       TestState.late => (
-          AppIcons.warning,
-          c.warning,
-          l10n.testLate(_lateSeconds),
-          !perms.exactAlarms ? l10n.testFixExact : l10n.testFixBattery,
-        ),
+        AppIcons.warning,
+        c.warning,
+        l10n.testLate(_lateSeconds),
+        !perms.exactAlarms ? l10n.testFixExact : l10n.testFixBattery,
+      ),
       TestState.failed => (AppIcons.error, c.danger, l10n.testFail, l10n.testSteps),
     };
     return Material(
@@ -199,7 +203,8 @@ class _TestReminderPanelState extends ConsumerState<TestReminderPanel> with Widg
                 Icon(icon, color: color),
                 const SizedBox(width: Space.s),
                 Expanded(child: Text(title, style: text.titleMedium)),
-                if (_state == TestState.waiting) const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+                if (_state == TestState.waiting)
+                  const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2)),
               ],
             ),
             if (sub != null) ...[const SizedBox(height: Space.xs), Text(sub, style: text.bodyMedium)],

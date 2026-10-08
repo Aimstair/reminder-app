@@ -71,6 +71,7 @@ class _CompletedPageState extends ConsumerState<CompletedPage> {
                   EmptyState(title: l10n.completedEmptyTitle, sub: l10n.completedEmptySub, mood: BellMood.calm)
                 else
                   InsetGroup(
+                    indent: ReminderRow.dividerIndent,
                     children: [
                       for (final (r, o) in rows)
                         ReminderRow(

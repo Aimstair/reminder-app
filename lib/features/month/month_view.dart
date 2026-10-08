@@ -17,6 +17,7 @@ import '../actions/occurrence_actions.dart';
 import '../../ui/widgets.dart';
 import '../capture/capture_sheet.dart';
 import '../../ui/icons.dart';
+import '../../ui/motion.dart';
 
 const _origin = 10000;
 
@@ -108,7 +109,7 @@ class _MonthPage extends ConsumerWidget {
           // October 2026  ‹ ›
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(Space.l, Space.xs, Space.l, Space.m),
+              padding: const EdgeInsets.fromLTRB(Space.l, Space.m, Space.l, Space.m),
               child: Row(
                 children: [
                   Expanded(
@@ -119,6 +120,8 @@ class _MonthPage extends ConsumerWidget {
                         if (d != null) notifier.setDate(d);
                       },
                       child: Text.rich(
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         TextSpan(
                           text: f.month(month),
                           style: text.displaySmall,
@@ -152,11 +155,17 @@ class _MonthPage extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(Space.l, 0, Space.l, Space.m),
               child: Row(
                 children: [
-                  Expanded(child: _Summary(count: occasions, label: l10n.summaryOccasions(occasions), color: c.occasion)),
+                  Expanded(
+                    child: _Summary(count: occasions, label: l10n.summaryOccasions(occasions), color: c.occasion),
+                  ),
                   const SizedBox(width: Space.s),
-                  Expanded(child: _Summary(count: bills, label: l10n.summaryBills(bills), color: c.event)),
+                  Expanded(
+                    child: _Summary(count: bills, label: l10n.summaryBills(bills), color: c.event),
+                  ),
                   const SizedBox(width: Space.s),
-                  Expanded(child: _Summary(count: meetings, label: l10n.summaryMeetings(meetings), color: c.meeting)),
+                  Expanded(
+                    child: _Summary(count: meetings, label: l10n.summaryMeetings(meetings), color: c.meeting),
+                  ),
                 ],
               ),
             ),
@@ -230,18 +239,32 @@ class _MonthPage extends ConsumerWidget {
                           child: InkWell(
                             borderRadius: BorderRadius.circular(Radii.row),
                             onTap: () => notifier.openDay(selected), // heading → Day view (VW-8)
-                            child: Text(f.date(selected, today: today), style: text.titleLarge),
+                            child: Text(
+                              f.date(selected, today: today),
+                              style: text.titleLarge,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ),
-                        Text('${dayItems.length} ${l10n.statItems(dayItems.length)}', style: text.bodyMedium),
+                        const SizedBox(width: Space.s),
+                        Text(
+                          '${dayItems.length} ${l10n.statItems(dayItems.length)}',
+                          style: text.bodyMedium,
+                          maxLines: 1,
+                        ),
                       ],
                     ),
                     const SizedBox(height: Space.m),
                     if (dayItems.isEmpty)
                       Text(l10n.monthDayEmpty, style: text.bodyMedium)
                     else
-                      for (final i in dayItems) ...[
-                        _DayItemCard(item: i, today: today),
+                      for (final (n, i) in dayItems.indexed) ...[
+                        FadeSlideIn(
+                          key: ValueKey('${selected.day}-${i.occurrenceKey}'),
+                          index: n,
+                          child: _DayItemCard(item: i, today: today),
+                        ),
                         const SizedBox(height: Space.m),
                       ],
                   ],
@@ -261,14 +284,22 @@ class _RoundButton extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => IconButton.filledTonal(
-    tooltip: tooltip,
-    style: IconButton.styleFrom(
-      backgroundColor: AppColors.of(context).separator.withValues(alpha: 0.18),
-      foregroundColor: AppColors.of(context).textPrimary,
+  Widget build(BuildContext context) => Tooltip(
+    message: tooltip,
+    child: Semantics(
+      button: true,
+      label: tooltip,
+      child: Pressable(
+        scale: 0.88,
+        onTap: onTap,
+        child: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(color: AppColors.of(context).bgGrouped, shape: BoxShape.circle),
+          child: Icon(icon, size: 18, color: AppColors.of(context).accent),
+        ),
+      ),
     ),
-    onPressed: onTap,
-    icon: Icon(icon),
   );
 }
 
@@ -289,10 +320,19 @@ class _Summary extends StatelessWidget {
       decoration: BoxDecoration(color: color.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(Radii.card)),
       child: Row(
         children: [
-          Text('$count', style: text.titleLarge?.copyWith(color: deep, fontWeight: FontWeight.w700)),
+          Text(
+            '$count',
+            maxLines: 1,
+            style: text.titleLarge?.copyWith(color: deep, fontWeight: FontWeight.w700),
+          ),
           const SizedBox(width: Space.s),
           Expanded(
-            child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: text.labelLarge?.copyWith(color: deep)),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: text.titleSmall?.copyWith(color: deep),
+            ),
           ),
         ],
       ),
@@ -328,26 +368,37 @@ class _Cell extends StatelessWidget {
     final kinds = Kind.values.where((k) => open.any((i) => i.reminder.kind == k)).take(3).toList();
     final labelItem = items.where((i) => i.allDay).firstOrNull;
     final ring = selected && !today ? (open.isEmpty ? c.accent : c.kind(open.first.reminder.kind)) : null;
-    return InkWell(
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       onLongPress: onLongPress,
       child: Column(
         children: [
           const SizedBox(height: Space.xs),
-          Container(
-            width: 30,
-            height: 30,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: today ? c.accent : (ring?.withValues(alpha: 0.12)),
-              shape: BoxShape.circle,
-              border: ring == null ? null : Border.all(color: ring, width: 2),
-            ),
-            child: Text(
-              '${day.day}',
-              style: text.titleSmall?.copyWith(
-                color: today ? Colors.white : (ring ?? (inMonth ? c.textPrimary : c.textSecondary.withValues(alpha: 0.4))),
-                fontWeight: today || selected ? FontWeight.w700 : FontWeight.w500,
+          // The selection ring fades and pops in on the chosen day.
+          AnimatedScale(
+            scale: selected && !today ? 1.08 : 1,
+            duration: Motion.standard,
+            curve: Motion.spring,
+            child: AnimatedContainer(
+              duration: Motion.standard,
+              curve: Curves.easeOutCubic,
+              width: 32,
+              height: 32,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: today ? c.accent : (ring?.withValues(alpha: 0.12)),
+                shape: BoxShape.circle,
+                border: Border.all(color: ring ?? Colors.transparent, width: 2),
+              ),
+              child: Text(
+                '${day.day}',
+                style: text.titleSmall?.copyWith(
+                  color: today
+                      ? Colors.white
+                      : (ring ?? (inMonth ? c.textPrimary : c.textSecondary.withValues(alpha: 0.4))),
+                  fontWeight: today || selected ? FontWeight.w700 : FontWeight.w500,
+                ),
               ),
             ),
           ),
@@ -367,10 +418,7 @@ class _Cell extends StatelessWidget {
               ],
             ),
           ),
-          if (labelItem != null) ...[
-            const SizedBox(height: 2),
-            _Label(item: labelItem),
-          ],
+          if (labelItem != null) ...[const SizedBox(height: 2), _Label(item: labelItem)],
         ],
       ),
     );
@@ -380,8 +428,26 @@ class _Cell extends StatelessWidget {
 /// One short label in a cell (VW-10): "Mom", "Rent", "Party" — tinted in the type color.
 class _Label extends StatelessWidget {
   static const _verbs = {
-    'pay', 'buy', 'call', 'pick', 'get', 'book', 'return', 'renew', 'cancel', 'order',
-    'send', 'take', 'fix', 'clean', 'water', 'submit', 'file', 'email', 'text', 'visit',
+    'pay',
+    'buy',
+    'call',
+    'pick',
+    'get',
+    'book',
+    'return',
+    'renew',
+    'cancel',
+    'order',
+    'send',
+    'take',
+    'fix',
+    'clean',
+    'water',
+    'submit',
+    'file',
+    'email',
+    'text',
+    'visit',
   };
 
   const _Label({required this.item});
@@ -402,10 +468,17 @@ class _Label extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final color = item.overdue ? c.danger : c.kind(item.reminder.kind);
-    final deep = Color.lerp(color, Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black, 0.25)!;
+    final deep = Color.lerp(
+      color,
+      Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+      0.25,
+    )!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-      decoration: BoxDecoration(color: color.withValues(alpha: item.resolved ? 0.06 : 0.16), borderRadius: BorderRadius.circular(5)),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: item.resolved ? 0.06 : 0.16),
+        borderRadius: BorderRadius.circular(5),
+      ),
       child: Text(
         short(item.reminder),
         maxLines: 1,
@@ -438,38 +511,39 @@ class _DayItemCard extends StatelessWidget {
     final r = item.reminder;
     final color = c.kind(r.kind);
     final bill = glyphFor(r) == ItemGlyph.bill;
-    return Material(
-      color: c.surface,
-      borderRadius: BorderRadius.circular(Radii.card + 4),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(Radii.card + 4),
-        onTap: () => openDetail(context, r, item.occurrenceKey),
-        child: Padding(
-          padding: const EdgeInsets.all(Space.m),
-          child: Row(
-            children: [
-              IconTile.item(context, r),
-              const SizedBox(width: Space.m),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      r.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: text.titleMedium?.copyWith(decoration: item.resolved ? TextDecoration.lineThrough : null),
-                    ),
-                    Text(
-                      f.when(item.start, allDay: item.allDay, today: today),
-                      style: text.bodyMedium?.copyWith(color: item.overdue ? c.danger : null),
-                    ),
-                  ],
-                ),
+    return Pressable(
+      onTap: () => openDetail(context, r, item.occurrenceKey),
+      child: Container(
+        height: 68,
+        padding: const EdgeInsets.symmetric(horizontal: Space.m),
+        decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(Radii.card + 4)),
+        child: Row(
+          children: [
+            IconTile.item(context, r),
+            const SizedBox(width: Space.m),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    r.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: text.titleMedium?.copyWith(decoration: item.resolved ? TextDecoration.lineThrough : null),
+                  ),
+                  Text(
+                    f.when(item.start, allDay: item.allDay, today: today),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: text.bodyMedium?.copyWith(color: item.overdue ? c.danger : null),
+                  ),
+                ],
               ),
-              MiniChip(bill ? l10n.chipBill : f.kind(r.kind), color: bill ? c.event : color),
-            ],
-          ),
+            ),
+            const SizedBox(width: Space.s),
+            MiniChip(bill ? l10n.chipBill : f.kind(r.kind), color: bill ? c.event : color),
+          ],
         ),
       ),
     );
@@ -529,7 +603,9 @@ class _MiniMonthState extends ConsumerState<_MiniMonth> {
                 onPressed: () => setState(() => _month = DateTime.utc(_month.year, _month.month - 1)),
                 icon: const Icon(AppIcons.previous),
               ),
-              Expanded(child: Text(f.monthYear(_month), textAlign: TextAlign.center, style: text.titleMedium)),
+              Expanded(
+                child: Text(f.monthYear(_month), textAlign: TextAlign.center, style: text.titleMedium),
+              ),
               IconButton(
                 onPressed: () => setState(() => _month = DateTime.utc(_month.year, _month.month + 1)),
                 icon: const Icon(AppIcons.next),
@@ -555,8 +631,8 @@ class _MiniMonthState extends ConsumerState<_MiniMonth> {
                       color: d == dateOnly(widget.selected)
                           ? c.accent
                           : d == today
-                              ? c.accent.withValues(alpha: 0.15)
-                              : null,
+                          ? c.accent.withValues(alpha: 0.15)
+                          : null,
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -570,7 +646,11 @@ class _MiniMonthState extends ConsumerState<_MiniMonth> {
                           ),
                         ),
                         if (marked.contains(d))
-                          Container(width: 4, height: 4, decoration: BoxDecoration(color: c.textSecondary, shape: BoxShape.circle)),
+                          Container(
+                            width: 4,
+                            height: 4,
+                            decoration: BoxDecoration(color: c.textSecondary, shape: BoxShape.circle),
+                          ),
                       ],
                     ),
                   ),

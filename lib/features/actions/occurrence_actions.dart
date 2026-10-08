@@ -66,15 +66,14 @@ class OccurrenceActions {
     }
     messenger
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 5), // OCC-5
-        persist: false,
-        action: SnackBarAction(
-          label: l10n.actionUndo,
-          onPressed: () => _undo(s, r, key, before),
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          duration: const Duration(seconds: 5), // OCC-5
+          persist: false,
+          action: SnackBarAction(label: l10n.actionUndo, onPressed: () => _undo(s, r, key, before)),
         ),
-      ));
+      );
   }
 
   // Takes the services captured when the action ran: Undo fires after a swiped row (and its ref)
@@ -101,8 +100,12 @@ class OccurrenceActions {
     final before = await s.service.act(r.id, key, JournalActionType.prepared);
     s.feedback.tap();
     if (context.mounted) {
-      showUndoSnack(context, l10n.snackPrepared, undoLabel: l10n.actionUndo,
-          onUndo: () => s.service.setState(r.id, key, before));
+      showUndoSnack(
+        context,
+        l10n.snackPrepared,
+        undoLabel: l10n.actionUndo,
+        onUndo: () => s.service.setState(r.id, key, before),
+      );
     }
   }
 
@@ -134,10 +137,18 @@ class OccurrenceActions {
     final options = <(String, IconData, DateTime)>[
       if (laterToday.day == nowWall.day) (l10n.reschedLaterToday, AppIcons.time, at(today, laterToday.hour, 0)),
       if (nowWall.hour < 18) (l10n.reschedEvening, AppIcons.evening, at(today, 19, 0)),
-      (l10n.reschedTomorrow, AppIcons.day,
-          keepTime ? at(addDays(today, 1), start.hour, start.minute) : at(addDays(today, 1), prefs.dayTime.hour, prefs.dayTime.minute)),
-      (l10n.reschedNextWeek, AppIcons.nextWeek,
-          keepTime ? at(addDays(today, 7), start.hour, start.minute) : at(addDays(today, 7), prefs.dayTime.hour, 0)),
+      (
+        l10n.reschedTomorrow,
+        AppIcons.day,
+        keepTime
+            ? at(addDays(today, 1), start.hour, start.minute)
+            : at(addDays(today, 1), prefs.dayTime.hour, prefs.dayTime.minute),
+      ),
+      (
+        l10n.reschedNextWeek,
+        AppIcons.nextWeek,
+        keepTime ? at(addDays(today, 7), start.hour, start.minute) : at(addDays(today, 7), prefs.dayTime.hour, 0),
+      ),
     ];
     final chosen = await showAppSheet<DateTime>(context, (ctx) {
       final c = AppColors.of(ctx);
@@ -206,6 +217,10 @@ class OccurrenceActions {
   /// REC-15 / DAT-1: delete with scope for repeating reminders, then Undo.
   Future<bool> delete(Reminder r, DateTime key) async {
     final s = ref.read(servicesProvider);
+    // Captured up front: deleting rebuilds the detail page without this widget, so [context] is
+    // unmounted by the time the Undo snackbar is shown.
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = this.l10n;
     var scope = EditScope.all;
     if (r.rrule != null && r.repeatMode == RecurrenceMode.fixed) {
       final picked = await askScope(context, delete: true);
@@ -213,16 +228,13 @@ class OccurrenceActions {
       scope = picked;
     }
     await s.service.deleteScoped(r, key, scope);
-    if (context.mounted) {
-      showUndoSnack(
-        context,
-        scope == EditScope.thisOne ? l10n.snackSkipped : l10n.snackDeleted,
-        undoLabel: l10n.actionUndo,
-        onUndo: () => scope == EditScope.thisOne
-            ? s.service.setState(r.id, key, OccurrenceState.pending)
-            : s.service.restore(r.id),
-      );
-    }
+    showUndoSnackOn(
+      messenger,
+      scope == EditScope.thisOne ? l10n.snackSkipped : l10n.snackDeleted,
+      undoLabel: l10n.actionUndo,
+      onUndo: () =>
+          scope == EditScope.thisOne ? s.service.setState(r.id, key, OccurrenceState.pending) : s.service.restore(r.id),
+    );
     return true;
   }
 }
@@ -237,7 +249,10 @@ Future<EditScope?> askScope(BuildContext context, {required bool delete}) {
       children: [
         SimpleDialogOption(
           onPressed: () => Navigator.pop(ctx, EditScope.thisOne),
-          child: Padding(padding: const EdgeInsets.symmetric(vertical: Space.s), child: Text(l10n.scopeThisOne)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: Space.s),
+            child: Text(l10n.scopeThisOne),
+          ),
         ),
         SimpleDialogOption(
           onPressed: () => Navigator.pop(ctx, delete ? EditScope.all : EditScope.thisAndFuture),
@@ -261,7 +276,10 @@ Future<DateTime?> pickDateTime(BuildContext context, DateTime initial, {required
   );
   if (d == null || !context.mounted) return null;
   if (!withTime) return DateTime.utc(d.year, d.month, d.day);
-  final t = await showTimePicker(context: context, initialTime: TimeOfDay(hour: initial.hour, minute: initial.minute));
+  final t = await showTimePicker(
+    context: context,
+    initialTime: TimeOfDay(hour: initial.hour, minute: initial.minute),
+  );
   if (t == null) return null;
   return DateTime.utc(d.year, d.month, d.day, t.hour, t.minute);
 }

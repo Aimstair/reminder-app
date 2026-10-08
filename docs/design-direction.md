@@ -18,6 +18,7 @@ The look, feel, and motion of the app. Screens are listed in [`screens.md`](scre
 | DS10 | Overall style confirmed | **Calm Things 3 style.** A heavily gamified, Duolingo-like direction (XP, streaks, levels, badges, mascot on every screen) was mocked up and **rejected** — too playful for the long-term enterprise goal (D5). The bell stays limited to key moments. | 2026-10-06 |
 | DS11 | Visual reference | **Approved mockups:** [Reminder App Screens canvas](https://claude.ai/artifact/ArygfCSr3DBPg4pTmz8kMG), page "Calm · Things 3 style (chosen)" — rendered copies in [`docs/design/mockups/`](design/mockups/README.md) (the canvas lives in another account; use the images) | 2026-10-06 |
 | DS12 | Mockup over earlier text | Where the mockups show more than the written patterns, **build to the mockups**: Month view = type dots + one short label + selected-day list (`VW-8`, `VW-10` updated); **All clear is a full screen** (stats, Today in review, Coming up, Plan tomorrow, share), not a pop-up | 2026-10-08 |
+| DS14 | More life, closer to iOS | After device review ("too bland", "make it feel made by Apple"): the **iOS type scale** (sizes, weights, line heights) with SF-like size-dependent tracking on Inter; **iOS page transitions** (slide + parallax, edge swipe back); **bouncing scroll**, no Material ripples (cells turn grey while pressed); **press feedback** (shrink + dim) on cards and buttons; **selection highlights slide** to the new choice (filter chips, segmented controls, day strips, month selection); views cross-fade; lists and cards **ease in** staggered; illustrations **float** gently. Layout: **fixed heights** for rows, cards, pills and chips, single-line text that **truncates**, even 12/16 spacing, separators aligned with the text. All of it off under Reduce Motion. | 2026-10-08 |
 | DS13 | No streak framing | The occasion detail's third stat card is **factual history** ("Done 3 years" — years completed, any order), not "years in a row" (DS10) | 2026-10-08 |
 
 ### Patterns established by the approved mockups (DS11)
@@ -142,7 +143,7 @@ The app **looks** Apple-inspired but **behaves** like a good Android app. Users 
 - Android share sheet, widget picker, Quick Settings tile
 - Font scaling and TalkBack support
 
-**Font:** Apple's SF Pro is licensed for Apple platforms only. Use **Inter** (free, open source, very close to SF Pro's feel).
+**Font:** Apple's SF Pro is licensed for Apple platforms only. Use **Inter** (free, open source, very close to SF Pro's feel), set to the iOS type scale with Inter's size-dependent tracking (`tracking()` in `lib/ui/theme.dart`), which brings it close to SF Pro's optical sizes (DS14).
 
 **Icons:** **Phosphor** (decided 2026-10-08 over Lucide: SF Symbols-like, and has filled versions for selected/solid states). Regular weight for line icons, Fill only for solid shapes (status ticks, dots). All icons go through `lib/ui/icons.dart` (`AppIcons`). Don't use Apple's SF Symbols.
 
@@ -177,15 +178,18 @@ Values follow Apple's system palette closely so the app feels familiar to Apple-
 All text/background pairs must meet WCAG AA contrast (4.5:1 body, 3:1 large text); type colors are never the only signal — each type also has an icon.
 
 ### Typography (Inter, sizes in sp — scale with system font size)
+iOS text styles at the default Dynamic Type size (DS14). Line height in brackets; tracking from Inter's dynamic-metrics formula (tighter as text gets bigger).
 | Style | Size / weight | Use |
 |---|---|---|
-| Large title | 34 / Bold | Screen titles (Today, October) |
-| Title 2 | 22 / Bold | Section headers in sheets |
-| Headline | 17 / Semibold | Group headers, row titles when emphasized |
-| Body | 17 / Regular | Row titles, input text |
-| Subheadline | 15 / Regular | Times, metadata |
-| Footnote | 13 / Regular | Hints, captions |
-| Caption | 12 / Medium | Chips, grid labels |
+| Large title | 34 (41) / Bold | Screen titles (Good morning, October, Just type it.) |
+| Title 1 | 28 (34) / Bold | Detail title, drawer title |
+| Title 2 | 22 (28) / Bold | Sheet and panel headers |
+| Title 3 | 20 (25) / Semibold–Bold | Schedule group headers |
+| Headline | 17 (22) / Semibold | Buttons, emphasized row titles |
+| Body | 17 (22) / Regular | Row titles, input text, form values |
+| Subheadline | 15 (20) / Regular | Times, metadata, chips (semibold) |
+| Footnote | 13 (18) / Regular | Hints, group captions (uppercase) |
+| Caption | 12 (16) / Medium | Grid labels, badges |
 
 ### Shape & spacing
 - **Spacing:** 4-pt grid — 4, 8, 12, 16, 20, 24, 32. Screen side margin **16**; inset list margin **16**.
@@ -225,7 +229,12 @@ All text/background pairs must meet WCAG AA contrast (4.5:1 body, 3:1 large text
 | Capture sheet open / chips appearing | Quick spring; chips pop in one by one as parsed | Flutter animations |
 | Save → item flies into its group | Emphasized motion | `SliverAnimatedList` insert + slide |
 | Swipe actions | Follows the finger, springs back | Drag gestures + `SpringSimulation` |
-| View switch (Schedule ↔ Day ↔ Month) | Crossfade + zoom from the selected date | Flutter page/hero transitions |
+| View switch (Schedule ↔ Day ↔ Month) | Cross-fade with a slight rise; the view pill resizes and its label cross-fades | `SwapFade` (`lib/ui/motion.dart`) |
+| Choosing an option (filter chip, segment, day) | The highlight **slides** to the new choice with a spring | `SlidingHighlightRow`, `SlidingCells` |
+| Tapping cards and buttons | Shrink to 97% + dim while pressed, spring back | `Pressable` |
+| Lists and home cards appearing | Fade + 14dp rise, staggered 35 ms per group | `FadeSlideIn` |
+| Pushed screens | iOS slide with parallax; swipe from the edge to go back | `CupertinoPageTransitionsBuilder` |
+| Numbers (progress, counts) | Count up to the new value | `CountText` |
 | Empty states | Gentle looping illustration | Rive |
 | Notification actions | **None** — handled by Android; must be instant | — |
 | Permission explainers | Small animated illustration (phone ringing, clock) | Rive |

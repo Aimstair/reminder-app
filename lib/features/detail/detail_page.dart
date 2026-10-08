@@ -14,6 +14,7 @@ import '../../app/providers.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../ui/format.dart';
 import '../../ui/icons.dart';
+import '../../ui/motion.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
 import '../actions/occurrence_actions.dart';
@@ -270,89 +271,97 @@ class _Banner extends ConsumerWidget {
     final when = allDay ? f.date(startLocal) : '${f.date(startLocal)} · ${f.time(startLocal)}';
     final line = r.rrule == null ? when : '$when · ${f.repeat(r.rrule, r.repeatMode)}';
     final art = r.kind == Kind.occasion ? AppIcons.giftSolid : glyphIcon(glyphFor(r));
-    return Container(
-      color: Color.alphaBlend(color.withValues(alpha: dark ? 0.24 : 0.14), c.surface),
-      padding: const EdgeInsets.only(bottom: Space.xxxl + Space.l),
-      child: SafeArea(
-        bottom: false,
+    final top = MediaQuery.paddingOf(context).top;
+    // The whole tinted area (status bar included) clips the decoration, so the circle is cut only by
+    // the banner's own edges.
+    return ClipRect(
+      child: Container(
+        color: Color.alphaBlend(color.withValues(alpha: dark ? 0.24 : 0.14), c.surface),
+        padding: const EdgeInsets.only(bottom: Space.xxxl + Space.l),
         child: Stack(
+          clipBehavior: Clip.none, // the outer ClipRect cuts the circle at the banner edges
           children: [
-            // Soft circle + the item's art on the right.
+            // Soft circle with the item's art centered in it, on the right.
             Positioned(
-              right: -40,
-              top: -20,
+              right: -36,
+              top: top + 36,
               child: Container(
-                width: 200,
-                height: 200,
+                width: 188,
+                height: 188,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 24),
+                  child: Floating(child: Icon(art, size: 84, color: color)),
+                ),
               ),
             ),
-            Positioned(
-              right: Space.xl,
-              top: 64,
-              child: Icon(art, size: 96, color: color),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    TextButton.icon(
-                      style: TextButton.styleFrom(foregroundColor: deep),
-                      onPressed: () => context.canPop() ? context.pop() : context.go('/'),
-                      icon: const Icon(AppIcons.previous, size: 20),
-                      label: Text(
-                        HomeShell.viewName(l10n, ref.read(homeProvider).view),
-                        style: text.titleMedium?.copyWith(color: deep),
-                      ),
-                    ),
-                    const Spacer(),
-                    if (!r.isCalendarEvent && !resolved)
-                      TextButton(
-                        style: TextButton.styleFrom(foregroundColor: deep),
-                        onPressed: () => openEditor(context, ref, r, data.key),
-                        child: Text(l10n.actionEdit, style: text.titleMedium?.copyWith(color: deep)),
-                      ),
-                    if (!r.isCalendarEvent)
-                      IconButton(
-                        tooltip: l10n.actionDelete,
-                        color: deep,
-                        icon: const Icon(AppIcons.delete),
-                        onPressed: () async {
-                          if (await actions.delete(r, data.key) && context.mounted) context.pop();
-                        },
-                      ),
-                    const SizedBox(width: Space.xs),
-                  ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(Space.l, Space.l, 140, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            SafeArea(
+              bottom: false,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Wrap(
-                        spacing: Space.s,
-                        children: [
-                          _Chip(text: f.kind(r.kind).toUpperCase(), color: deep),
-                          _Chip(text: f.context(r.context).toUpperCase(), color: c.textSecondary),
-                        ],
+                      TextButton.icon(
+                        style: TextButton.styleFrom(foregroundColor: deep),
+                        onPressed: () => context.canPop() ? context.pop() : context.go('/'),
+                        icon: const Icon(AppIcons.previous, size: 20),
+                        label: Text(
+                          HomeShell.viewName(l10n, ref.read(homeProvider).view),
+                          style: text.titleMedium?.copyWith(color: deep),
+                        ),
                       ),
-                      const SizedBox(height: Space.m),
-                      Text(
-                        r.title,
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                        style: text.displaySmall?.copyWith(fontSize: 30),
-                      ),
-                      const SizedBox(height: Space.xs),
-                      Text(
-                        line,
-                        style: text.titleMedium?.copyWith(color: deep, fontWeight: FontWeight.w400),
-                      ),
+                      const Spacer(),
+                      if (!r.isCalendarEvent && !resolved)
+                        TextButton(
+                          style: TextButton.styleFrom(foregroundColor: deep),
+                          onPressed: () => openEditor(context, ref, r, data.key),
+                          child: Text(l10n.actionEdit, style: text.titleMedium?.copyWith(color: deep)),
+                        ),
+                      if (!r.isCalendarEvent)
+                        IconButton(
+                          tooltip: l10n.actionDelete,
+                          color: deep,
+                          icon: const Icon(AppIcons.delete),
+                          onPressed: () async {
+                            // Router captured first: the page rebuilds without this button once
+                            // the reminder is gone, so [context] is unmounted after the await.
+                            final router = GoRouter.of(context);
+                            if (await actions.delete(r, data.key)) {
+                              router.canPop() ? router.pop() : router.go('/');
+                            }
+                          },
+                        ),
+                      const SizedBox(width: Space.xs),
                     ],
                   ),
-                ),
-              ],
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(Space.l, Space.l, 140, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: Space.s,
+                          children: [
+                            _Chip(text: f.kind(r.kind).toUpperCase(), color: deep),
+                            _Chip(text: f.context(r.context).toUpperCase(), color: c.textSecondary),
+                          ],
+                        ),
+                        const SizedBox(height: Space.m),
+                        Text(r.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: text.headlineLarge),
+                        const SizedBox(height: Space.xs),
+                        Text(
+                          line,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: text.bodyLarge?.copyWith(color: deep),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -393,13 +402,11 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final text = Theme.of(context).textTheme;
-    final big = (small ? text.titleLarge : text.displaySmall)?.copyWith(
-      color: color ?? c.textPrimary,
-      fontWeight: FontWeight.w700,
-    );
+    // One value size for all three cards so they line up; long words shrink to fit.
+    final big = text.headlineMedium?.copyWith(color: color ?? c.textPrimary, fontSize: small ? 20 : 24);
     return Container(
-      height: 92,
-      padding: const EdgeInsets.all(Space.m),
+      height: 84,
+      padding: const EdgeInsets.fromLTRB(Space.m + 2, Space.m, Space.m, Space.m),
       decoration: BoxDecoration(
         color: c.surface,
         borderRadius: BorderRadius.circular(Radii.card + 4),
@@ -420,14 +427,14 @@ class _StatCard extends StatelessWidget {
                   if (suffix != null)
                     TextSpan(
                       text: suffix,
-                      style: text.titleMedium?.copyWith(color: c.textSecondary),
+                      style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                     ),
                 ],
               ),
               maxLines: 1,
             ),
           ),
-          Text(label, style: text.bodyMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(label, style: text.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
         ],
       ),
     );
@@ -469,7 +476,7 @@ class _NudgesCard extends StatelessWidget {
             children: [
               Text(
                 l10n.nudgesTitle.toUpperCase(),
-                style: text.labelLarge?.copyWith(color: c.textSecondary, letterSpacing: 0.6),
+                style: text.bodySmall?.copyWith(fontWeight: FontWeight.w600, letterSpacing: 0.5),
               ),
               const Spacer(),
               if (onChange != null)
@@ -722,10 +729,11 @@ class _DuplicateBanner extends ConsumerWidget {
                   ),
                   FilledButton.tonal(
                     onPressed: () async {
+                      final router = GoRouter.of(context); // deleting unmounts this banner
                       final ev = reminderFromEvent(event, overlays: const [], deviceId: '');
                       await s.calendar.remindMe(ev, reminder.alertPlan, series: false);
                       await s.service.delete(reminder.id);
-                      if (context.mounted) context.pop();
+                      router.canPop() ? router.pop() : router.go('/');
                     },
                     child: Text(l10n.actionMerge),
                   ),
@@ -761,12 +769,12 @@ class _Actions extends ConsumerWidget {
 
     Widget primary(String label, IconData? icon, VoidCallback onTap, {Color? bg}) => SizedBox(
       width: double.infinity,
-      height: 56,
+      height: 50,
       child: FilledButton.icon(
         style: FilledButton.styleFrom(
           backgroundColor: bg ?? color,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.card + 4)),
-          textStyle: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.card)),
+          textStyle: text.titleMedium,
         ),
         onPressed: onTap,
         icon: icon == null ? null : Icon(icon),
@@ -775,16 +783,16 @@ class _Actions extends ConsumerWidget {
     );
     Widget secondary(String label, Color fg, VoidCallback onTap) => Expanded(
       child: SizedBox(
-        height: 52,
+        height: 50,
         child: FilledButton(
           style: FilledButton.styleFrom(
             backgroundColor: c.surface,
             foregroundColor: fg,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.card + 4)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.card)),
             textStyle: text.titleMedium,
           ),
           onPressed: onTap,
-          child: Text(label),
+          child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
         ),
       ),
     );

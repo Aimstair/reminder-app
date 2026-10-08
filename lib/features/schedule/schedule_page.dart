@@ -15,6 +15,7 @@ import '../../l10n/gen/app_localizations.dart';
 import '../../ui/bell.dart';
 import '../../ui/format.dart';
 import '../../ui/icons.dart';
+import '../../ui/motion.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
 import '../actions/occurrence_actions.dart';
@@ -70,7 +71,9 @@ class SchedulePage extends ConsumerWidget {
       onRefresh: () => ref.read(servicesProvider).refresh(),
       child: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(child: _Header(done: progress.done, total: progress.total)),
+          SliverToBoxAdapter(
+            child: _Header(done: progress.done, total: progress.total),
+          ),
           const SliverToBoxAdapter(child: _WeekStrip()),
           const SliverToBoxAdapter(child: _FilterChips()),
           if (digest != null) const SliverToBoxAdapter(child: DigestCard()),
@@ -78,15 +81,21 @@ class SchedulePage extends ConsumerWidget {
             SliverFillRemaining(
               hasScrollBody: false,
               child: filters.active
-                  ? EmptyState(title: l10n.filterEmpty, action: l10n.actionClearFilters, onAction: () => _clearFilters(ref))
+                  ? EmptyState(
+                      title: l10n.filterEmpty,
+                      action: l10n.actionClearFilters,
+                      onAction: () => _clearFilters(ref),
+                    )
                   : EmptyState(title: l10n.emptyNoneTitle, sub: l10n.emptyNoneSub, mood: BellMood.thinking),
             )
           else ...[
             if (upNext != null || spotlight != null)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(Space.l, Space.m, Space.l, 0),
-                  child: IntrinsicHeight(
+                  padding: const EdgeInsets.fromLTRB(Space.l, Space.s, Space.l, 0),
+                  // Fixed height: both cards line up whatever their text (titles truncate).
+                  child: SizedBox(
+                    height: _HomeCard.height,
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -104,7 +113,7 @@ class SchedulePage extends ConsumerWidget {
                     ? EmptyState(title: l10n.allClearTitle, sub: l10n.allClearSub, compact: true, mood: BellMood.happy)
                     : EmptyState(title: l10n.emptyTodayTitle, sub: l10n.emptyTodaySub, compact: true),
               ),
-            for (final s in sections) ...[
+            for (final (n, s) in sections.indexed) ...[
               SliverToBoxAdapter(
                 child: _GroupHeader(
                   title: s.title,
@@ -115,7 +124,15 @@ class SchedulePage extends ConsumerWidget {
                       : (s.today && progress.done > 0 ? l10n.sectionDoneCount(progress.done) : null),
                 ),
               ),
-              SliverToBoxAdapter(child: InsetGroup(children: [for (final i in s.items) _SwipeRow(item: i)])),
+              SliverToBoxAdapter(
+                child: FadeSlideIn(
+                  index: n,
+                  child: InsetGroup(
+                    indent: ReminderRow.dividerIndent,
+                    children: [for (final i in s.items) _SwipeRow(key: ValueKey(i.occurrenceId), item: i)],
+                  ),
+                ),
+              ),
             ],
             const SliverToBoxAdapter(child: SizedBox(height: 96)), // room for the [+] button
           ],
@@ -134,11 +151,13 @@ class SchedulePage extends ConsumerWidget {
 
   /// Next timed item starting within 12 hours.
   static ScheduleItem? _upNext(List<ScheduleItem> items, DateTime now) => items
-      .where((i) =>
-          !i.overdue &&
-          i.reminder.timing.type == TimingType.datetime &&
-          i.times.anchor.isAfter(now) &&
-          i.times.anchor.difference(now) < const Duration(hours: 12))
+      .where(
+        (i) =>
+            !i.overdue &&
+            i.reminder.timing.type == TimingType.datetime &&
+            i.times.anchor.isAfter(now) &&
+            i.times.anchor.difference(now) < const Duration(hours: 12),
+      )
       .firstOrNull;
 
   /// "Later" covers the rest of this month; after that, one header per month (VW-12).
@@ -159,7 +178,12 @@ class SchedulePage extends ConsumerWidget {
         ScheduleGroup.later => f.monthYear(i.start),
       };
       if (out.isEmpty || out.last.title != title) {
-        out.add((title: title, overdue: i.group == ScheduleGroup.overdue, today: i.group == ScheduleGroup.today, items: []));
+        out.add((
+          title: title,
+          overdue: i.group == ScheduleGroup.overdue,
+          today: i.group == ScheduleGroup.today,
+          items: [],
+        ));
       }
       out.last.items.add(i);
     }
@@ -181,7 +205,7 @@ class _Header extends ConsumerWidget {
     final hour = DateTime.now().hour;
     final greeting = hour < 12 ? l10n.greetingMorning : (hour < 18 ? l10n.greetingAfternoon : l10n.greetingEvening);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(Space.l, Space.xs, Space.l, Space.m),
+      padding: const EdgeInsets.fromLTRB(Space.l, Space.m, Space.l, Space.m),
       child: Row(
         children: [
           Expanded(
@@ -197,15 +221,17 @@ class _Header extends ConsumerWidget {
                   },
                   child: Text(
                     f.dayLong(today).toUpperCase(),
-                    style: text.labelLarge?.copyWith(color: c.accent, fontWeight: FontWeight.w600, letterSpacing: 0.6),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: text.bodySmall?.copyWith(color: c.accent, fontWeight: FontWeight.w600, letterSpacing: 0.4),
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(greeting, style: text.displaySmall),
+                Text(greeting, style: text.displaySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
-          if (total > 0) _ProgressRing(done: done, total: total),
+          if (total > 0) ...[const SizedBox(width: Space.m), _ProgressRing(done: done, total: total)],
         ],
       ),
     );
@@ -248,8 +274,12 @@ class _ProgressRing extends StatelessWidget {
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('$done/$total', style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700, height: 1.1)),
-                Text(l10n.ringDone, style: text.labelSmall?.copyWith(height: 1.1)),
+                CountText(
+                  done,
+                  format: (n) => '$n/$total',
+                  style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700, height: 1.1),
+                ),
+                Text(l10n.ringDone, style: text.labelSmall?.copyWith(fontSize: 10, height: 1.1)),
               ],
             ),
           ],
@@ -277,26 +307,41 @@ class _WeekStrip extends ConsumerWidget {
         children: [
           for (var i = 0; i < 7; i++)
             Expanded(
-              child: Builder(builder: (context) {
-                final day = addDays(start, i);
-                final kinds = items.where((x) => x.day == day && !x.resolved).map((x) => x.reminder.kind).toSet();
-                final isToday = day == today;
-                final fg = isToday ? Colors.white : c.textPrimary;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: Material(
-                    color: isToday ? c.accent : Colors.transparent,
-                    borderRadius: BorderRadius.circular(Radii.card),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(Radii.card),
+              child: Builder(
+                builder: (context) {
+                  final day = addDays(start, i);
+                  final kinds = items.where((x) => x.day == day && !x.resolved).map((x) => x.reminder.kind).toSet();
+                  final isToday = day == today;
+                  final fg = isToday ? Colors.white : c.textPrimary;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: Pressable(
+                      scale: 0.92,
                       onTap: () => ref.read(homeProvider.notifier).openDay(day),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: Space.s),
+                      child: Container(
+                        height: 72,
+                        decoration: BoxDecoration(
+                          color: isToday ? c.accent : Colors.transparent,
+                          borderRadius: BorderRadius.circular(Radii.card),
+                          boxShadow: isToday
+                              ? [
+                                  BoxShadow(
+                                    color: c.accent.withValues(alpha: 0.35),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ]
+                              : null,
+                        ),
                         child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(f.weekdayNarrow(day), style: text.labelSmall?.copyWith(color: isToday ? Colors.white70 : null)),
+                            Text(
+                              f.weekdayNarrow(day),
+                              style: text.labelSmall?.copyWith(color: isToday ? Colors.white70 : null),
+                            ),
                             const SizedBox(height: 2),
-                            Text('${day.day}', style: text.titleLarge?.copyWith(color: fg, fontWeight: FontWeight.w600)),
+                            Text('${day.day}', style: text.headlineSmall?.copyWith(color: fg)),
                             const SizedBox(height: 4),
                             SizedBox(
                               height: 6,
@@ -320,9 +365,9 @@ class _WeekStrip extends ConsumerWidget {
                         ),
                       ),
                     ),
-                  ),
-                );
-              }),
+                  );
+                },
+              ),
             ),
         ],
       ),
@@ -350,40 +395,55 @@ class _FilterChips extends ConsumerWidget {
       (QuickFilter.events, l10n.filterEvents, c.event),
       (QuickFilter.meetings, l10n.filterMeetings, c.meeting),
     ];
+    final index = chips.indexWhere((x) => x.$1 == current);
+    // The dark pill slides to the chosen chip; labels cross-fade their color.
     return SizedBox(
-      height: 56,
-      child: ListView.separated(
+      height: 52,
+      child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: Space.l, vertical: Space.s),
-        itemCount: chips.length,
-        separatorBuilder: (_, _) => const SizedBox(width: Space.s),
-        itemBuilder: (_, i) {
-          final (value, label, dot) = chips[i];
-          final selected = value == current;
-          final bg = selected ? (dark ? Colors.white : Colors.black) : c.surface;
-          final fg = selected ? (dark ? Colors.black : Colors.white) : c.textPrimary;
-          return Material(
-            color: bg,
-            shape: const StadiumBorder(),
-            child: InkWell(
-              customBorder: const StadiumBorder(),
-              onTap: () => ref.read(quickFilterProvider.notifier).set(value),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: Space.l),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (dot != null) ...[
-                      Container(width: 8, height: 8, decoration: BoxDecoration(color: dot, shape: BoxShape.circle)),
-                      const SizedBox(width: Space.s),
+        child: SlidingHighlightRow(
+          selected: index,
+          highlight: DecoratedBox(
+            decoration: ShapeDecoration(color: dark ? Colors.white : Colors.black, shape: const StadiumBorder()),
+          ),
+          children: [
+            for (final (value, label, dot) in chips)
+              Pressable(
+                scale: 0.94,
+                onTap: () => ref.read(quickFilterProvider.notifier).set(value),
+                child: AnimatedContainer(
+                  duration: Motion.standard,
+                  height: 36,
+                  padding: const EdgeInsets.symmetric(horizontal: Space.l),
+                  decoration: ShapeDecoration(
+                    color: value == current ? c.surface.withValues(alpha: 0) : c.surface,
+                    shape: const StadiumBorder(),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (dot != null) ...[
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
+                        ),
+                        const SizedBox(width: Space.s),
+                      ],
+                      AnimatedDefaultTextStyle(
+                        duration: Motion.standard,
+                        style: text.titleSmall!.copyWith(
+                          color: value == current ? (dark ? Colors.black : Colors.white) : c.textPrimary,
+                        ),
+                        child: Text(label, maxLines: 1),
+                      ),
                     ],
-                    Text(label, style: text.titleSmall?.copyWith(color: fg, fontWeight: FontWeight.w600)),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+          ],
+        ),
       ),
     );
   }
@@ -420,20 +480,44 @@ class _UpNextCard extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               IconTile(icon: glyphIcon(glyphFor(r)), color: color, size: 44, filled: true),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: Space.s, vertical: 3),
-                decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(Radii.chip)),
-                child: Text(countdown, style: text.labelMedium?.copyWith(color: color, fontWeight: FontWeight.w600)),
+              const SizedBox(width: Space.s),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.topRight,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: Space.s, vertical: 3),
+                    decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(Radii.chip)),
+                    child: Text(
+                      countdown,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: text.labelMedium?.copyWith(color: color, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
           const Spacer(),
-          Text(l10n.upNext.toUpperCase(), style: text.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+          Text(
+            l10n.upNext.toUpperCase(),
+            maxLines: 1,
+            style: text.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w700, letterSpacing: 0.5),
+          ),
           const SizedBox(height: 2),
-          Text(r.title, style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700), maxLines: 2, overflow: TextOverflow.ellipsis),
+          Text(
+            r.title,
+            style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
           const SizedBox(height: 2),
-          Text(end == null ? f.time(item.start) : l10n.timeRange(f.time(item.start), f.time(end)), style: text.bodyMedium),
+          Text(
+            end == null ? f.time(item.start) : l10n.timeRange(f.time(item.start), f.time(end)),
+            style: text.bodyMedium,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );
@@ -467,13 +551,20 @@ class _OccasionCard extends ConsumerWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 52),
+              const SizedBox(height: 48),
               Text(
                 (days <= 0 ? l10n.groupToday : l10n.inTime(l10n.relDays(days))).toUpperCase(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: text.labelSmall?.copyWith(color: c.occasion, fontWeight: FontWeight.w700, letterSpacing: 0.5),
               ),
               const SizedBox(height: 2),
-              Text(r.title, style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700), maxLines: 2, overflow: TextOverflow.ellipsis),
+              Text(
+                r.title,
+                style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
               const SizedBox(height: Space.s),
               if (stages.isNotEmpty)
                 Row(
@@ -492,18 +583,23 @@ class _OccasionCard extends ConsumerWidget {
                     ],
                   ],
                 ),
-              const SizedBox(height: Space.s),
+              const Spacer(),
               if (prepared)
-                Text(l10n.statePrepared, style: text.labelLarge?.copyWith(color: c.occasion, fontWeight: FontWeight.w600))
+                Text(l10n.statePrepared, maxLines: 1, style: text.titleSmall?.copyWith(color: c.occasion))
               else if (!r.isCalendarEvent && r.alertPlan.any((s) => s.offset.amount < 0))
-                FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: c.occasion,
-                    visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.symmetric(horizontal: Space.l),
+                SizedBox(
+                  height: 34,
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: c.occasion,
+                      minimumSize: const Size(0, 34),
+                      shape: const StadiumBorder(),
+                      textStyle: text.titleSmall,
+                      padding: const EdgeInsets.symmetric(horizontal: Space.m),
+                    ),
+                    onPressed: () => OccurrenceActions(context, ref).prepared(r, item.occurrenceKey), // OCC-3
+                    child: Text(l10n.actionPrepared, maxLines: 1, overflow: TextOverflow.ellipsis),
                   ),
-                  onPressed: () => OccurrenceActions(context, ref).prepared(r, item.occurrenceKey), // OCC-3
-                  child: Text(l10n.actionPrepared),
                 ),
             ],
           ),
@@ -530,19 +626,24 @@ class _HomeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    return Material(
-      color: Color.alphaBlend(tint.withValues(alpha: dark ? 0.22 : 0.12), AppColors.of(context).surface),
-      borderRadius: BorderRadius.circular(Radii.card + 4),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
+    return FadeSlideIn(
+      child: Pressable(
         onTap: onTap,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 168),
-          child: Padding(padding: const EdgeInsets.all(Space.l), child: child),
+        child: Container(
+          height: height,
+          padding: const EdgeInsets.all(Space.l),
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: Color.alphaBlend(tint.withValues(alpha: dark ? 0.22 : 0.12), AppColors.of(context).surface),
+            borderRadius: BorderRadius.circular(Radii.card + 4),
+          ),
+          child: child,
         ),
       ),
     );
   }
+
+  static const height = 176.0;
 }
 
 /// Group header (mockup 02): title, count badge, and a quiet note on the right ("Nagging", "2 done").
@@ -561,17 +662,41 @@ class _GroupHeader extends StatelessWidget {
     final badge = danger ? c.danger : c.textSecondary;
     return Padding(
       padding: const EdgeInsets.fromLTRB(Space.l, Space.xl, Space.l, Space.s),
+      // Title + badge fill an Expanded on the left, so the capped note always sits on the right edge
+      // (a loose Flexible keeps its unused share and would leave the note short of the edge).
       child: Row(
         children: [
-          Text(title, style: text.titleLarge?.copyWith(color: color)),
-          const SizedBox(width: Space.s),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: Space.s, vertical: 1),
-            decoration: BoxDecoration(color: badge.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(Radii.chip)),
-            child: Text('$count', style: text.labelLarge?.copyWith(color: badge, fontWeight: FontWeight.w600)),
+          Expanded(
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: text.headlineSmall?.copyWith(color: color, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                const SizedBox(width: Space.s),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: Space.s, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: badge.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(Radii.chip),
+                  ),
+                  child: Text('$count', style: text.titleSmall?.copyWith(color: badge)),
+                ),
+              ],
+            ),
           ),
-          const Spacer(),
-          if (meta != null) Text(meta!, style: text.bodyMedium),
+          if (meta != null)
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 140),
+              child: Padding(
+                padding: const EdgeInsets.only(left: Space.s),
+                child: Text(meta!, style: text.bodyMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
+              ),
+            ),
         ],
       ),
     );
@@ -579,7 +704,7 @@ class _GroupHeader extends StatelessWidget {
 }
 
 class _SwipeRow extends ConsumerWidget {
-  const _SwipeRow({required this.item});
+  const _SwipeRow({super.key, required this.item});
   final ScheduleItem item;
 
   @override
@@ -636,10 +761,10 @@ class _SwipeRow extends ConsumerWidget {
       final rel = ago <= 0
           ? (allDay ? l10n.groupToday.toLowerCase() : f.time(i.start))
           : ago == 1
-              ? l10n.dayYesterday
-              : ago < 7
-                  ? f.weekdayShort(day)
-                  : f.date(day, today: today);
+          ? l10n.dayYesterday
+          : ago < 7
+          ? f.weekdayShort(day)
+          : f.date(day, today: today);
       return l10n.dueWhen(rel);
     }
     if (i.group == ScheduleGroup.today || i.group == ScheduleGroup.tomorrow) {

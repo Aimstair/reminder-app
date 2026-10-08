@@ -29,9 +29,17 @@ Future<void> showCaptureSheet(BuildContext context, {DateTime? at, DateTime? day
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    showDragHandle: true,
+    showDragHandle: false,
     backgroundColor: AppColors.of(context).bgGrouped, // white cards on the grouped background (mockup 03)
-    builder: (_) => CaptureSheet(at: at, day: day, text: text, onSavedWithAlerts: () => withAlerts = true),
+    builder: (_) => Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SheetGrabber(),
+        Flexible(
+          child: CaptureSheet(at: at, day: day, text: text, onSavedWithAlerts: () => withAlerts = true),
+        ),
+      ],
+    ),
   );
   if (withAlerts && context.mounted) await runPermissionFlowOnce(context);
 }
@@ -92,7 +100,6 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
       _input.text = split.input;
       _notes = split.notes;
     }
-
   }
 
   @override
@@ -136,7 +143,8 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
       if (allDay) {
         timing = ParsedTiming(type: TimingType.date, start: formatWallDate(date));
       } else {
-        final t = _lockTime ??
+        final t =
+            _lockTime ??
             (base.type == TimingType.datetime
                 ? ClockTime(parsedStart.hour, parsedStart.minute)
                 : ref.read(prefsProvider).dayTime);
@@ -299,7 +307,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(Space.l, Space.s, Space.l, Space.xxl),
+        padding: const EdgeInsets.fromLTRB(Space.l, 0, Space.l, Space.xxl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
@@ -349,7 +357,10 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                             backgroundColor: (_listening ? c.danger : c.accent).withValues(alpha: 0.12),
                           ),
                           onPressed: _voice,
-                          icon: Icon(_listening ? AppIcons.stop : AppIcons.mic, color: _listening ? c.danger : c.accent),
+                          icon: Icon(
+                            _listening ? AppIcons.stop : AppIcons.mic,
+                            color: _listening ? c.danger : c.accent,
+                          ),
                         ),
                       ),
                     ],
@@ -421,7 +432,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                   padding: const EdgeInsets.fromLTRB(Space.l, Space.s, Space.l, 0),
                   child: Text(hint, style: text.bodySmall?.copyWith(color: c.warning)),
                 ),
-              GroupCaption(l10n.captureDetails),
+              GroupCaption(l10n.captureDetails, inset: Space.l),
               InsetGroup(
                 margin: EdgeInsets.zero,
                 indent: 56,
@@ -506,7 +517,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                     ],
                   ),
                 ),
-              GroupCaption(l10n.fieldType),
+              GroupCaption(l10n.fieldType, inset: Space.l),
               SegmentedPills<Kind>(
                 items: [for (final k in Kind.values) (value: k, label: f.kind(k), dot: c.kind(k))],
                 selected: p.kind,
@@ -554,20 +565,25 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
       meta: RecordMeta(id: 'preview', createdAt: now, updatedAt: now, deviceId: ''),
       prefs: prefs,
     );
-    final alarms = AlarmPlanner(prefs: prefs, text: (_) => (title: '', body: ''))
-        .plan([r], const {}, now)
-        .where((a) => !a.key.contains(':nag'))
-        .toList();
+    final alarms = AlarmPlanner(
+      prefs: prefs,
+      text: (_) => (title: '', body: ''),
+    ).plan([r], const {}, now).where((a) => !a.key.contains(':nag')).toList();
     if (alarms.isEmpty) return null;
     final first = instantToWall(alarms.first.fireAt, prefs.deviceTimeZone);
-    return f.l10n.captureFirstAlert(f.when(first, allDay: false, today: dateOnly(instantToWall(now, prefs.deviceTimeZone))));
+    return f.l10n.captureFirstAlert(
+      f.when(first, allDay: false, today: dateOnly(instantToWall(now, prefs.deviceTimeZone))),
+    );
   }
 
   /// "Every 2 hours, 8 AM – 10 PM" (mockup 03): the default nag interval and the nag hours (ALR-9, PRF-4).
   String _nagSubtitle(AppLocalizations l10n, Fmt f) {
     final p = ref.read(prefsProvider);
     String t(ClockTime c) => f.time(DateTime.utc(2026, 1, 1, c.hour, c.minute));
-    return l10n.nagEveryBetween(l10n.nagEvery(f.duration(const Duration(hours: 2))), l10n.timeRange(t(p.nagStart), t(p.nagEnd)));
+    return l10n.nagEveryBetween(
+      l10n.nagEvery(f.duration(const Duration(hours: 2))),
+      l10n.timeRange(t(p.nagStart), t(p.nagEnd)),
+    );
   }
 
   String? _hint(ParseResult p, AppLocalizations l10n, Fmt f) {

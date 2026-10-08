@@ -8,8 +8,11 @@ name: FL-14 repeat after completion
     env:
       TEXT: "Water plants today 11pm every 3 days after done"
 - assertVisible: ".*Water plants.*"
+# The row, not the "Up next" card above it (same title when the item is within 12 hours).
 - swipe:
-    from: ".*Water plants.*"
+    from:
+      text: ".*Water plants.*"
+      below: "Today.*"
     direction: RIGHT
 - tapOn:
     text: "Continue"

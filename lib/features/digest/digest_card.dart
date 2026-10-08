@@ -13,6 +13,68 @@ import '../../ui/format.dart';
 import '../../ui/tokens.dart';
 import '../actions/occurrence_actions.dart';
 import '../../ui/icons.dart';
+import '../../ui/motion.dart';
+
+/// Today's Day view (S-13): the digest as one line ("Your day · 2 overdue · 1 coming up") that
+/// opens into the full card, so the hour grid keeps its height.
+class DigestBar extends ConsumerStatefulWidget {
+  const DigestBar({super.key});
+
+  @override
+  ConsumerState<DigestBar> createState() => _DigestBarState();
+}
+
+class _DigestBarState extends ConsumerState<DigestBar> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final d = ref.watch(digestProvider);
+    if (d == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    final c = AppColors.of(context);
+    final text = Theme.of(context).textTheme;
+    final parts = [
+      if (d.overdue.isNotEmpty) l10n.digestPartOverdue(d.overdue.length),
+      if (d.upcomingOccasions.isNotEmpty) l10n.digestPartComing(d.upcomingOccasions.length),
+    ];
+    return AnimatedSize(
+      duration: Motion.standard,
+      curve: Curves.easeOutCubic,
+      alignment: Alignment.topCenter,
+      child: _open
+          ? GestureDetector(onTap: () => setState(() => _open = false), child: const DigestCard())
+          : Padding(
+              padding: const EdgeInsets.fromLTRB(Space.l, Space.xs, Space.l, Space.s),
+              child: Pressable(
+                onTap: () => setState(() => _open = true),
+                child: Container(
+                  height: 44,
+                  padding: const EdgeInsets.symmetric(horizontal: Space.m),
+                  decoration: BoxDecoration(color: c.bgGrouped, borderRadius: BorderRadius.circular(Radii.row)),
+                  child: Row(
+                    children: [
+                      Icon(AppIcons.digest, color: c.warning, size: 20),
+                      const SizedBox(width: Space.s),
+                      Text(l10n.digestTitle, style: text.titleSmall, maxLines: 1),
+                      const SizedBox(width: Space.s),
+                      Expanded(
+                        child: Text(
+                          parts.join(' · '),
+                          style: text.bodyMedium,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Icon(AppIcons.dropDown, size: 14, color: c.textSecondary),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+    );
+  }
+}
 
 class DigestCard extends ConsumerWidget {
   const DigestCard({super.key});
@@ -45,10 +107,28 @@ class DigestCard extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(
           children: [
-            Container(width: 6, height: 6, decoration: BoxDecoration(color: color ?? c.accent, shape: BoxShape.circle)),
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(color: color ?? c.accent, shape: BoxShape.circle),
+            ),
             const SizedBox(width: Space.s),
-            Expanded(child: Text(title, style: text.bodyLarge, maxLines: 1, overflow: TextOverflow.ellipsis)),
-            Text(sub, style: text.bodySmall),
+            Expanded(
+              child: Text(
+                title,
+                style: text.bodyLarge?.copyWith(fontSize: 15),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (sub.isNotEmpty) ...[
+              const SizedBox(width: Space.s),
+              // Capped, not Flexible: a loose Flexible next to the Expanded title would start mid-row.
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.4),
+                child: Text(sub, style: text.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+              ),
+            ],
             ?trailing,
           ],
         ),
@@ -66,9 +146,9 @@ class DigestCard extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(Space.l, Space.s, Space.l, 0),
       child: Material(
         color: c.surface,
-        borderRadius: BorderRadius.circular(Radii.card),
+        borderRadius: BorderRadius.circular(Radii.card + 4),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(Space.l, Space.m, Space.s, Space.m),
+          padding: const EdgeInsets.all(Space.l),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -76,12 +156,22 @@ class DigestCard extends ConsumerWidget {
                 children: [
                   Icon(AppIcons.digest, color: c.warning),
                   const SizedBox(width: Space.s),
-                  Expanded(child: Text(l10n.digestTitle, style: text.titleMedium)),
-                  TextButton(
-                    onPressed: () => s.prefs.set(
-                      PrefKeys.digestDismissedDay,
-                      formatWallDate(ref.read(todayProvider)),
+                  Expanded(
+                    child: Text(
+                      l10n.digestTitle,
+                      style: text.titleMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
+                  ),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(0, 32),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      textStyle: text.bodyLarge?.copyWith(fontSize: 15, fontWeight: FontWeight.w500),
+                    ),
+                    onPressed: () => s.prefs.set(PrefKeys.digestDismissedDay, formatWallDate(ref.read(todayProvider))),
                     child: Text(l10n.actionDismiss),
                   ),
                 ],
@@ -105,7 +195,8 @@ class DigestCard extends ConsumerWidget {
                                       child: Text(l10n.actionKeep),
                                     ),
                                     TextButton(
-                                      onPressed: () => OccurrenceActions(context, ref).skip(i.reminder, i.occurrenceKey),
+                                      onPressed: () =>
+                                          OccurrenceActions(context, ref).skip(i.reminder, i.occurrenceKey),
                                       child: Text(l10n.actionSkip),
                                     ),
                                   ],
@@ -113,15 +204,24 @@ class DigestCard extends ConsumerWidget {
                               ],
                             ),
                           )
-                        : line(i.reminder.title, short((reminder: i.reminder, start: i.start)),
-                            color: c.danger, onTap: () => openDetail(context, i.reminder, i.occurrenceKey)),
+                        : line(
+                            i.reminder.title,
+                            short((reminder: i.reminder, start: i.start)),
+                            color: c.danger,
+                            onTap: () => openDetail(context, i.reminder, i.occurrenceKey),
+                          ),
                 ]),
-              if (d.missed > 0) section(l10n.digestMissed, [line(l10n.digestMissedCount(d.missed), '', color: c.warning)]),
+              if (d.missed > 0)
+                section(l10n.digestMissed, [line(l10n.digestMissedCount(d.missed), '', color: c.warning)]),
               if (d.upcomingOccasions.isNotEmpty)
                 section(l10n.digestComingUp, [
                   for (final i in d.upcomingOccasions.take(5))
-                    line(i.reminder.title, short((reminder: i.reminder, start: i.start)),
-                        color: c.occasion, onTap: () => openDetail(context, i.reminder, i.occurrenceKey)),
+                    line(
+                      i.reminder.title,
+                      short((reminder: i.reminder, start: i.start)),
+                      color: c.occasion,
+                      onTap: () => openDetail(context, i.reminder, i.occurrenceKey),
+                    ),
                 ]),
               if (d.removedFromCalendar.isNotEmpty)
                 section(l10n.digestRemoved, [line('${d.removedFromCalendar.length}', '', color: c.event)]),

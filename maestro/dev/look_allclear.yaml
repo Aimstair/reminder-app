@@ -8,7 +8,9 @@ appId: app.aimstair.reminder_app
     times: 4
     commands:
       - swipe:
-          from: ".*(Pay electricity bill|Return shoes|Pick up dry cleaning|Call mom).*"
+          from:
+            text: ".*(Pay electricity bill|Return shoes|Pick up dry cleaning|Call mom).*"
+            below: "(Overdue|Today)" # rows, not the digest card above them
           direction: RIGHT
       - tapOn:
           text: "Continue"

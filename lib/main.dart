@@ -30,12 +30,7 @@ Future<void> main() => runWithCrashReporting(() async {
   });
   final platform = PlatformGateway();
   final services = await AppServices.start(platform: platform);
-  runApp(
-    ProviderScope(
-      overrides: [servicesProvider.overrideWithValue(services)],
-      child: const ReminderApp(),
-    ),
-  );
+  runApp(ProviderScope(overrides: [servicesProvider.overrideWithValue(services)], child: const ReminderApp()));
 });
 
 class ReminderApp extends ConsumerStatefulWidget {
@@ -124,7 +119,10 @@ class _ReminderAppState extends ConsumerState<ReminderApp> {
         title: Text(l10n.travelTitle(Fmt.city(here))),
         content: Text(l10n.travelBody),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dctx, false), child: Text(l10n.actionKeepCity(Fmt.city(p.defaultTimeZone)))),
+          TextButton(
+            onPressed: () => Navigator.pop(dctx, false),
+            child: Text(l10n.actionKeepCity(Fmt.city(p.defaultTimeZone))),
+          ),
           FilledButton(onPressed: () => Navigator.pop(dctx, true), child: Text(l10n.actionSwitch)),
         ],
       ),
@@ -151,6 +149,7 @@ class _ReminderAppState extends ConsumerState<ReminderApp> {
     return MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context).appName,
       debugShowCheckedModeBanner: false,
+      scrollBehavior: const AppScrollBehavior(),
       theme: buildTheme(Brightness.light),
       darkTheme: buildTheme(Brightness.dark),
       themeMode: switch (theme) {

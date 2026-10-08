@@ -192,7 +192,7 @@ class AllClearPage extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(vertical: Space.s),
                       child: Row(
                         children: [
-                          CheckCircle(color: c.kind(d.reminder.kind), checked: true),
+                          CheckCircle(color: c.kind(d.reminder.kind), checked: true, padded: false),
                           const SizedBox(width: Space.m),
                           Expanded(
                             child: Text(
@@ -354,7 +354,10 @@ class _Card extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text(title.toUpperCase(), style: text.labelLarge?.copyWith(color: c.textSecondary, letterSpacing: 0.6)),
+                Text(
+                  title.toUpperCase(),
+                  style: text.bodySmall?.copyWith(fontWeight: FontWeight.w600, letterSpacing: 0.5),
+                ),
                 const Spacer(),
                 if (trailing != null) Text(trailing!, style: text.bodyMedium),
               ],

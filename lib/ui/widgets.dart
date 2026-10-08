@@ -2,11 +2,13 @@
 /// sheet frame, undo snackbar.
 library;
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:reminder_core/reminder_core.dart';
 
 import '../l10n/gen/app_localizations.dart';
 import 'bell.dart';
+import 'motion.dart';
 import 'tokens.dart';
 import 'icons.dart';
 
@@ -42,7 +44,7 @@ class IconTile extends StatelessWidget {
 
 /// Inset grouped list (rounded card, hairline separators) on the grouped background.
 class InsetGroup extends StatelessWidget {
-  const InsetGroup({super.key, required this.children, this.indent = 64, this.margin, this.color});
+  const InsetGroup({super.key, required this.children, this.indent = 56, this.margin, this.color});
 
   final List<Widget> children;
   final double indent;
@@ -60,10 +62,7 @@ class InsetGroup extends StatelessWidget {
           color: color ?? c.surface,
           child: Column(
             children: [
-              for (var n = 0; n < children.length; n++) ...[
-                if (n > 0) Divider(indent: indent),
-                children[n],
-              ],
+              for (var n = 0; n < children.length; n++) ...[if (n > 0) Divider(indent: indent), children[n]],
             ],
           ),
         ),
@@ -87,19 +86,31 @@ class SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(Space.l + Space.xs, Space.l, Space.l, Space.s),
       child: Row(
         children: [
-          Flexible(child: Text(title, style: text.titleMedium?.copyWith(color: danger ? c.danger : null))),
-          if (count != null) ...[
-            const SizedBox(width: Space.s),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
-              decoration: BoxDecoration(
-                color: (danger ? c.danger : c.textSecondary).withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(Radii.chip),
-              ),
-              child: Text('$count', style: text.labelSmall?.copyWith(color: danger ? c.danger : null)),
+          Expanded(
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: text.titleMedium?.copyWith(color: danger ? c.danger : null),
+                  ),
+                ),
+                if (count != null) ...[
+                  const SizedBox(width: Space.s),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: (danger ? c.danger : c.textSecondary).withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(Radii.chip),
+                    ),
+                    child: Text('$count', style: text.labelSmall?.copyWith(color: danger ? c.danger : null)),
+                  ),
+                ],
+              ],
             ),
-          ],
-          const Spacer(),
+          ),
           ?trailing,
         ],
       ),
@@ -109,13 +120,21 @@ class SectionHeader extends StatelessWidget {
 
 /// Small caption above a settings/form group.
 class GroupCaption extends StatelessWidget {
-  const GroupCaption(this.text, {super.key});
+  const GroupCaption(this.text, {super.key, this.inset = Space.l * 2});
   final String text;
+
+  /// Left edge: 32 on a page (16 margin + 16 into the card); 16 inside an already padded sheet.
+  final double inset;
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(Space.l * 2, Space.xl, Space.l, Space.s),
-    child: Text(text.toUpperCase(), style: Theme.of(context).textTheme.labelSmall?.copyWith(letterSpacing: 0.5)),
+    padding: EdgeInsets.fromLTRB(inset, Space.xl, Space.l, Space.s),
+    child: Text(
+      text.toUpperCase(),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(letterSpacing: 0.3),
+    ),
   );
 }
 
@@ -159,16 +178,21 @@ class ReminderRow extends StatelessWidget {
     final subStyle = text.bodyMedium?.copyWith(color: sub);
     return InkWell(
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(Space.m, Space.m, Space.m, Space.m),
-        child: Opacity(
-          opacity: done ? 0.55 : 1,
+      child: Container(
+        // Fixed height: every row lines up, whatever the title length (one line, then …).
+        height: rowHeight,
+        // CheckCircle brings its own 8dp touch padding, so both edges sit 12dp in.
+        padding: const EdgeInsets.fromLTRB(Space.xs, 0, Space.m, 0),
+        child: AnimatedOpacity(
+          duration: Motion.standard,
+          opacity: done ? 0.5 : 1,
           child: Row(
             children: [
               CheckCircle(color: type, checked: done, onTap: onCheck),
-              const SizedBox(width: Space.m),
+              const SizedBox(width: Space.xs),
               Expanded(
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -177,26 +201,35 @@ class ReminderRow extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                         decoration: done ? TextDecoration.lineThrough : null,
                       ),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 3),
-                    Wrap(
-                      spacing: Space.xs,
-                      runSpacing: 2,
-                      crossAxisAlignment: WrapCrossAlignment.center,
+                    const SizedBox(height: 2),
+                    Row(
                       children: [
-                        Icon(r.isCalendarEvent ? AppIcons.calendar : AppIcons.clockSmall, size: 15, color: sub),
-                        Text(when, style: subStyle),
-                        if (r.rrule != null) Icon(AppIcons.repeat, size: 15, color: sub),
-                        if (nagLabel case final nag?) MiniChip(nag, color: overdue ? c.danger : c.textSecondary),
-                        if (r.context == ReminderContext.work) MiniChip(l10n.ctxWork, color: c.textSecondary),
+                        Icon(r.isCalendarEvent ? AppIcons.calendar : AppIcons.clockSmall, size: 14, color: sub),
+                        const SizedBox(width: Space.xs),
+                        Flexible(
+                          child: Text(when, style: subStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        ),
+                        if (r.rrule != null) ...[
+                          const SizedBox(width: Space.xs),
+                          Icon(AppIcons.repeat, size: 14, color: sub),
+                        ],
+                        if (nagLabel case final nag?) ...[
+                          const SizedBox(width: Space.xs),
+                          Flexible(child: MiniChip(nag, color: overdue ? c.danger : c.textSecondary)),
+                        ],
+                        if (r.context == ReminderContext.work) ...[
+                          const SizedBox(width: Space.xs),
+                          Flexible(child: MiniChip(l10n.ctxWork, color: c.textSecondary)),
+                        ],
                       ],
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: Space.s),
+              const SizedBox(width: Space.m),
               trailing ?? IconTile.item(context, r),
             ],
           ),
@@ -204,34 +237,55 @@ class ReminderRow extends StatelessWidget {
       ),
     );
   }
+
+  static const rowHeight = 64.0;
+
+  /// Where the title starts (4 + 40 check + 4): separators line up with it, iOS-style.
+  static const dividerIndent = 48.0;
 }
 
-/// Round checkbox in a type color (mockup rows). Filled with a tick when [checked].
+/// Round checkbox in a type color (mockup rows). Fills and pops with a tick when [checked].
 class CheckCircle extends StatelessWidget {
-  const CheckCircle({super.key, required this.color, this.checked = false, this.onTap});
+  const CheckCircle({super.key, required this.color, this.checked = false, this.onTap, this.padded = true});
   final Color color;
   final bool checked;
   final VoidCallback? onTap;
 
+  /// 8dp around the 24dp circle (a 40dp touch target), so rows line up whether or not it's tappable.
+  final bool padded;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final circle = AnimatedContainer(
-      duration: Motion.micro,
-      width: 24,
-      height: 24,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: checked ? color : Colors.transparent,
-        border: Border.all(color: color, width: 2),
+    final circle = TweenAnimationBuilder<double>(
+      tween: Tween(end: checked ? 1 : 0),
+      duration: reduceMotion(context) ? Duration.zero : Motion.standard,
+      curve: Curves.easeOutBack,
+      builder: (_, v, _) => Container(
+        width: 24,
+        height: 24,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Color.lerp(Colors.transparent, color, v.clamp(0, 1)),
+          border: Border.all(color: color, width: 2),
+        ),
+        child: v <= 0.01
+            ? null
+            : Transform.scale(
+                scale: v,
+                child: const Icon(AppIcons.check, size: 15, color: Colors.white),
+              ),
       ),
-      child: checked ? const Icon(AppIcons.check, size: 16, color: Colors.white) : null,
     );
-    if (onTap == null) return circle;
+    if (onTap == null) return padded ? Padding(padding: const EdgeInsets.all(Space.s), child: circle) : circle;
     return Semantics(
       button: true,
       label: l10n.actionDone,
-      child: InkResponse(onTap: onTap, radius: 24, child: Padding(padding: const EdgeInsets.all(2), child: circle)),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Padding(padding: const EdgeInsets.all(Space.s), child: circle),
+      ),
     );
   }
 }
@@ -246,14 +300,19 @@ class MiniChip extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
     decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(6)),
-    child: Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w600)),
+    child: Text(
+      label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w600),
+    ),
   );
 }
 
 enum BannerTone { info, warning }
 
-/// iOS-style segmented control (mockup 03): gray track, white thumb on the selected item,
-/// optional colored dot per item.
+/// iOS-style segmented control (mockup 03): gray track, a white thumb that slides to the selected
+/// item, optional colored dot per item. Fixed 36dp height; labels truncate.
 class SegmentedPills<T> extends StatelessWidget {
   const SegmentedPills({super.key, required this.items, required this.selected, required this.onChanged});
   final List<({T value, String label, Color? dot})> items;
@@ -265,54 +324,66 @@ class SegmentedPills<T> extends StatelessWidget {
     final c = AppColors.of(context);
     final text = Theme.of(context).textTheme;
     final dark = Theme.of(context).brightness == Brightness.dark;
+    final index = items.indexWhere((i) => i.value == selected);
     return Container(
-      padding: const EdgeInsets.all(3),
+      height: 36,
+      padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
         color: c.separator.withValues(alpha: dark ? 0.35 : 0.18),
-        borderRadius: BorderRadius.circular(Radii.row),
+        borderRadius: BorderRadius.circular(9),
       ),
-      child: Row(
-        children: [
-          for (final i in items)
-            Expanded(
-              child: Semantics(
-                button: true,
-                selected: i.value == selected,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => onChanged(i.value),
-                  child: AnimatedContainer(
-                    duration: Motion.micro,
-                    padding: const EdgeInsets.symmetric(vertical: Space.s),
-                    decoration: BoxDecoration(
-                      color: i.value == selected ? (dark ? c.surfaceElevated : c.surface) : Colors.transparent,
-                      borderRadius: BorderRadius.circular(Radii.row - 3),
-                      boxShadow: i.value == selected
-                          ? [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 4, offset: const Offset(0, 1))]
-                          : null,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (i.dot != null) ...[
-                          Container(width: 7, height: 7, decoration: BoxDecoration(color: i.dot, shape: BoxShape.circle)),
-                          const SizedBox(width: 6),
-                        ],
-                        Flexible(
-                          child: Text(
-                            i.label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: text.titleSmall?.copyWith(fontWeight: i.value == selected ? FontWeight.w600 : FontWeight.w500),
-                          ),
+      child: SlidingCells(
+        count: items.length,
+        selected: index,
+        highlight: DecoratedBox(
+          decoration: BoxDecoration(
+            color: dark ? c.surfaceElevated : c.surface,
+            borderRadius: BorderRadius.circular(7),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 8, offset: const Offset(0, 3)),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 1, offset: const Offset(0, 0.5)),
+            ],
+          ),
+        ),
+        cell: (context, n) {
+          final i = items[n];
+          final on = n == index;
+          return Semantics(
+            button: true,
+            selected: on,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => onChanged(i.value),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: Space.xs),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (i.dot != null) ...[
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(color: i.dot, shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    Flexible(
+                      child: AnimatedDefaultTextStyle(
+                        duration: Motion.micro,
+                        style: text.titleSmall!.copyWith(
+                          fontSize: 14,
+                          fontWeight: on ? FontWeight.w600 : FontWeight.w500,
+                          color: on ? c.textPrimary : c.textPrimary.withValues(alpha: 0.75),
                         ),
-                      ],
+                        child: Text(i.label, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -320,7 +391,14 @@ class SegmentedPills<T> extends StatelessWidget {
 
 /// Persistent banners on the home shell (G2–G4, G10).
 class InfoBanner extends StatelessWidget {
-  const InfoBanner({super.key, required this.text, this.action, this.onAction, this.tone = BannerTone.warning, this.icon});
+  const InfoBanner({
+    super.key,
+    required this.text,
+    this.action,
+    this.onAction,
+    this.tone = BannerTone.warning,
+    this.icon,
+  });
   final String text;
   final String? action;
   final VoidCallback? onAction;
@@ -342,7 +420,9 @@ class InfoBanner extends StatelessWidget {
             children: [
               Icon(icon ?? AppIcons.info, color: color, size: 20),
               const SizedBox(width: Space.s),
-              Expanded(child: Text(text, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: c.textPrimary))),
+              Expanded(
+                child: Text(text, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: c.textPrimary)),
+              ),
               if (action != null) TextButton(onPressed: onAction, child: Text(action!)),
             ],
           ),
@@ -354,7 +434,15 @@ class InfoBanner extends StatelessWidget {
 
 /// Empty state with the bell (G1, G6, G7, Completed).
 class EmptyState extends StatelessWidget {
-  const EmptyState({super.key, required this.title, this.sub, this.compact = false, this.action, this.onAction, this.mood = BellMood.calm});
+  const EmptyState({
+    super.key,
+    required this.title,
+    this.sub,
+    this.compact = false,
+    this.action,
+    this.onAction,
+    this.mood = BellMood.calm,
+  });
   final String title;
   final String? sub;
   final bool compact;
@@ -400,11 +488,17 @@ class SheetBar extends StatelessWidget {
     height: 52,
     child: Row(
       children: [
-        SizedBox(width: 96, child: Align(alignment: Alignment.centerLeft, child: left)),
+        SizedBox(
+          width: 96,
+          child: Align(alignment: Alignment.centerLeft, child: left),
+        ),
         Expanded(
           child: Text(title, style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center, maxLines: 1),
         ),
-        SizedBox(width: 96, child: Align(alignment: Alignment.centerRight, child: right)),
+        SizedBox(
+          width: 96,
+          child: Align(alignment: Alignment.centerRight, child: right),
+        ),
       ],
     ),
   );
@@ -448,33 +542,45 @@ class FormRow extends StatelessWidget {
             children: [
               if (icon != null) ...[
                 IconTile(icon: icon!, color: color ?? c.accent, size: 30, filled: true),
-                const SizedBox(width: Space.m),
+                const SizedBox(width: 14), // label starts at 12 + 30 + 14 = 56 = InsetGroup indent
               ],
+              // Label fills the left; the value sits against the chevron, capped at half the screen, so
+              // every row's chevron lands on the same edge and long values truncate.
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(label, style: text.bodyLarge?.copyWith(color: destructive ? c.danger : null)),
-                    if (subtitle != null) Text(subtitle!, style: text.bodySmall),
+                    Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: text.bodyLarge?.copyWith(color: destructive ? c.danger : null),
+                    ),
+                    if (subtitle != null)
+                      Text(subtitle!, style: text.bodySmall, maxLines: 2, overflow: TextOverflow.ellipsis),
                   ],
                 ),
               ),
               if (value != null)
-                Flexible(
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.5),
                   child: Padding(
                     padding: const EdgeInsets.only(left: Space.s),
                     child: Text(
                       value!,
                       textAlign: TextAlign.end,
                       overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
-                      style: text.bodyMedium?.copyWith(color: flagged ? c.warning : null),
+                      maxLines: 1,
+                      style: text.bodyLarge?.copyWith(color: flagged ? c.warning : c.textSecondary),
                     ),
                   ),
                 ),
-              if (trailing != null) trailing! else if (onTap != null) ...[
+              if (trailing != null)
+                trailing!
+              else if (onTap != null) ...[
                 const SizedBox(width: Space.xs),
-                Icon(AppIcons.next, color: c.textSecondary, size: 20),
+                Icon(AppIcons.next, color: c.textSecondary.withValues(alpha: 0.6), size: 18),
               ],
             ],
           ),
@@ -486,7 +592,15 @@ class FormRow extends StatelessWidget {
 
 /// Switch row for forms and settings.
 class SwitchRow extends StatelessWidget {
-  const SwitchRow({super.key, required this.label, required this.value, required this.onChanged, this.subtitle, this.icon, this.color});
+  const SwitchRow({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    this.subtitle,
+    this.icon,
+    this.color,
+  });
   final String label;
   final String? subtitle;
   final bool value;
@@ -501,13 +615,17 @@ class SwitchRow extends StatelessWidget {
     icon: icon,
     color: color,
     onTap: onChanged == null ? null : () => onChanged!(!value),
-    trailing: Switch.adaptive(value: value, onChanged: onChanged),
+    trailing: CupertinoSwitch(value: value, onChanged: onChanged, activeTrackColor: AppColors.of(context).success),
   );
 }
 
 /// Snackbar with Undo (screens.md §4), 5 s (OCC-5, DAT-1).
-void showUndoSnack(BuildContext context, String message, {String? undoLabel, VoidCallback? onUndo}) {
-  ScaffoldMessenger.of(context)
+void showUndoSnack(BuildContext context, String message, {String? undoLabel, VoidCallback? onUndo}) =>
+    showUndoSnackOn(ScaffoldMessenger.of(context), message, undoLabel: undoLabel, onUndo: onUndo);
+
+/// [showUndoSnack] on a messenger captured before an await (the caller may be gone by then).
+void showUndoSnackOn(ScaffoldMessengerState messenger, String message, {String? undoLabel, VoidCallback? onUndo}) {
+  messenger
     ..hideCurrentSnackBar()
     ..showSnackBar(
       SnackBar(
@@ -525,11 +643,43 @@ Future<T?> showAppSheet<T>(BuildContext context, WidgetBuilder builder, {bool ex
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      showDragHandle: true,
+      showDragHandle: false,
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
         child: expand
-            ? FractionallySizedBox(heightFactor: 0.9, child: builder(ctx))
-            : SafeArea(top: false, child: builder(ctx)),
+            ? FractionallySizedBox(
+                heightFactor: 0.9,
+                child: Column(
+                  children: [
+                    const SheetGrabber(),
+                    Expanded(child: builder(ctx)),
+                  ],
+                ),
+              )
+            : SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SheetGrabber(),
+                    Flexible(child: builder(ctx)),
+                  ],
+                ),
+              ),
       ),
     );
+
+/// iOS sheet grabber: a 36 × 5 pill, 6dp from the top edge (14dp tall in all).
+class SheetGrabber extends StatelessWidget {
+  const SheetGrabber({super.key});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 6, bottom: 3),
+    child: Container(
+      width: 36,
+      height: 5,
+      decoration: BoxDecoration(color: AppColors.of(context).separator, borderRadius: BorderRadius.circular(3)),
+    ),
+  );
+}

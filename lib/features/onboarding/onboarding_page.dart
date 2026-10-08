@@ -22,6 +22,7 @@ import '../../ui/widgets.dart';
 import '../setup/permission_flow.dart';
 import '../setup/setup_widgets.dart';
 import '../../ui/icons.dart';
+import '../../ui/motion.dart';
 
 class OnboardingPage extends ConsumerStatefulWidget {
   const OnboardingPage({super.key});
@@ -149,7 +150,9 @@ class _Step extends StatelessWidget {
     final primaryButton = SizedBox(
       height: 56,
       child: FilledButton(
-        style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.card + 4))),
+        style: FilledButton.styleFrom(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.card + 4)),
+        ),
         onPressed: onPrimary,
         child: Text(primary),
       ),
@@ -159,11 +162,16 @@ class _Step extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(child: Center(child: SingleChildScrollView(child: child))),
+          Expanded(
+            child: Center(child: SingleChildScrollView(child: child)),
+          ),
           // Left-aligned, large (mockup 01).
           Text(title, style: text.displaySmall?.copyWith(fontSize: 34)),
           const SizedBox(height: Space.s),
-          Text(sub, style: text.titleMedium?.copyWith(color: c.textSecondary, fontWeight: FontWeight.w400)),
+          Text(
+            sub,
+            style: text.titleMedium?.copyWith(color: c.textSecondary, fontWeight: FontWeight.w400),
+          ),
           if (below != null) ...[const SizedBox(height: Space.l), below!],
           const SizedBox(height: Space.xl),
           if (secondary == null)
@@ -248,46 +256,64 @@ class _WelcomeState extends State<_Welcome> with TickerProviderStateMixin {
               builder: (context, box) => Stack(
                 alignment: Alignment.center,
                 children: [
-                  Opacity(opacity: 1 - g, child: const Bell(size: 96, mood: BellMood.calm)),
+                  Opacity(
+                    opacity: 1 - g,
+                    child: const Bell(size: 96, mood: BellMood.calm),
+                  ),
                   for (var i = 0; i < notes.length; i++)
-                    Builder(builder: (context) {
-                      final (kind, label, pos, rot) = notes[i];
-                      final wobble = math.sin((_drift.value + i * 0.3) * math.pi) * 6;
-                      final scattered = Offset(pos.dx * box.maxWidth / 2, pos.dy * 140 + wobble);
-                      final listed = Offset(0, (i - 1.5) * 58);
-                      final at = Offset.lerp(scattered, listed, g)!;
-                      return Transform.translate(
-                        offset: at,
-                        child: Transform.rotate(
-                          angle: rot * (1 - g),
-                          child: Container(
-                            width: math.min(260, box.maxWidth * 0.75),
-                            padding: const EdgeInsets.symmetric(horizontal: Space.m, vertical: Space.s),
-                            decoration: BoxDecoration(
-                              color: Color.lerp(
-                                [const Color(0xFFFFF4B8), const Color(0xFFDFF3FF), const Color(0xFFE8E6FF), const Color(0xFFFFE6D1)][i],
-                                c.surface,
-                                g,
+                    Builder(
+                      builder: (context) {
+                        final (kind, label, pos, rot) = notes[i];
+                        final wobble = math.sin((_drift.value + i * 0.3) * math.pi) * 6;
+                        final scattered = Offset(pos.dx * box.maxWidth / 2, pos.dy * 140 + wobble);
+                        final listed = Offset(0, (i - 1.5) * 58);
+                        final at = Offset.lerp(scattered, listed, g)!;
+                        return Transform.translate(
+                          offset: at,
+                          child: Transform.rotate(
+                            angle: rot * (1 - g),
+                            child: Container(
+                              width: math.min(260, box.maxWidth * 0.75),
+                              padding: const EdgeInsets.symmetric(horizontal: Space.m, vertical: Space.s),
+                              decoration: BoxDecoration(
+                                color: Color.lerp(
+                                  [
+                                    const Color(0xFFFFF4B8),
+                                    const Color(0xFFDFF3FF),
+                                    const Color(0xFFE8E6FF),
+                                    const Color(0xFFFFE6D1),
+                                  ][i],
+                                  c.surface,
+                                  g,
+                                ),
+                                borderRadius: BorderRadius.circular(Radii.row),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.08),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
                               ),
-                              borderRadius: BorderRadius.circular(Radii.row),
-                              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0, 3))],
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(kindIcon(kind), color: c.kind(kind), size: 20),
-                                const SizedBox(width: Space.s),
-                                Expanded(
-                                  child: Text(label,
+                              child: Row(
+                                children: [
+                                  Icon(kindIcon(kind), color: c.kind(kind), size: 20),
+                                  const SizedBox(width: Space.s),
+                                  Expanded(
+                                    child: Text(
+                                      label,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w500)),
-                                ),
-                              ],
+                                      style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    }),
+                        );
+                      },
+                    ),
                 ],
               ),
             );
@@ -344,19 +370,26 @@ class _JustTypeItState extends ConsumerState<_JustTypeIt> {
     final t = _input.text.trim();
     if (t.isEmpty) return null;
     final prefs = ref.read(prefsProvider);
-    return ReminderParser(ParseContext(
-      now: instantToWall(DateTime.now().toUtc(), prefs.defaultTimeZone),
-      defaultTimeZone: prefs.defaultTimeZone,
-      locale: Localizations.localeOf(context).toLanguageTag(),
-      dayTimeHour: prefs.dayTime.hour,
-      dayTimeMinute: prefs.dayTime.minute,
-    )).parse(t);
+    return ReminderParser(
+      ParseContext(
+        now: instantToWall(DateTime.now().toUtc(), prefs.defaultTimeZone),
+        defaultTimeZone: prefs.defaultTimeZone,
+        locale: Localizations.localeOf(context).toLanguageTag(),
+        dayTimeHour: prefs.dayTime.hour,
+        dayTimeMinute: prefs.dayTime.minute,
+      ),
+    ).parse(t);
   }
 
   Future<void> _save(ParseResult p) async {
     setState(() => _saving = true);
     final s = ref.read(servicesProvider);
-    final r = reminderFromParse(p, meta: await s.reminders.newMeta(), prefs: s.prefs.current, rawInput: _input.text.trim());
+    final r = reminderFromParse(
+      p,
+      meta: await s.reminders.newMeta(),
+      prefs: s.prefs.current,
+      rawInput: _input.text.trim(),
+    );
     await s.service.create(r);
     await widget.onSaved();
   }
@@ -371,10 +404,8 @@ class _JustTypeItState extends ConsumerState<_JustTypeIt> {
         ? const <(IconData, String, Color)>[]
         : [
             (kindIcon(p.kind), f.kind(p.kind), c.kind(p.kind)),
-            if (p.timing != null)
-              (AppIcons.calendar, f.date(parseWall(p.timing!.start)), c.danger),
-            if (p.timing?.type == TimingType.datetime)
-              (AppIcons.time, f.time(parseWall(p.timing!.start)), c.accent),
+            if (p.timing != null) (AppIcons.calendar, f.date(parseWall(p.timing!.start)), c.danger),
+            if (p.timing?.type == TimingType.datetime) (AppIcons.time, f.time(parseWall(p.timing!.start)), c.accent),
             if (p.rrule != null) (AppIcons.repeat, f.repeat(p.rrule, p.repeatMode ?? RecurrenceMode.fixed), c.meeting),
           ];
     final typedDone = _input.text.trim() == l10n.obTypeDemo;
@@ -395,24 +426,70 @@ class _JustTypeItState extends ConsumerState<_JustTypeIt> {
           builder: (context, box) => Stack(
             alignment: Alignment.center,
             children: [
-              Container(width: 270, height: 270, decoration: BoxDecoration(color: c.event.withValues(alpha: 0.10), shape: BoxShape.circle)),
-              Container(width: 200, height: 200, decoration: BoxDecoration(color: c.event.withValues(alpha: 0.14), shape: BoxShape.circle)),
+              Container(
+                width: 270,
+                height: 270,
+                decoration: BoxDecoration(color: c.event.withValues(alpha: 0.10), shape: BoxShape.circle),
+              ),
+              Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(color: c.event.withValues(alpha: 0.14), shape: BoxShape.circle),
+              ),
               Bell(size: 150, mood: typedDone && _demo ? BellMood.happy : BellMood.calm),
-              _FloatCard(left: 0, top: 4, angle: -0.06, icon: AppIcons.gift, color: c.occasion, title: l10n.obCard1Title, sub: l10n.obCard1Sub),
-              _FloatCard(right: 0, top: 70, angle: 0.06, icon: AppIcons.bill, color: c.event, title: l10n.obCard2Title, sub: l10n.obCard2Sub),
-              _FloatCard(left: 8, bottom: 40, angle: 0.04, icon: AppIcons.video, color: c.meeting, title: l10n.obCard3Title, sub: l10n.obCard3Sub),
-              _FloatCard(right: 12, bottom: 0, angle: -0.06, icon: AppIcons.bag, color: c.task, title: l10n.obCard4Title, sub: l10n.obCard4Sub),
+              _FloatCard(
+                left: 0,
+                top: 4,
+                angle: -0.06,
+                icon: AppIcons.gift,
+                color: c.occasion,
+                title: l10n.obCard1Title,
+                sub: l10n.obCard1Sub,
+              ),
+              _FloatCard(
+                right: 0,
+                top: 70,
+                angle: 0.06,
+                icon: AppIcons.bill,
+                color: c.event,
+                title: l10n.obCard2Title,
+                sub: l10n.obCard2Sub,
+              ),
+              _FloatCard(
+                left: 8,
+                bottom: 40,
+                angle: 0.04,
+                icon: AppIcons.video,
+                color: c.meeting,
+                title: l10n.obCard3Title,
+                sub: l10n.obCard3Sub,
+              ),
+              _FloatCard(
+                right: 12,
+                bottom: 0,
+                angle: -0.06,
+                icon: AppIcons.bag,
+                color: c.task,
+                title: l10n.obCard4Title,
+                sub: l10n.obCard4Sub,
+              ),
             ],
           ),
         ),
       ),
       below: Container(
         padding: const EdgeInsets.all(Space.l),
-        decoration: BoxDecoration(color: c.separator.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(Radii.sheet)),
+        decoration: BoxDecoration(
+          color: c.separator.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(Radii.sheet),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.obTryOwn, style: text.titleSmall?.copyWith(color: c.textSecondary, fontWeight: FontWeight.w600)),
+            Text(
+              l10n.obTryOwn,
+              style: text.titleSmall?.copyWith(color: c.textSecondary, fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: Space.s),
             Container(
               decoration: BoxDecoration(
@@ -457,7 +534,10 @@ class _JustTypeItState extends ConsumerState<_JustTypeIt> {
               spacing: Space.s,
               runSpacing: Space.s,
               children: [
-                for (final (i, (icon, label, color, tinted)) in [...chips.map((x) => (x.$1, x.$2, x.$3, x == chips.first)), if (alerts != null) (AppIcons.alert, alerts, c.textPrimary, false)].indexed)
+                for (final (i, (icon, label, color, tinted)) in [
+                  ...chips.map((x) => (x.$1, x.$2, x.$3, x == chips.first)),
+                  if (alerts != null) (AppIcons.alert, alerts, c.textPrimary, false),
+                ].indexed)
                   TweenAnimationBuilder<double>(
                     key: ValueKey('$i$label'),
                     tween: Tween(begin: 0, end: 1),
@@ -475,7 +555,13 @@ class _JustTypeItState extends ConsumerState<_JustTypeIt> {
                         children: [
                           Icon(icon, size: 16, color: tinted ? color : c.textPrimary),
                           const SizedBox(width: 6),
-                          Text(label, style: text.titleSmall?.copyWith(color: tinted ? color : c.textPrimary, fontWeight: FontWeight.w600)),
+                          Text(
+                            label,
+                            style: text.titleSmall?.copyWith(
+                              color: tinted ? color : c.textPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -491,13 +577,16 @@ class _JustTypeItState extends ConsumerState<_JustTypeIt> {
   /// "1 week · 1 day · on the day" (mockup 01): the alert plan without "before".
   String _alertsChip(Fmt f, ParseResult p) {
     final allDay = p.timing?.type != TimingType.datetime;
-    final plan = p.alerts?.map((o) => AlertStage(AlertOffset.parse(o))).toList() ??
+    final plan =
+        p.alerts?.map((o) => AlertStage(AlertOffset.parse(o))).toList() ??
         ref.read(prefsProvider).alertPlanFor(p.kind, p.timing?.type ?? TimingType.date);
-    return plan.map((s) {
-      final o = s.offset;
-      if (o.amount == 0) return f.offset(o, allDay: allDay);
-      return f.offset(AlertOffset(o.amount.abs(), o.unit), allDay: allDay); // positive → no "before"
-    }).join(' · ');
+    return plan
+        .map((s) {
+          final o = s.offset;
+          if (o.amount == 0) return f.offset(o, allDay: allDay);
+          return f.offset(AlertOffset(o.amount.abs(), o.unit), allDay: allDay); // positive → no "before"
+        })
+        .join(' · ');
   }
 }
 
@@ -530,29 +619,36 @@ class _FloatCard extends StatelessWidget {
       right: right,
       top: top,
       bottom: bottom,
-      child: Transform.rotate(
-        angle: angle,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(Space.s, Space.s, Space.l, Space.s),
-          decoration: BoxDecoration(
-            color: c.surface,
-            borderRadius: BorderRadius.circular(Radii.card),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 14, offset: const Offset(0, 4))],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconTile(icon: icon, color: color, size: 34),
-              const SizedBox(width: Space.s),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(title, style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-                  Text(sub, style: text.labelSmall),
-                ],
-              ),
-            ],
+      child: Floating(
+        amplitude: 5,
+        phase: (angle.abs() * 7) % 1, // cards drift out of sync
+        period: Duration(milliseconds: 2600 + (angle.abs() * 8000).round()),
+        child: Transform.rotate(
+          angle: angle,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(Space.s, Space.s, Space.l, Space.s),
+            decoration: BoxDecoration(
+              color: c.surface,
+              borderRadius: BorderRadius.circular(Radii.card),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 14, offset: const Offset(0, 4)),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconTile(icon: icon, color: color, size: 34),
+                const SizedBox(width: Space.s),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(title, style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                    Text(sub, style: text.labelSmall),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -610,7 +706,10 @@ class _NudgesDemoState extends State<_NudgesDemo> {
                     tween: Tween(begin: 0, end: 1),
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeOutCubic,
-                    builder: (_, v, child) => Opacity(opacity: v, child: Transform.translate(offset: Offset(0, (1 - v) * -12), child: child)),
+                    builder: (_, v, child) => Opacity(
+                      opacity: v,
+                      child: Transform.translate(offset: Offset(0, (1 - v) * -12), child: child),
+                    ),
                     child: Container(
                       margin: const EdgeInsets.only(bottom: Space.s),
                       padding: const EdgeInsets.all(Space.s),
@@ -623,16 +722,20 @@ class _NudgesDemoState extends State<_NudgesDemo> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(l10n.obTypeDemo.split(' ').take(2).join(' '),
-                                    style: text.labelSmall?.copyWith(color: c.textPrimary, fontWeight: FontWeight.w700)),
+                                Text(
+                                  l10n.obTypeDemo.split(' ').take(2).join(' '),
+                                  style: text.labelSmall?.copyWith(color: c.textPrimary, fontWeight: FontWeight.w700),
+                                ),
                                 Text(body, style: text.labelSmall),
                                 if (d < 7 && !_prepared)
                                   GestureDetector(
                                     onTap: () => setState(() => _prepared = true), // OCC-3
                                     child: Padding(
                                       padding: const EdgeInsets.only(top: 2),
-                                      child: Text(l10n.actionPrepared,
-                                          style: text.labelSmall?.copyWith(color: c.accent, fontWeight: FontWeight.w700)),
+                                      child: Text(
+                                        l10n.actionPrepared,
+                                        style: text.labelSmall?.copyWith(color: c.accent, fontWeight: FontWeight.w700),
+                                      ),
                                     ),
                                   ),
                               ],
@@ -684,7 +787,10 @@ class _YourSchedule extends ConsumerWidget {
             onChanged: (v) {
               if (v.end - v.start < 1) return;
               repo.set(PrefKeys.nagStart, PrefsRepository.encodeTime(ClockTime(v.start.round(), 0)));
-              repo.set(PrefKeys.nagEnd, PrefsRepository.encodeTime(ClockTime(math.min(v.end.round(), 23), v.end.round() >= 24 ? 59 : 0)));
+              repo.set(
+                PrefKeys.nagEnd,
+                PrefsRepository.encodeTime(ClockTime(math.min(v.end.round(), 23), v.end.round() >= 24 ? 59 : 0)),
+              );
             },
           ),
           const ScheduleSettings(),
@@ -731,8 +837,14 @@ class _Sky extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: const [
-          Padding(padding: EdgeInsets.all(Space.l), child: Icon(AppIcons.sun, color: Colors.white, size: 32)),
-          Padding(padding: EdgeInsets.all(Space.l), child: Icon(AppIcons.night, color: Colors.white, size: 28)),
+          Padding(
+            padding: EdgeInsets.all(Space.l),
+            child: Icon(AppIcons.sun, color: Colors.white, size: 32),
+          ),
+          Padding(
+            padding: EdgeInsets.all(Space.l),
+            child: Icon(AppIcons.night, color: Colors.white, size: 28),
+          ),
         ],
       ),
     );

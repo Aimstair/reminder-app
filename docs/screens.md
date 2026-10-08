@@ -128,7 +128,7 @@ The home screen can show reminders in several **views**, switched from the top b
 | ID | Screen | Contents | Actions → |
 |---|---|---|---|
 | S-40 | **Search** | Search field, live results (active + archived), empty state G7 | Result → detail · **[Create '…']** → S-20 |
-| S-41 | **Digest card** (component on S-12 and today's S-13) | Overdue · Missed · Coming up · Removed from calendar (`DIG-2`) | Per-item actions · **[Dismiss]** |
+| S-41 | **Digest card** (component on S-12; on today's S-13 a one-line bar that expands into the card) | Overdue · Missed · Coming up · Removed from calendar (`DIG-2`) | Per-item actions · **[Dismiss]** |
 | S-42 | **Completed** | Done/archived reminders, newest first, searchable | Tap → detail (read-only for resolved) · **[Mark as not done]** |
 
 ### Settings
@@ -150,7 +150,7 @@ The home screen can show reminders in several **views**, switched from the top b
 | ID | Surface | Contents |
 |---|---|---|
 | S-60 | **Notifications** | Layouts per `NTF-2`; grouped summary (`SCH-10`); 5 s Done/Undo replacement (`NTF-9`); digest notification; late-alerts group (G5) |
-| S-61 | **Home-screen widget** | Sizes: small (**[+]** only), medium (**[+]** + next 3), large (+ today's list) |
+| S-61 | **Home-screen widget** | Header: day + date, "N left" and a round **[+]** in the corner; then the next 3 items with type-colored bars (mockup 05, DS14). Resizable from 2×2 |
 | S-62 | **Quick Settings tile** | "+ Reminder" |
 | S-63 | **Share target** | "Reminder App" in the Android share sheet |
 
