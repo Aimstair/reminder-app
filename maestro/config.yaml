@@ -1,0 +1,6 @@
+# Maestro e2e suite (docs/testing.md §1, FL-*). Run with maestro/run.sh — emulator only:
+# flows reset app data (clearState), so they must never run on a personal phone.
+flows:
+  - "*.yaml"
+executionOrder:
+  continueOnFailure: true

@@ -1,6 +1,6 @@
 # Screens & Navigation — v1.0
 
-Every screen, sheet, and dialog in the app: what it shows, what you can do there, and where it leads. This is the brief for UI design. **Approved mockups:** [Reminder App Screens canvas](https://claude.ai/artifact/ArygfCSr3DBPg4pTmz8kMG) (page "Calm · Things 3 style (chosen)"; patterns in `design-direction.md` DS11). Flow IDs (`FL-*`) → [`user-flows.md`](user-flows.md); rule IDs → [`behavior-spec.md`](behavior-spec.md).
+Every screen, sheet, and dialog in the app: what it shows, what you can do there, and where it leads. This is the brief for UI design. **Approved mockups:** rendered in [`design/mockups/`](design/mockups/README.md) (from the [Reminder App Screens canvas](https://claude.ai/artifact/ArygfCSr3DBPg4pTmz8kMG), page "Calm · Things 3 style (chosen)"; patterns in `design-direction.md` DS11). **Build to the mockup images.** Flow IDs (`FL-*`) → [`user-flows.md`](user-flows.md); rule IDs → [`behavior-spec.md`](behavior-spec.md).
 
 **Version tags:** screens are v1.0 unless marked **v1.2**.
 
@@ -37,10 +37,10 @@ The home screen can show reminders in several **views**, switched from the top b
 - **VW-7** Recurring items are shown for **any** date you scroll to, computed on the fly (`OCC-6`). The 14-day window only limits alarms, not what's displayed.
 - **VW-8** **Tap empty space:**
   - Time slot in Day/3 Day/Week → capture sheet pre-filled with that date and time (chips locked, `CAP-11`)
-  - Day cell in Month → opens **Day** view for that date
+  - Day cell in Month → **selects** that day and lists its items in a panel under the grid (tap an item → detail; tap the panel's date heading → **Day** view). Changed 2026-10-08 to match the approved mockups.
   - **Long-press** a Month day → capture sheet pre-filled with that date
 - **VW-9** **Swipe left/right** moves to the next/previous day, period, or month. **[Today]** in the top bar jumps back to now.
-- **VW-10** **Month cells** show up to 3 labels, then "+N". Occasions show a small icon (🎂-style) in the label.
+- **VW-10** **Month cells** show up to 3 dots (one per type present, in type color) and **one short label** for the day's first all-day item (e.g. *Mom*, *Rent*, *Party*). Today = filled accent circle; selected day = ring. Above the grid: month summary chips (*N occasions · N bills due · N meetings*). (Changed 2026-10-08 from "up to 3 labels + N" to match the approved mockups.)
 - **VW-11** **Time grid** shows a current-time line; on open it scrolls to one hour before now (today) or to day time (`PRF-3`) for other days. Overlapping items sit side by side (max 3 columns, then "+N").
 - **VW-12** **Schedule** scrolls forward indefinitely; after "Later" it switches to month headers ("November 2026"). It doesn't scroll into the past (history is in Day/Month views and the Completed screen).
 - **VW-13** *(v1.2)* **Drag to reschedule** in Day/3 Day/Week: drag a block to a new time. Same rules as reschedule (`NTF-7`): recurring items change this occurrence only.
@@ -98,7 +98,7 @@ The home screen can show reminders in several **views**, switched from the top b
 | S-11 | **Drawer** | **Views:** Schedule, Day, Month *(3 Day, Week, Year v1.2)* · **Types:** Meeting, Task, Event, Occasion (checkbox + color) · **Context:** Personal, Work · **Calendars:** each imported calendar (checkbox) · **Completed** · **Settings** · **Help & feedback** | Select view / toggle filters / → S-42, S-50 |
 | S-12 | **Schedule view** | Greeting + daily progress ring ("2/6 done") · week strip with type-colored dots · filter chips · home cards: **Up next** (countdown, attendees) and **occasion spotlight** (gift illustration, prep progress, I'm prepared) · digest card (S-41) · groups Overdue / Today / Tomorrow / This week / Later / months with count badges · reminder rows with icon tiles (`VW-12`) | Swipe right = Done · swipe left = Reschedule (S-33) · tap → detail |
 | S-13 | **Day view** | Date header · all-day strip (incl. "Overdue (n)" for today) · hourly grid with current-time line (`VW-3`, `VW-5`, `VW-11`) | Swipe = prev/next day · tap slot → S-20 prefilled · tap item → detail |
-| S-14 | **Month view** | Month grid, colored labels, "+N", occasion icons (`VW-10`) | Swipe = prev/next month · tap day → S-13 · long-press → S-20 prefilled |
+| S-14 | **Month view** | Month title + ‹ › · summary chips · grid with type dots + one short label (`VW-10`) · selected day's items listed below | Swipe or ‹ › = prev/next month · tap day → select + list (`VW-8`) · date heading → S-13 · long-press → S-20 prefilled |
 | S-15 | **3 Day view** — v1.2 | Three-column time grid | As Day; drag to reschedule (`VW-13`) |
 | S-16 | **Week view** — v1.2 | Month + week range header ("Oct 4 – 10 · Week 41") with prev/next · day header row (today circled) · all-day row (multi-day items span columns; overdue marker on today) · seven-column hour grid, today tinted, weekends shaded, red now line in today's column · titles wrap to 2 short lines on phones; week start per locale | As Day; drag to reschedule |
 | S-17 | **Year view** — v1.2 | 12 mini months; dots on days with items; occasion days highlighted | Tap day → S-13 · tap month → S-14 |

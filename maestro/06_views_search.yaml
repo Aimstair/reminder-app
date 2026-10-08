@@ -1,0 +1,23 @@
+# FL-12: Schedule → Day → Month and back; search finds a reminder and offers Create for a miss.
+appId: app.aimstair.reminder_app
+name: FL-12 views and search
+---
+- runFlow: common/fresh_app.yaml
+- runFlow:
+    file: common/save_reminder.yaml
+    env:
+      TEXT: "Dentist tomorrow 3pm"
+- tapOn: "Schedule"          # view switcher (its tooltip) → menu
+- tapOn: "Month"
+- assertVisible: ".*Dentist.*"
+- tapOn: "Schedule"
+- tapOn: "Day"
+- tapOn: "Schedule"          # view switcher → menu
+- tapOn: "Schedule"          # the "Schedule" item in the open menu
+- assertVisible: ".*Dentist.*"
+- tapOn: "Search"
+- inputText: "dent"
+- assertVisible: ".*Dentist.*"
+- eraseText: 10
+- inputText: "zebra"
+- assertVisible: "No matches for \"zebra\""

@@ -63,6 +63,12 @@ void main() {
     expect(gateway.synced, isEmpty, reason: 'alarms cancelled when done');
     expect(find.text('Done'), findsOneWidget); // Undo snackbar
 
+    // OCC-5: Undo still works although the swiped row is gone (it once read a disposed ref).
+    await tester.tap(find.text('Undo'));
+    await settleUntil(tester, () => gateway.synced.isNotEmpty && find.text('Call mom').evaluate().isNotEmpty);
+    expect(find.text('Call mom'), findsOneWidget);
+    expect(gateway.synced, isNotEmpty, reason: 'alarms restored by Undo');
+
     await tester.pumpWidget(const SizedBox());
     final closed = db.close();
     await tester.pump(const Duration(seconds: 1));

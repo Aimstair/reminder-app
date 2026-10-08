@@ -16,7 +16,9 @@ The look, feel, and motion of the app. Screens are listed in [`screens.md`](scre
 | DS8 | Mascot | **A friendly bell** | 2026-10-05 |
 | DS9 | Art production | **AI-generated mascot & illustrations, animated in Rive** | 2026-10-05 |
 | DS10 | Overall style confirmed | **Calm Things 3 style.** A heavily gamified, Duolingo-like direction (XP, streaks, levels, badges, mascot on every screen) was mocked up and **rejected** — too playful for the long-term enterprise goal (D5). The bell stays limited to key moments. | 2026-10-06 |
-| DS11 | Visual reference | **Approved mockups:** [Reminder App Screens canvas](https://claude.ai/artifact/ArygfCSr3DBPg4pTmz8kMG), page "Calm · Things 3 style (chosen)" | 2026-10-06 |
+| DS11 | Visual reference | **Approved mockups:** [Reminder App Screens canvas](https://claude.ai/artifact/ArygfCSr3DBPg4pTmz8kMG), page "Calm · Things 3 style (chosen)" — rendered copies in [`docs/design/mockups/`](design/mockups/README.md) (the canvas lives in another account; use the images) | 2026-10-06 |
+| DS12 | Mockup over earlier text | Where the mockups show more than the written patterns, **build to the mockups**: Month view = type dots + one short label + selected-day list (`VW-8`, `VW-10` updated); **All clear is a full screen** (stats, Today in review, Coming up, Plan tomorrow, share), not a pop-up | 2026-10-08 |
+| DS13 | No streak framing | The occasion detail's third stat card is **factual history** ("Done 3 years" — years completed, any order), not "years in a row" (DS10) | 2026-10-08 |
 
 ### Patterns established by the approved mockups (DS11)
 | Pattern | Where | Notes |

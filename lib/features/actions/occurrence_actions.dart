@@ -7,7 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:reminder_core/reminder_core.dart';
 
+import '../../app/app_services.dart';
 import '../../app/providers.dart';
+import '../../app/router.dart' show rootNavigatorKey;
 import '../../data/prefs_repository.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../native/alarm_gateway.dart';
@@ -49,6 +51,18 @@ class OccurrenceActions {
     } else if (r.kind == Kind.occasion) {
       message = l10n.occasionDone;
     }
+    // Celebrate first, then offer Undo: a celebration on top of the snackbar would hide Undo
+    // until its 5 seconds were gone (OCC-5). Shown from the root navigator — a swiped row is
+    // already gone from the list by now.
+    final host = rootNavigatorKey.currentContext;
+    if (host != null && host.mounted) {
+      if (!s.prefs.flag(PrefKeys.firstDoneShown)) {
+        await s.prefs.set(PrefKeys.firstDoneShown, true);
+        if (host.mounted) await showCelebration(host, Celebration.firstDone);
+      } else if (wasLastToday) {
+        await showCelebration(host, Celebration.allClear);
+      }
+    }
     messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
@@ -57,22 +71,14 @@ class OccurrenceActions {
         persist: false,
         action: SnackBarAction(
           label: l10n.actionUndo,
-          onPressed: () => _undo(r, key, before),
+          onPressed: () => _undo(s, r, key, before),
         ),
       ));
-
-    if (!context.mounted) return;
-    final firstEver = !s.prefs.flag(PrefKeys.firstDoneShown);
-    if (firstEver) {
-      await s.prefs.set(PrefKeys.firstDoneShown, true);
-      if (context.mounted) await showCelebration(context, Celebration.firstDone);
-    } else if (wasLastToday) {
-      await showCelebration(context, Celebration.allClear);
-    }
   }
 
-  Future<void> _undo(Reminder r, DateTime key, OccurrenceState before) async {
-    final s = ref.read(servicesProvider);
+  // Takes the services captured when the action ran: Undo fires after a swiped row (and its ref)
+  // is gone, so it must not read providers itself.
+  Future<void> _undo(AppServices s, Reminder r, DateTime key, OccurrenceState before) async {
     if (r.repeatMode == RecurrenceMode.afterCompletion && r.rrule != null) {
       // REC-6 moved the series; put the start back too.
       await s.service.edit(r);
@@ -109,7 +115,7 @@ class OccurrenceActions {
       if (next != null && context.mounted) message = l10n.snackSkippedNext(Fmt.of(context).date(next.timing.start));
     }
     if (context.mounted) {
-      showUndoSnack(context, message, undoLabel: l10n.actionUndo, onUndo: () => _undo(r, key, before));
+      showUndoSnack(context, message, undoLabel: l10n.actionUndo, onUndo: () => _undo(s, r, key, before));
     }
   }
 

@@ -14,6 +14,7 @@ v0 done. **v1.0 feature-complete (2026-10-07), ready for device testing:** core 
 | `docs/parser-test-set.md` | Parser rules (`PRS-*`) and acceptance cases |
 | `docs/user-flows.md` · `docs/screens.md` | Flows (`FL-*`), screens (`S-*`), view rules (`VW-*`) |
 | `docs/design-direction.md` · `docs/copy.md` | Look, motion, tokens · all user-facing text |
+| `docs/design/mockups/` | **Approved UI mockups (images) — build screens to match them** |
 | `docs/architecture.md` · `docs/testing.md` | Structure, libraries, data model, alarm module · test plan |
 | `docs/product-decisions.md` · `docs/competitors.md` | Business decisions (D1–D4) · market context |
 | `docs/spikes/animation-bakeoff.md` | Why Flutter; build lessons on this machine |
@@ -50,7 +51,7 @@ Don't add a package that isn't in `docs/architecture.md` §3 without asking and 
 - Run on phone (hot reload): `flutter run` · performance and alarms: `flutter run --release`
 - Release APK / Play bundle: `flutter build apk --release` · `flutter build appbundle` (add `--dart-define=SENTRY_DSN=<dsn>` for beta/store builds to turn on crash reporting)
 - Core tests: `cd packages/core && dart test` · app tests: `flutter test` · `flutter test integration_test`
-- E2E: `maestro test maestro/`
+- E2E: `maestro/run.sh [flow.yaml]` — **emulator only** (flows wipe app data; the script refuses physical devices). Start the AVD first: `emulator -avd Medium_Phone_API_36.0 -no-window`. Maestro CLI in `~/.maestro`, Java from Android Studio's JBR
 - Analyze / format: `flutter analyze` · `dart format .`
 - Regenerate Pigeon bridge: `dart run pigeon --input pigeons/<file>.dart`
 - Rive native libs (if the build step fails): `dart run rive_native:setup -p android`

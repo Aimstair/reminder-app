@@ -1,0 +1,47 @@
+# FL-1: Welcome → Just type it → Save this → permissions (PRM-6) → rest of onboarding → Home.
+appId: app.aimstair.reminder_app
+name: FL-1 onboarding saves the first reminder
+---
+- launchApp:
+    clearState: true
+    permissions:
+      notifications: allow
+- tapOn:
+    text: "Wait"            # emulator's own "System UI isn't responding" dialog on a slow PC
+    optional: true
+- extendedWaitUntil:
+    visible: "Never forget the things that matter\\..*"
+    timeout: 20000
+- tapOn: "Get started"
+- assertVisible: "Just type it\\..*"
+# The demo types "Mom's birthday Oct 12" by itself, then the parser fills the chips.
+- extendedWaitUntil:
+    visible: "Occasion"
+    timeout: 8000
+- tapOn: "Save this"
+# PRM-6 runs after the first save with alerts; on a slow emulator the sheets take a few seconds.
+- extendedWaitUntil:
+    visible: "Right on time.*"          # precise-timing explainer (exact alarms are off on the emulator)
+    timeout: 10000
+    optional: true
+- tapOn:
+    text: "Not now"
+    optional: true
+- extendedWaitUntil:
+    visible: "Want to make sure it works.*"
+    timeout: 10000
+    optional: true
+- tapOn:
+    text: "Skip"
+    optional: true
+- assertVisible: "Nudged before it matters\\..*"
+- tapOn: "Next"
+- assertVisible: "Your schedule.*"
+- tapOn: "Looks good"
+- assertVisible: "See your calendar here too.*"
+- tapOn: "Not now"
+- assertVisible: "Never miss a birthday.*"
+- tapOn: "Not now"
+# A first reminder was saved, so Home opens without the capture sheet.
+- assertVisible: ".*Mom's birthday.*"
+- assertNotVisible: "Cancel"         # capture sheet closed (the + button is also labelled "New reminder")

@@ -1,0 +1,14 @@
+# FL-11: open a reminder → Reschedule → Next week; it moves out of Tomorrow.
+appId: app.aimstair.reminder_app
+name: FL-11 reschedule from detail
+---
+- runFlow: common/fresh_app.yaml
+- runFlow:
+    file: common/save_reminder.yaml
+    env:
+      TEXT: "Pay rent tomorrow 9am"
+- tapOn: ".*Pay rent.*"
+- tapOn: "Reschedule"
+- assertVisible: "Next week.*"
+- tapOn: "Next week.*"
+- assertVisible: "Rescheduled to.*"

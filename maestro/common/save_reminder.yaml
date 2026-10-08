@@ -1,0 +1,22 @@
+# Types ${TEXT} into a fresh capture sheet and saves it. First save with alerts runs PRM-6
+# (precise-timing explainer + test-reminder sheet on the emulator) — dismissed if shown.
+appId: app.aimstair.reminder_app
+---
+- tapOn: "New reminder"
+- inputText: ${TEXT}
+- tapOn: "Save"
+# PRM-6 runs after the first save with alerts; on a slow emulator the sheets take a few seconds.
+- extendedWaitUntil:
+    visible: "Right on time.*"          # precise-timing explainer (exact alarms are off on the emulator)
+    timeout: 10000
+    optional: true
+- tapOn:
+    text: "Not now"
+    optional: true
+- extendedWaitUntil:
+    visible: "Want to make sure it works.*"
+    timeout: 10000
+    optional: true
+- tapOn:
+    text: "Skip"
+    optional: true

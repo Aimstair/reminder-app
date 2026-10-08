@@ -1,0 +1,21 @@
+# Fresh install state, onboarding skipped (FL-1: every step after Welcome can be skipped, PRF-11).
+appId: app.aimstair.reminder_app
+---
+- launchApp:
+    clearState: true
+    permissions:
+      notifications: allow
+- tapOn:
+    text: "Wait"            # emulator's own "System UI isn't responding" dialog on a slow PC
+    optional: true
+- extendedWaitUntil:
+    visible: "Get started"
+    timeout: 20000
+- tapOn: "Get started"
+- repeat:
+    times: 5
+    commands:
+      - tapOn: "Skip"
+# FL-1 step 6: nothing was saved, so Home opens with the capture sheet — close it.
+- tapOn: "Cancel"
+- assertVisible: "Nothing to remember… yet.*"

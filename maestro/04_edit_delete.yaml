@@ -1,0 +1,22 @@
+# FL-13: edit the title in the full editor, then delete; Undo brings it back.
+appId: app.aimstair.reminder_app
+name: FL-13 edit and delete
+---
+- runFlow: common/fresh_app.yaml
+- runFlow:
+    file: common/save_reminder.yaml
+    env:
+      TEXT: "Buy milk tomorrow 5pm"
+- tapOn: ".*Buy milk.*"
+- tapOn: "Edit"
+- assertVisible: "Edit reminder.*"
+- tapOn: ".*Buy milk.*"
+- eraseText: 20
+- inputText: "Buy oat milk"
+- tapOn: "Save"
+- assertVisible: ".*Buy oat milk.*"
+- tapOn: "Delete"
+- assertVisible: "Deleted"
+- assertNotVisible: ".*Buy oat milk.*"
+- tapOn: "Undo"
+- assertVisible: ".*Buy oat milk.*"

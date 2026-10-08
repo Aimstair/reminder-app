@@ -1,0 +1,17 @@
+# FL-14 / REC-6: completing a repeat-after-completion task shows the next date.
+appId: app.aimstair.reminder_app
+name: FL-14 repeat after completion
+---
+- runFlow: common/fresh_app.yaml
+- runFlow:
+    file: common/save_reminder.yaml
+    env:
+      TEXT: "Water plants today 11pm every 3 days after done"
+- assertVisible: ".*Water plants.*"
+- swipe:
+    from: ".*Water plants.*"
+    direction: RIGHT
+- tapOn:
+    text: "Continue"
+    optional: true
+- assertVisible: "Done · Next: .*"
