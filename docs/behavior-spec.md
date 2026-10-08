@@ -200,6 +200,7 @@ Detailed parser rules and examples live in `parser-test-set.md`. These are the d
 - **CAP-10** A time range ("2–4pm", "from 2 to 4") sets start and end time (`TIM-11`).
 - **CAP-11** Editing a preview chip by hand **locks** that field: further typing no longer changes it.
 - **CAP-12** Shared text (share sheet): links never become the title — they are removed from the input and go into notes. Text longer than 120 characters: the first sentence is parsed as the input; the full text goes into notes. A link-only share opens with an empty input (the user types what it's about) and the link in notes.
+- **CAP-13** Timed reminders show **Time** (start) and **Ends** as separate rows on the capture sheet. Ends is empty unless the text gave a range or the type has a default end (`TIM-11`); the user can set it (an end at or before the start means the next day) or clear it. A hand-set end locks like other fields (`CAP-11`).
 
 ## 8b. Templates (`TPL`)
 

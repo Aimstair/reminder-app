@@ -108,7 +108,7 @@ The home screen can show reminders in several **views**, switched from the top b
 
 | ID | Screen | Contents | Actions → |
 |---|---|---|---|
-| S-20 | **Capture sheet** | iOS-form layout: **Cancel · New Reminder · Save** bar · input card (text + 🎤 voice + removable template tag) · **template row when input is empty** (`TPL-1`) · grouped **Details** rows parsed from the text — Date, Time, Repeat, Alerts (colored icon, value, chevron; flagged values in warning style) · **Nag until done** switch · one-line "first alert" summary · **Type** and **Personal/Work** segmented controls · **Notes, links & files** group (Add note · Add link · Add file, `ATT-*`). A type badge left of the input shows the parsed type; the details slide in as the sheet grows (DS15). While typing, rows update live; the keyboard collapses to review | Row → S-21 picker · Save / Enter → closes + snackbar |
+| S-20 | **Capture sheet** | iOS-form layout: **Cancel · New Reminder · Save** bar · input card (text + 🎤 voice + removable template tag) · **template row when input is empty** (`TPL-1`) · grouped **Details** rows parsed from the text — Date, Time, Ends (`CAP-13`), Time zone, Repeat, Alerts (colored icon, value, chevron; flagged values in warning style) · **Nag until done** switch · one-line "first alert" summary · **Type** and **Personal/Work** segmented controls · **Notes, links & files** group (Add note · Add link · Add file, `ATT-*`). A type badge left of the input shows the parsed type; the details slide in as the sheet grows (DS15). While typing, rows update live; the keyboard collapses to review | Row → S-21 picker · Save / Enter → closes + snackbar |
 | S-21 | **Chip pickers** (small sheets) | a Date · b Time (+ end time) · c Time zone · d Type · e Context · f Repeat (incl. "after completion") · g Alerts (stages, start-by, nag) | Done → back to S-20 (field locked, `CAP-11`) |
 | S-22 | **Full editor** | Type badge, then all fields: title, date/time/end, zone, type, context, repeat, alerts, nag until done, notes, links & files (`ATT-*`) | **[Save]** · ⤷ recurring → S-34 |
 | S-23 | **Overlay capture host** | S-20 shown over the home screen / current app (widget, tile, share) | Save/close → back to where the user was |
@@ -150,7 +150,7 @@ The home screen can show reminders in several **views**, switched from the top b
 | ID | Surface | Contents |
 |---|---|---|
 | S-60 | **Notifications** | Layouts per `NTF-2`; grouped summary (`SCH-10`); 5 s Done/Undo replacement (`NTF-9`); digest notification; late-alerts group (G5) |
-| S-61 | **Home-screen widget** | Header: day + date, "N left" and a round **[+]** in the corner; then the next 3 items with type-colored bars (mockup 05, DS14). Resizable from 2×2 |
+| S-61 | **Home-screen widget** | **4×2 by default** (mockup 05): day + date and "N left" on top, the next 3 items with type-colored bars, a tall **[+ Add]** on the right. Resizable from 3 columns |
 | S-62 | **Quick Settings tile** | "+ Reminder" |
 | S-63 | **Share target** | "Reminder App" in the Android share sheet |
 

@@ -76,6 +76,10 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
   // CAP-11 locks: a field set by hand stays as set while typing.
   DateTime? _lockDate;
   ClockTime? _lockTime;
+
+  /// CAP-13: an end time set by hand, or "no end" ([_lockNoEnd]).
+  ClockTime? _lockEnd;
+  bool _lockNoEnd = false;
   bool? _lockAllDay;
   String? _lockZone;
   Kind? _lockKind;
@@ -182,6 +186,20 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
           ..remove(ParseFlag.pastDateRolled);
       }
       if (_lockTime != null) flags.remove(ParseFlag.ambiguousTime);
+    }
+    if (timing != null && timing.type == TimingType.datetime && (_lockEnd != null || _lockNoEnd)) {
+      final start = parseWall(timing.start);
+      DateTime? end;
+      if (_lockEnd case final e?) {
+        end = DateTime.utc(start.year, start.month, start.day, e.hour, e.minute);
+        if (!end.isAfter(start)) end = end.add(const Duration(days: 1)); // ends after midnight
+      }
+      timing = ParsedTiming(
+        type: timing.type,
+        start: timing.start,
+        end: end == null ? null : formatWallDateTime(end),
+        tz: timing.tz,
+      );
     }
     final kind = _lockKind ?? p.kind;
     return ParseResult(
@@ -525,6 +543,24 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                 ),
                 if (p.timing?.type == TimingType.datetime)
                   FormRow(
+                    icon: AppIcons.endTime,
+                    color: c.meeting,
+                    label: l10n.fieldEnd,
+                    value: p.timing!.end == null ? l10n.noEnd : f.time(parseWall(p.timing!.end!)),
+                    onTap: () => _pickEnd(p),
+                    trailing: p.timing!.end == null
+                        ? null
+                        : IconButton(
+                            tooltip: l10n.actionRemove,
+                            icon: Icon(AppIcons.close, size: 18, color: c.textSecondary),
+                            onPressed: () => setState(() {
+                              _lockEnd = null;
+                              _lockNoEnd = true;
+                            }),
+                          ),
+                  ),
+                if (p.timing?.type == TimingType.datetime)
+                  FormRow(
                     icon: AppIcons.timeZone,
                     color: c.meeting,
                     label: l10n.rowTimeZone,
@@ -632,6 +668,24 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
     }
   }
 
+  /// CAP-13: pick an end time; defaults to an hour after the start.
+  Future<void> _pickEnd(ParseResult p) async {
+    final t = p.timing;
+    if (t == null || t.type != TimingType.datetime) return;
+    final start = parseWall(t.start);
+    final current = t.end == null ? start.add(const Duration(hours: 1)) : parseWall(t.end!);
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: current.hour, minute: current.minute),
+    );
+    if (picked != null) {
+      setState(() {
+        _lockEnd = ClockTime(picked.hour, picked.minute);
+        _lockNoEnd = false;
+      });
+    }
+  }
+
   List<AlertStage> _plan(ParseResult p) =>
       p.alerts?.map((o) => AlertStage(AlertOffset.parse(o))).toList() ??
       ref.read(prefsProvider).alertPlanFor(p.kind, p.timing?.type ?? TimingType.date);
@@ -687,9 +741,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
     final t = p.timing;
     if (t == null) return '—';
     if (t.type == TimingType.date) return l10n.allDay;
-    final start = f.time(parseWall(t.start));
-    final end = t.end == null ? '' : ' – ${f.time(parseWall(t.end!))}';
-    return '$start$end';
+    return f.time(parseWall(t.start)); // the end has its own row (CAP-13)
   }
 }
 
