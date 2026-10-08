@@ -24,6 +24,10 @@ enum ItemGlyph {
   renewal,
   trial,
   nightOut,
+  anniversary,
+  holiday,
+  memorial,
+  celebration,
 }
 
 /// Keyword groups, checked in order; first hit wins. Whole words, lowercase.
@@ -65,9 +69,35 @@ ItemGlyph glyphFor(Reminder r) {
     case null:
       break;
   }
+  // SUB-1: a subtype picks the icon (appointments keep tooth/medical from their words below).
+  switch (r.subKind?.kind == r.kind ? r.subKind : null) {
+    case SubKind.birthday:
+      return ItemGlyph.gift;
+    case SubKind.anniversary:
+      return ItemGlyph.anniversary;
+    case SubKind.holiday:
+      return ItemGlyph.holiday;
+    case SubKind.memorial:
+      return ItemGlyph.memorial;
+    case SubKind.video:
+      return ItemGlyph.video;
+    case SubKind.phone:
+      return ItemGlyph.call;
+    case SubKind.inPerson:
+      return ItemGlyph.meeting;
+    case SubKind.travel:
+      return ItemGlyph.travel;
+    case SubKind.social:
+      return ItemGlyph.nightOut;
+    case SubKind.appointment || null:
+      break;
+  }
   final words = r.title.toLowerCase().split(RegExp(r"[^a-z0-9']+")).where((w) => w.isNotEmpty).toSet();
   if (r.kind == Kind.meeting) return words.any(_videoWords.contains) ? ItemGlyph.video : ItemGlyph.meeting;
-  if (r.kind == Kind.occasion) return ItemGlyph.gift;
+  // An occasion with no subtype: a birthday by its words, otherwise a celebration.
+  if (r.kind == Kind.occasion) {
+    return words.any(const ['birthday', 'bday'].contains) ? ItemGlyph.gift : ItemGlyph.celebration;
+  }
   if (r.kind == Kind.bill) {
     // BIL-1: subscriptions and trials have their own glyphs; payments keep the receipt.
     if (r.billKind == BillKind.subscription) return ItemGlyph.renewal;
@@ -77,5 +107,6 @@ ItemGlyph glyphFor(Reminder r) {
   for (final (glyph, list) in _keywords) {
     if (list.any(words.contains)) return glyph;
   }
+  if (r.subKind == SubKind.appointment) return ItemGlyph.medical;
   return r.kind == Kind.event ? ItemGlyph.event : ItemGlyph.task;
 }

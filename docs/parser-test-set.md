@@ -45,7 +45,8 @@ The parser returns this structure (the test harness compares it field by field):
     end?: string
     tz?: string            // only when different from the default zone
   } | null                 // null only when a required date is missing (Occasion)
-  kind: "task" | "meeting" | "event" | "occasion"
+  kind: "task" | "meeting" | "event" | "occasion" | "bill"
+  subKind?: string         // SUB-2, e.g. "holiday", "video", "appointment" — checked only where a row states "sub: …"
   context: "personal" | "work"
   rrule?: string           // RFC 5545, e.g. "FREQ=WEEKLY;BYDAY=FR"
   repeatMode?: "fixed" | "after_completion"
@@ -114,6 +115,8 @@ A row **passes** when every field shown in the row matches. Title comparison ign
   5. **Event:** *dinner, lunch, brunch, breakfast, drinks, party, concert, game, flight, appointment, dentist, doctor, physio, haircut, wedding, date night, webinar, workshop, class, practice*
   6. Otherwise **Task**
 - **PRS-30** Occasions get `FREQ=YEARLY` automatically (contextual default).
+- **PRS-39** **Holidays** — *Christmas, Christmas Eve, New Year('s), Lunar/Chinese New Year, Thanksgiving, Easter, Halloween, Hanukkah, Diwali, Eid, Ramadan, Valentine's Day, Mother's/Father's Day, Independence Day, Memorial Day, Labor Day, Fourth of July, St Patrick's Day, public/bank holiday* — are an **Occasion** (checked right after rule 1 of PRS-29), unless a *party, dinner, drinks, lunch, brunch, shopping, gift(s), presents, market, concert, show, sale* word is in the input (then the normal rules apply: "Christmas party" is an Event) or it starts with an action verb ("buy Christmas gifts" is a Task).
+- **PRS-40** **Subtype** (`SUB-2` in behavior-spec.md) is guessed from the title within the chosen type: Occasion → memorial / birthday / anniversary / holiday; Meeting → phone / in person / video; Event → appointment / travel / social. No match → no subtype.
 - **PRS-37** **Amounts:** a currency symbol or code with a number — *$1,200 · $15.49 · €450 · £9.99 · ₱500 · USD 320 · 85 usd · 85 dollars · 500 pesos · 20 euros* — becomes the bill's amount and is removed from the title. "$" means the default currency when that currency uses "$" (USD, CAD, AUD, NZD, SGD, HKD, MXN), otherwise USD. On a non-Bill the amount stays in the title ("Buy shoes $80").
 - **PRS-38** **Bill defaults:** payments get `nag 2h` (`BIL-3`); a subscription without a repeat gets `FREQ=MONTHLY` (with the day of month when a date was given); a free trial without a date ends **in 7 days** and sets `ambiguous_date`.
 - **PRS-31** Work context keywords: *client, team, report, invoice, deck, slides, contract, timesheet, board, sprint, manager, office, roadmap, candidate, webinar, workshop, budget*. Meetings default to Work regardless.
@@ -256,6 +259,12 @@ Types: **T** Task · **M** Meeting · **E** Event · **O** Occasion. Context: **
 | H13 | work: update roadmap Friday | Update roadmap | Oct 9 (date) | T | W | | PRS-32 |
 | H14 | client lunch Thursday | Client lunch | Oct 8 12:00–13:00 | E | W | | |
 | H15 | book table for dinner Friday | Book table for dinner | Oct 9 (date) | T | P | | Action verb beats Event word |
+| H16 | team meeting on zoom Tuesday 3pm | Team meeting on zoom | Oct 6 15:00–15:30 | M | W | sub: video | SUB-2 |
+| H17 | phone call with supplier Friday 10am | Phone call with supplier | Oct 9 10:00–10:30 | M | W | sub: phone | |
+| H18 | meeting with Anna at the office Monday 9am | Meeting with Anna at the office | Oct 12 09:00–09:30 | M | W | sub: inPerson | |
+| H19 | haircut Saturday 11am | Haircut | Oct 10 11:00–12:00 | E | P | sub: appointment | |
+| H20 | flight to Denver Nov 20 6am | Flight to Denver | Nov 20 06:00–07:00 | E | P | sub: travel | |
+| H21 | dinner with parents Saturday | Dinner with parents | Oct 10 19:00–20:00 | E | P | sub: social | |
 
 ### I. Occasions
 | # | Input | Title | When | Type | Ctx | Repeat / alerts | Flags · notes |
@@ -267,6 +276,13 @@ Types: **T** Task · **M** Meeting · **E** Event · **O** Occasion. Context: **
 | I5 | wedding anniversary today | Wedding anniversary | Oct 5 (date) | O | P | `FREQ=YEARLY` | All stages past today → no alerts this year |
 | I6 | Sam's birthday party Saturday 3pm | Sam's birthday party | Oct 10 15:00–16:00 | E | P | | "birthday party" → Event, no repeat |
 | I7 | Dad's birthday | Dad's birthday | *(none)* | O | P | `FREQ=YEARLY` | `date_missing` PRS-36 |
+| I8 | Christmas Dec 25 | Christmas | Dec 25 (date) | O | P | `FREQ=YEARLY` · sub: holiday | PRS-39 |
+| I9 | Thanksgiving Nov 26 | Thanksgiving | Nov 26 (date) | O | P | `FREQ=YEARLY` · sub: holiday | |
+| I10 | Grandpa's death anniversary March 3 | Grandpa's death anniversary | 2027-03-03 (date) | O | P | `FREQ=YEARLY` · sub: memorial | Memorial beats anniversary |
+| I11 | christmas party Dec 19 7pm | Christmas party | Dec 19 19:00–20:00 | E | P | sub: social | Party → Event |
+| I12 | buy christmas gifts Dec 10 | Buy christmas gifts | Dec 10 (date) | T | P | | Verb → Task |
+| I13 | Mom's birthday Oct 12 | Mom's birthday | Oct 12 (date) | O | P | `FREQ=YEARLY` · sub: birthday | SUB-2 |
+| I14 | our anniversary June 18 | Our anniversary | 2027-06-18 (date) | O | P | `FREQ=YEARLY` · sub: anniversary | |
 
 ### J. Alerts & lead time
 | # | Input | Title | When | Type | Ctx | Repeat / alerts | Flags · notes |

@@ -45,6 +45,7 @@ List<String> check(ParserCase c, ParseResult r) {
   eq('nag', c.nag, r.nag);
   eq('billKind', c.billKind, r.kind == Kind.bill ? r.billKind.name : null);
   eq('amount', c.amount, r.amount?.toString());
+  if (c.subKind != null) eq('subKind', c.subKind, r.subKind?.name);
   eq('flags', (c.flags.toList()..sort()).join(','), (r.flags.map((f) => _flagNames[f]!).toList()..sort()).join(','));
   return errs;
 }

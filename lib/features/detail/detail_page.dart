@@ -358,7 +358,7 @@ class _Banner extends ConsumerWidget {
                         Wrap(
                           spacing: Space.s,
                           children: [
-                            _Chip(text: f.kind(r.kind).toUpperCase(), color: deep),
+                            _Chip(text: f.typeOf(r).toUpperCase(), color: deep), // SUB-1
                             _Chip(text: f.context(r.context).toUpperCase(), color: c.textSecondary),
                           ],
                         ),

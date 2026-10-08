@@ -33,6 +33,15 @@ void main() {
       );
     });
 
+    test('BIL-1 bills are completable (Paid / Got it) and never pass on their own, like tasks', () {
+      expect(transition(OccurrenceState.pending, OccurrenceAction.done, Kind.bill), OccurrenceState.done);
+      expect(transition(OccurrenceState.snoozed, OccurrenceAction.done, Kind.bill), OccurrenceState.done);
+      expect(
+        () => transition(OccurrenceState.pending, OccurrenceAction.timePassed, Kind.bill),
+        throwsA(isA<InvalidTransition>()),
+      );
+    });
+
     test("OCC-3 I'm prepared is for occasions only, and Done still works afterwards", () {
       final s = transition(OccurrenceState.pending, OccurrenceAction.prepared, Kind.occasion);
       expect(s, OccurrenceState.prepared);

@@ -22,12 +22,12 @@ class InvalidTransition implements Exception {
 /// Applies one action. Throws [InvalidTransition] for anything the spec doesn't allow.
 OccurrenceState transition(OccurrenceState from, OccurrenceAction action, Kind kind) {
   const open = {OccurrenceState.pending, OccurrenceState.snoozed};
-  final completable = kind == Kind.task || kind == Kind.occasion;
+  final completable = kind == Kind.task || kind == Kind.occasion || kind == Kind.bill; // BIL-1: bills are completable
   final next = switch (action) {
     OccurrenceAction.snooze when open.contains(from) => OccurrenceState.snoozed,
     OccurrenceAction.alertFired when from == OccurrenceState.snoozed => OccurrenceState.pending,
     OccurrenceAction.alertFired when from == OccurrenceState.pending || from == OccurrenceState.prepared => from,
-    // Done: Task and Occasion only. An occasion can be done after "I'm prepared" (day-of Done).
+    // Done: Task, Bill and Occasion only. An occasion can be done after "I'm prepared" (day-of Done).
     OccurrenceAction.done when completable && (open.contains(from) || from == OccurrenceState.prepared) =>
       OccurrenceState.done,
     OccurrenceAction.skip when open.contains(from) || from == OccurrenceState.prepared => OccurrenceState.skipped,

@@ -154,6 +154,24 @@ class Fmt {
     BillKind.trial => l10n.billTrial,
   };
 
+  /// SUB-1: subtype name; null = "Other".
+  String subKind(SubKind? s) => switch (s) {
+    null => l10n.subOther,
+    SubKind.birthday => l10n.subBirthday,
+    SubKind.anniversary => l10n.subAnniversary,
+    SubKind.holiday => l10n.subHoliday,
+    SubKind.memorial => l10n.subMemorial,
+    SubKind.video => l10n.subVideo,
+    SubKind.inPerson => l10n.subInPerson,
+    SubKind.phone => l10n.subPhone,
+    SubKind.appointment => l10n.subAppointment,
+    SubKind.travel => l10n.subTravel,
+    SubKind.social => l10n.subSocial,
+  };
+
+  /// SUB-1: what a reminder is called on its detail page — the subtype if it has one, else the type.
+  String typeOf(Reminder r) => r.subKind?.kind == r.kind ? subKind(r.subKind) : kind(r.kind);
+
   /// BIL-2: "$1,200.00".
   String money(Money m) => formatMoney(m, locale);
 

@@ -2,6 +2,7 @@
 /// reminders in memory (not stored). User additions live in overlays (CAL-5, CAL-6).
 library;
 
+import '../capture/subkind.dart';
 import '../model/alert.dart';
 import '../model/enums.dart';
 import '../model/reminder.dart';
@@ -101,10 +102,12 @@ Reminder reminderFromEvent(CalendarEvent e, {required List<EventOverlay> overlay
           timeZone: zone,
           timeZoneSetManually: true,
         );
+  final type = overlay?.kindOverride ?? series?.kindOverride ?? kind;
   return Reminder(
     meta: RecordMeta(id: e.instanceId, createdAt: e.begin, updatedAt: e.begin, deviceId: deviceId),
     title: e.title.trim().isEmpty ? '(No title)' : e.title.trim(),
-    kind: overlay?.kindOverride ?? series?.kindOverride ?? kind,
+    kind: type,
+    subKind: guessSubKind(type, e.title), // SUB-2
     context: overlay?.contextOverride ?? series?.contextOverride ?? context,
     timing: timing,
     alertPlan: overlay?.alertPlan ?? const [], // CAL-6: no alerts by default

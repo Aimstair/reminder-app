@@ -4,7 +4,7 @@ library;
 import '../model/enums.dart';
 import '../model/money.dart';
 
-export '../model/enums.dart' show BillKind, Kind, ReminderContext, RecurrenceMode, TimingType;
+export '../model/enums.dart' show BillKind, Kind, ReminderContext, RecurrenceMode, SubKind, TimingType;
 
 /// Which preview chips to highlight (CAP-7, PRS-*).
 enum ParseFlag { ambiguousTime, ambiguousDate, pastDateRolled, timeInPast, titleMissing, dateMissing }
@@ -38,6 +38,7 @@ class ParseResult {
     this.nag,
     this.amount,
     this.billKind = BillKind.payment,
+    this.subKind,
   });
 
   /// Empty when nothing is left after extraction (PRS-36).
@@ -63,12 +64,15 @@ class ParseResult {
 
   /// BIL-1: meaningful when [kind] is [Kind.bill].
   final BillKind billKind;
+
+  /// SUB-2: subtype guessed from the words (birthday, video call, appointment…).
+  final SubKind? subKind;
   final Set<ParseFlag> flags;
 
   @override
   String toString() =>
       'ParseResult(title: "$title", timing: $timing, kind: $kind, context: $context, rrule: $rrule, '
-      'repeatMode: $repeatMode, alerts: $alerts, nag: $nag, amount: $amount, billKind: $billKind, flags: $flags)';
+      'repeatMode: $repeatMode, alerts: $alerts, nag: $nag, amount: $amount, billKind: $billKind, subKind: $subKind, flags: $flags)';
 }
 
 /// Inputs the parser needs besides the text.

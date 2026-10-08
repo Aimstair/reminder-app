@@ -116,6 +116,7 @@ class ReminderRepository {
     attachments: r.attachments,
     amount: r.amount,
     billKind: r.billKind,
+    subKind: r.subKind,
     rawInput: r.rawInput,
     kind: r.kind,
     context: r.context,
@@ -143,6 +144,7 @@ class ReminderRepository {
     amountMinor: r.kind == Kind.bill ? r.amount?.minor : null,
     currency: r.kind == Kind.bill ? r.amount?.currency : null,
     billKind: r.kind == Kind.bill ? r.billKind.name : null,
+    subKind: r.subKind?.kind == r.kind ? r.subKind!.name : null, // SUB-1
     rawInput: r.rawInput,
     kind: r.kind,
     context: r.context,
@@ -176,6 +178,10 @@ class ReminderRepository {
         : (jsonDecode(row.attachments!) as List).map((j) => Attachment.fromJson((j as Map).cast())).toList(),
     amount: row.amountMinor == null || row.currency == null ? null : Money(row.amountMinor!, row.currency!),
     billKind: BillKind.values.asNameMap()[row.billKind] ?? BillKind.payment,
+    subKind: switch (SubKind.values.asNameMap()[row.subKind]) {
+      final s? when s.kind == row.kind => s,
+      _ => null,
+    },
     rawInput: row.rawInput,
     kind: row.kind,
     context: row.context,

@@ -29,6 +29,20 @@ abstract final class AppIcons {
   static const IconData lastUsed = IconData(0xe1a0, fontFamily: 'Phosphor'); // clockCounterClockwise
   static const IconData calendarCheck = IconData(0xe712, fontFamily: 'Phosphor'); // calendarCheck
   static const IconData star = IconData(0xe46a, fontFamily: 'Phosphor'); // star
+  static const IconData memorial = IconData(0xe6cc, fontFamily: 'Phosphor'); // flowerLotus
+  static const IconData celebration = IconData(0xe81a, fontFamily: 'Phosphor'); // confetti
+  static const IconData social = IconData(0xeaca, fontFamily: 'Phosphor'); // champagne
+  static const IconData handshake = IconData(0xe582, fontFamily: 'Phosphor'); // handshake
+  // Filled shapes for the home-card illustrations (VW-15, DS16).
+  static const IconData heartSolid = IconData(0xe2a8, fontFamily: 'PhosphorFill'); // heart
+  static const IconData starSolid = IconData(0xe46a, fontFamily: 'PhosphorFill'); // star
+  static const IconData sparkleSolid = IconData(0xe6a2, fontFamily: 'PhosphorFill'); // sparkle
+  static const IconData treeSolid = IconData(0xe6dc, fontFamily: 'PhosphorFill'); // treeEvergreen
+  static const IconData champagneSolid = IconData(0xeaca, fontFamily: 'PhosphorFill'); // champagne
+  static const IconData lotusSolid = IconData(0xe6cc, fontFamily: 'PhosphorFill'); // flowerLotus
+  static const IconData confettiSolid = IconData(0xe81a, fontFamily: 'PhosphorFill'); // confetti
+  static const IconData ghostSolid = IconData(0xe62a, fontFamily: 'PhosphorFill'); // ghost
+  static const IconData eggSolid = IconData(0xe812, fontFamily: 'PhosphorFill'); // egg
   static const IconData appointment = IconData(0xe570, fontFamily: 'Phosphor'); // firstAidKit
   static const IconData autoAdd = IconData(0xe4d0, fontFamily: 'Phosphor'); // userPlus
   static const IconData backup = IconData(0xe00c, fontFamily: 'Phosphor'); // archive
@@ -143,4 +157,28 @@ IconData glyphIcon(ItemGlyph g) => switch (g) {
   ItemGlyph.renewal => AppIcons.renewal,
   ItemGlyph.trial => AppIcons.precise,
   ItemGlyph.nightOut => AppIcons.nightOut,
+  ItemGlyph.anniversary => AppIcons.anniversary,
+  ItemGlyph.holiday => AppIcons.star,
+  ItemGlyph.memorial => AppIcons.memorial,
+  ItemGlyph.celebration => AppIcons.celebration,
+};
+
+/// SUB-1 picker icons; null = "Other" (the type's plain icon).
+IconData subKindIcon(SubKind? s, Kind kind) => switch (s) {
+  SubKind.birthday => AppIcons.gift,
+  SubKind.anniversary => AppIcons.anniversary,
+  SubKind.holiday => AppIcons.star,
+  SubKind.memorial => AppIcons.memorial,
+  SubKind.video => AppIcons.video,
+  SubKind.inPerson => AppIcons.meeting,
+  SubKind.phone => AppIcons.call,
+  SubKind.appointment => AppIcons.appointment,
+  SubKind.travel => AppIcons.plane,
+  SubKind.social => AppIcons.social,
+  null => switch (kind) {
+    Kind.occasion => AppIcons.celebration,
+    Kind.meeting => AppIcons.handshake,
+    Kind.event => AppIcons.event,
+    Kind.task || Kind.bill => AppIcons.task,
+  },
 };

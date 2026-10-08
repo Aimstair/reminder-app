@@ -61,6 +61,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
   late final _notes = TextEditingController(text: widget.reminder.notes ?? '');
   late Kind _kind = widget.reminder.kind;
   late BillKind _billKind = widget.reminder.billKind; // BIL-1
+  late SubKind? _sub = widget.reminder.subKind; // SUB-1
   late Money? _amount = widget.reminder.amount; // BIL-2
   late ReminderContext _context = widget.reminder.context;
   late bool _allDay = widget.reminder.timing.type == TimingType.date;
@@ -105,6 +106,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
       attachments: _attachments,
       amount: () => _kind == Kind.bill ? _amount : null,
       billKind: _billKind,
+      subKind: () => _sub?.kind == _kind ? _sub : null,
       kind: _kind,
       context: _context,
       timing: Timing(
@@ -159,7 +161,14 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                   duration: reduceMotion(context) ? Duration.zero : Motion.standard,
                   switchInCurve: Curves.easeOutBack,
                   transitionBuilder: (child, a) => ScaleTransition(scale: a, child: child),
-                  child: GlyphBadge(key: ValueKey(_kind), icon: kindIcon(_kind), color: c.kind(_kind), size: 64),
+                  child: GlyphBadge(
+                    key: ValueKey((_kind, _sub)),
+                    icon: SubKind.of(_kind).isEmpty
+                        ? kindIcon(_kind)
+                        : subKindIcon(_sub?.kind == _kind ? _sub : null, _kind),
+                    color: c.kind(_kind),
+                    size: 64,
+                  ),
                 ),
               ),
             ),
@@ -287,8 +296,27 @@ class _EditorPageState extends ConsumerState<EditorPage> {
               child: SegmentedPills<Kind>(
                 items: [for (final k in Kind.values) (value: k, label: f.kind(k), dot: c.kind(k))],
                 selected: _kind,
-                onChanged: (k) => setState(() => _kind = k),
+                onChanged: (k) => setState(() {
+                  _kind = k;
+                  // SUB-1: a subtype that doesn't fit the new type gives way to a fresh guess (SUB-2).
+                  if (_sub?.kind != k) _sub = guessSubKind(k, _title.text);
+                }),
               ),
+            ),
+            AnimatedSize(
+              duration: Motion.standard,
+              curve: Curves.easeOutCubic,
+              child: SubKind.of(_kind).isEmpty
+                  ? const SizedBox(width: double.infinity)
+                  : Padding(
+                      padding: const EdgeInsets.fromLTRB(Space.l, Space.m, Space.l, 0),
+                      child: SubKindChips(
+                        key: ValueKey(_kind),
+                        kind: _kind,
+                        selected: _sub?.kind == _kind ? _sub : null,
+                        onChanged: (s) => setState(() => _sub = s),
+                      ),
+                    ),
             ),
             // BIL-1 / BIL-2: bill kind and amount.
             AnimatedSize(

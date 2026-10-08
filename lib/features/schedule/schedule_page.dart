@@ -5,6 +5,8 @@
 /// swipe left = Reschedule.
 library;
 
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:reminder_core/reminder_core.dart';
@@ -21,6 +23,7 @@ import '../../ui/motion.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
 import '../actions/occurrence_actions.dart';
+import '../attachments/attachments.dart' show openAttachment;
 import '../digest/digest_card.dart';
 import '../month/month_view.dart' show firstWeekday, showMiniMonth;
 
@@ -64,10 +67,11 @@ class SchedulePage extends ConsumerWidget {
     final hasToday = items.any((i) => i.group == ScheduleGroup.today || i.group == ScheduleGroup.overdue);
     final digest = ref.watch(digestProvider);
     final now = ref.watch(nowProvider).value ?? DateTime.now().toUtc();
-    final upNext = _upNext(items, now);
+    // VW-15: the next meeting within 7 days and the next occasion within 30.
+    final upNext = _nextMeeting(items, now);
     final spotlight = items
-        .where((i) => i.reminder.kind == Kind.occasion && i.group != ScheduleGroup.overdue)
-        .where((i) => i.start.difference(today).inDays <= 14)
+        .where((i) => i.reminder.kind == Kind.occasion && i.group != ScheduleGroup.overdue && !i.state.isResolved)
+        .where((i) => i.start.difference(today).inDays <= 30)
         .firstOrNull;
 
     return RefreshIndicator.adaptive(
@@ -103,9 +107,9 @@ class SchedulePage extends ConsumerWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        if (upNext != null) Expanded(child: _UpNextCard(item: upNext)),
-                        if (upNext != null && spotlight != null && spotlight != upNext) const SizedBox(width: Space.m),
-                        if (spotlight != null && spotlight != upNext) Expanded(child: _OccasionCard(item: spotlight)),
+                        if (upNext != null) Expanded(child: _MeetingCard(item: upNext)),
+                        if (upNext != null && spotlight != null) const SizedBox(width: Space.m),
+                        if (spotlight != null) Expanded(child: _OccasionCard(item: spotlight)),
                       ],
                     ),
                   ),
@@ -153,14 +157,15 @@ class SchedulePage extends ConsumerWidget {
     ref.read(quickFilterProvider.notifier).set(QuickFilter.all);
   }
 
-  /// Next timed item starting within 12 hours.
-  static ScheduleItem? _upNext(List<ScheduleItem> items, DateTime now) => items
+  /// VW-15: the next meeting that hasn't ended and starts within 7 days (one in progress counts).
+  static ScheduleItem? _nextMeeting(List<ScheduleItem> items, DateTime now) => items
       .where(
         (i) =>
-            !i.overdue &&
+            i.reminder.kind == Kind.meeting &&
             i.reminder.timing.type == TimingType.datetime &&
-            i.times.anchor.isAfter(now) &&
-            i.times.anchor.difference(now) < const Duration(hours: 12),
+            !i.state.isResolved &&
+            (i.times.anchor.isAfter(now) || i.times.end.isAfter(now)) &&
+            i.times.anchor.difference(now) < const Duration(days: 7),
       )
       .firstOrNull;
 
@@ -454,9 +459,10 @@ class _FilterChips extends ConsumerWidget {
   }
 }
 
-/// "Up next" card (mockup 02): type-tinted, filled icon tile, "in 45 min" pill, title, time range.
-class _UpNextCard extends ConsumerWidget {
-  const _UpNextCard({required this.item});
+/// Meeting card (VW-15, mockup 02): the next meeting within 7 days — subtype tile, countdown pill,
+/// "Up next" / "Now", title, time range, and a footer: Join for a video call with a link, else the subtype.
+class _MeetingCard extends ConsumerWidget {
+  const _MeetingCard({required this.item});
   final ScheduleItem item;
 
   @override
@@ -466,15 +472,30 @@ class _UpNextCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final text = Theme.of(context).textTheme;
     final r = item.reminder;
-    final color = c.kind(r.kind);
+    final color = c.meeting;
     final now = ref.watch(nowProvider).value ?? DateTime.now().toUtc();
-    // Round up: 40 s away reads "in 1 min", never "in 0 min".
-    final mins = (item.times.anchor.difference(now).inSeconds / 60).ceil().clamp(0, 9999);
-    final countdown = mins == 0
-        ? l10n.notifNow(f.time(item.start))
-        : l10n.inTime(mins < 60 ? l10n.relMinutes(mins) : l10n.relHours((mins / 60).round()));
+    final today = ref.watch(todayProvider);
+    final started = !item.times.anchor.isAfter(now);
     final zone = ref.watch(prefsProvider).deviceTimeZone;
     final end = item.times.end.isAfter(item.times.anchor) ? instantToWall(item.times.end, zone) : null;
+    final days = dateOnly(item.start).difference(today).inDays;
+    // Round up: 40 s away reads "in 1 min", never "in 0 min".
+    final mins = (item.times.anchor.difference(now).inSeconds / 60).ceil();
+    final countdown = started
+        ? l10n.homeNowPill
+        : days == 0
+        ? l10n.inTime(mins < 60 ? l10n.relMinutes(mins) : l10n.relHours((mins / 60).round()))
+        : days == 1
+        ? l10n.dayTomorrow
+        : f.weekdayShort(item.start);
+    final sub = r.subKind?.kind == Kind.meeting ? r.subKind : guessSubKind(Kind.meeting, r.title);
+    // VW-15: the first link attachment, else the first web address in the notes.
+    final link =
+        r.attachments.where((a) => a.kind == AttachmentKind.link).firstOrNull ??
+        switch (findLinks(r.notes ?? '').firstOrNull) {
+          final l? => Attachment.link(l.url),
+          null => null,
+        };
     return _HomeCard(
       tint: color,
       onTap: () => openDetail(context, r, item.occurrenceKey),
@@ -484,19 +505,25 @@ class _UpNextCard extends ConsumerWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              IconTile(icon: glyphIcon(glyphFor(r)), color: color, size: 44, filled: true),
+              IconTile(icon: subKindIcon(sub, Kind.meeting), color: color, size: 40, filled: true),
               const SizedBox(width: Space.s),
               Expanded(
                 child: Align(
                   alignment: Alignment.topRight,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: Space.s, vertical: 3),
-                    decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(Radii.chip)),
+                    decoration: BoxDecoration(
+                      color: started ? color : c.surface,
+                      borderRadius: BorderRadius.circular(Radii.chip),
+                    ),
                     child: Text(
                       countdown,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: text.labelMedium?.copyWith(color: color, fontWeight: FontWeight.w600),
+                      style: text.labelMedium?.copyWith(
+                        color: started ? Colors.white : color,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
@@ -505,7 +532,7 @@ class _UpNextCard extends ConsumerWidget {
           ),
           const Spacer(),
           Text(
-            l10n.upNext.toUpperCase(),
+            (started ? l10n.homeNow : l10n.upNext).toUpperCase(),
             maxLines: 1,
             style: text.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w700, letterSpacing: 0.5),
           ),
@@ -513,15 +540,45 @@ class _UpNextCard extends ConsumerWidget {
           Text(
             r.title,
             style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            maxLines: 2,
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 2),
           Text(
             end == null ? f.time(item.start) : l10n.timeRange(f.time(item.start), f.time(end)),
             style: text.bodyMedium,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: Space.s),
+          SizedBox(
+            height: 30,
+            child: sub == SubKind.video && link != null
+                ? FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: color,
+                      minimumSize: const Size(0, 30),
+                      shape: const StadiumBorder(),
+                      textStyle: text.titleSmall,
+                      padding: const EdgeInsets.symmetric(horizontal: Space.m),
+                    ),
+                    onPressed: () => openAttachment(context, ref, link), // ATT-4
+                    icon: const Icon(AppIcons.video, size: 16),
+                    label: Text(l10n.actionJoin, maxLines: 1),
+                  )
+                : Row(
+                    children: [
+                      Icon(subKindIcon(sub, Kind.meeting), size: 15, color: c.textSecondary),
+                      const SizedBox(width: Space.xs),
+                      Flexible(
+                        child: Text(
+                          sub == null ? f.kind(Kind.meeting) : f.subKind(sub),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: text.bodySmall,
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         ],
       ),
@@ -529,7 +586,8 @@ class _UpNextCard extends ConsumerWidget {
   }
 }
 
-/// Occasion card (mockup 02): pink, gift, "in 6 days", prep progress, "I'm prepared".
+/// Occasion card (VW-15, mockup 02): color and illustration by subtype, "In 6 days", prep progress,
+/// "I'm prepared".
 class _OccasionCard extends ConsumerWidget {
   const _OccasionCard({required this.item});
   final ScheduleItem item;
@@ -540,6 +598,8 @@ class _OccasionCard extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final text = Theme.of(context).textTheme;
     final r = item.reminder;
+    final sub = r.subKind?.kind == Kind.occasion ? r.subKind : null;
+    final color = c.occasionSub(sub);
     final today = ref.watch(todayProvider);
     final days = item.start.difference(today).inDays;
     final prepared = item.state == OccurrenceState.prepared;
@@ -547,12 +607,21 @@ class _OccasionCard extends ConsumerWidget {
     final stages = r.alertPlan;
     final reached = stages.where((s) => !_stageDay(item.start, s.offset).isAfter(today)).length;
     return _HomeCard(
-      tint: c.occasion,
+      tint: color,
       onTap: () => openDetail(context, r, item.occurrenceKey),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          Positioned(right: -4, top: -6, child: Icon(AppIcons.giftSolid, size: 60, color: c.occasion)),
+          Positioned(
+            right: -4,
+            top: -6,
+            child: ExcludeSemantics(
+              child: Floating(
+                amplitude: 3,
+                child: _OccasionArt(sub: sub, title: r.title, color: color),
+              ),
+            ),
+          ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -561,7 +630,7 @@ class _OccasionCard extends ConsumerWidget {
                 (days <= 0 ? l10n.groupToday : l10n.inTime(l10n.relDays(days))).toUpperCase(),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: text.labelSmall?.copyWith(color: c.occasion, fontWeight: FontWeight.w700, letterSpacing: 0.5),
+                style: text.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w700, letterSpacing: 0.5),
               ),
               const SizedBox(height: 2),
               Text(
@@ -580,7 +649,7 @@ class _OccasionCard extends ConsumerWidget {
                         child: Container(
                           height: 5,
                           decoration: BoxDecoration(
-                            color: i < reached || prepared ? c.occasion : c.separator.withValues(alpha: 0.4),
+                            color: i < reached || prepared ? color : c.separator.withValues(alpha: 0.4),
                             borderRadius: BorderRadius.circular(3),
                           ),
                         ),
@@ -590,14 +659,14 @@ class _OccasionCard extends ConsumerWidget {
                 ),
               const Spacer(),
               if (prepared)
-                Text(l10n.statePrepared, maxLines: 1, style: text.titleSmall?.copyWith(color: c.occasion))
+                Text(l10n.statePrepared, maxLines: 1, style: text.titleSmall?.copyWith(color: color))
               else if (!r.isCalendarEvent && r.alertPlan.any((s) => s.offset.amount < 0))
                 SizedBox(
-                  height: 34,
+                  height: 30,
                   child: FilledButton(
                     style: FilledButton.styleFrom(
-                      backgroundColor: c.occasion,
-                      minimumSize: const Size(0, 34),
+                      backgroundColor: color,
+                      minimumSize: const Size(0, 30),
                       shape: const StadiumBorder(),
                       textStyle: text.titleSmall,
                       padding: const EdgeInsets.symmetric(horizontal: Space.m),
@@ -619,6 +688,58 @@ class _OccasionCard extends ConsumerWidget {
     OffsetUnit.weeks => addDays(day, o.amount * 7),
     OffsetUnit.months => DateTime.utc(day.year, day.month + o.amount, day.day),
   };
+}
+
+/// DS16 occasion illustrations, drawn from filled icons: gift · two hearts · a holiday picture ·
+/// lotus · confetti. Each has a small companion shape so it reads as a picture, not an icon.
+class _OccasionArt extends StatelessWidget {
+  const _OccasionArt({required this.sub, required this.title, required this.color});
+  final SubKind? sub;
+  final String title;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final light = Color.lerp(color, Colors.white, 0.45)!;
+    final (IconData main, Color mainColor, IconData? extra, Color extraColor) = switch (sub) {
+      SubKind.birthday => (AppIcons.giftSolid, color, AppIcons.sparkleSolid, c.holiday),
+      SubKind.anniversary => (AppIcons.heartSolid, color, AppIcons.heartSolid, light),
+      SubKind.holiday => _holiday(c),
+      SubKind.memorial => (AppIcons.lotusSolid, color, null, light),
+      _ => (AppIcons.confettiSolid, color, AppIcons.sparkleSolid, c.holiday),
+    };
+    return SizedBox(
+      width: 76,
+      height: 70,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(right: 0, top: 4, child: Icon(main, size: 60, color: mainColor)),
+          if (extra != null)
+            Positioned(
+              left: 0,
+              top: sub == SubKind.anniversary ? 26 : 0,
+              child: Transform.rotate(
+                angle: sub == SubKind.anniversary ? -0.35 : 0,
+                child: Icon(extra, size: sub == SubKind.anniversary ? 30 : 22, color: extraColor),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Christmas → tree, New Year → champagne, Halloween → ghost, Easter → egg; any other holiday → star.
+  (IconData, Color, IconData?, Color) _holiday(AppColors c) {
+    final t = title.toLowerCase();
+    bool has(List<String> w) => w.any(t.contains);
+    if (has(['christmas', 'xmas'])) return (AppIcons.treeSolid, c.success, AppIcons.starSolid, c.holiday);
+    if (has(['new year'])) return (AppIcons.champagneSolid, c.holiday, AppIcons.sparkleSolid, c.occasion);
+    if (has(['halloween'])) return (AppIcons.ghostSolid, c.textSecondary, AppIcons.starSolid, c.event);
+    if (has(['easter'])) return (AppIcons.eggSolid, c.purple, AppIcons.sparkleSolid, c.holiday);
+    return (AppIcons.starSolid, c.holiday, AppIcons.sparkleSolid, c.event);
+  }
 }
 
 /// Rounded card tinted in a type color (home cards, mockup 02).
@@ -648,7 +769,7 @@ class _HomeCard extends StatelessWidget {
     );
   }
 
-  static const height = 176.0;
+  static const height = 184.0;
 }
 
 /// Group header (mockup 02): title, count badge, and a quiet note on the right ("Nagging", "2 done").
@@ -708,28 +829,79 @@ class _GroupHeader extends StatelessWidget {
   }
 }
 
-class _SwipeRow extends ConsumerWidget {
+class _SwipeRow extends ConsumerStatefulWidget {
   const _SwipeRow({super.key, required this.item});
   final ScheduleItem item;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_SwipeRow> createState() => _SwipeRowState();
+}
+
+class _SwipeRowState extends ConsumerState<_SwipeRow> with TickerProviderStateMixin {
+  /// VW-16: the burst around the checkbox, then the row folding away.
+  late final _burst = AnimationController(vsync: this, duration: const Duration(milliseconds: 520));
+  late final _fold = AnimationController(vsync: this, duration: Motion.standard, value: 1);
+  bool _ticked = false;
+
+  ScheduleItem get item => widget.item;
+
+  @override
+  void dispose() {
+    _burst.dispose();
+    _fold.dispose();
+    super.dispose();
+  }
+
+  /// VW-16: fill + burst, strike through, fold away — then record Done (which offers Undo).
+  Future<void> _tick() async {
+    if (_ticked) return;
+    final actions = OccurrenceActions(context, ref);
+    final still = reduceMotion(context);
+    setState(() => _ticked = true);
+    if (!still) {
+      await _burst.forward(from: 0);
+      if (!mounted) return;
+      await _fold.animateTo(0, curve: Curves.easeInCubic);
+    }
+    await actions.done(item.reminder, item.occurrenceKey);
+    // Done leaves the list a moment later; if the row is still here, it wasn't recorded — show it again.
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
+    setState(() => _ticked = false);
+    _fold.value = 1;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final f = Fmt.of(context);
     final l10n = AppLocalizations.of(context);
     final r = item.reminder;
     final today = ref.watch(todayProvider);
     final actions = OccurrenceActions(context, ref);
-    final row = ReminderRow(
-      reminder: r,
-      when: _when(item, l10n, f, today),
-      overdue: item.overdue,
-      nagLabel: r.nagInterval == null ? null : l10n.nagEvery(_short(l10n, r.nagInterval!)), // ALR-9
-      onTap: () => openDetail(context, r, item.occurrenceKey),
-      onCheck: r.completable && !r.isCalendarEvent ? () => actions.done(r, item.occurrenceKey) : null,
+    final row = Stack(
+      children: [
+        ReminderRow(
+          reminder: r,
+          when: _when(item, l10n, f, today),
+          overdue: item.overdue,
+          done: _ticked,
+          nagLabel: r.nagInterval == null ? null : l10n.nagEvery(_short(l10n, r.nagInterval!)), // ALR-9
+          onTap: () => openDetail(context, r, item.occurrenceKey),
+          onCheck: r.completable && !r.isCalendarEvent ? _tick : null,
+        ),
+        // Centered on the checkbox: 4 row padding + 8 touch padding + 12 half circle.
+        Positioned(
+          left: 24 - _TickBurst.size / 2,
+          top: ReminderRow.rowHeight / 2 - _TickBurst.size / 2,
+          child: IgnorePointer(
+            child: _TickBurst(animation: _burst, color: c.kind(r.kind)),
+          ),
+        ),
+      ],
     );
     if (r.isCalendarEvent) return row;
-    return Dismissible(
+    final swipe = Dismissible(
       key: ValueKey(item.occurrenceId),
       direction: r.completable ? DismissDirection.horizontal : DismissDirection.endToStart,
       background: Container(
@@ -753,6 +925,11 @@ class _SwipeRow extends ConsumerWidget {
       },
       onDismissed: (_) => actions.done(r, item.occurrenceKey),
       child: row,
+    );
+    return SizeTransition(
+      sizeFactor: _fold,
+      alignment: Alignment.topCenter,
+      child: FadeTransition(opacity: _fold, child: swipe),
     );
   }
 
@@ -843,4 +1020,49 @@ class _BillsSummaryCard extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// VW-16: a ring and eight dots bursting out of a ticked checkbox, fading as they go.
+class _TickBurst extends AnimatedWidget {
+  const _TickBurst({required Animation<double> animation, required this.color}) : super(listenable: animation);
+  final Color color;
+
+  static const size = 64.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = (listenable as Animation<double>).value;
+    if (t == 0 || t == 1) return const SizedBox(width: size, height: size);
+    return CustomPaint(size: const Size.square(size), painter: _BurstPainter(t, color));
+  }
+}
+
+class _BurstPainter extends CustomPainter {
+  _BurstPainter(this.t, this.color);
+  final double t;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final out = Curves.easeOutCubic.transform(t);
+    final fade = 1 - Curves.easeIn.transform(t);
+    canvas.drawCircle(
+      center,
+      12 + 10 * out,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5 * fade
+        ..color = color.withValues(alpha: 0.5 * fade),
+    );
+    final dot = Paint()..color = color.withValues(alpha: fade);
+    for (var i = 0; i < 8; i++) {
+      final a = i * pi / 4 + pi / 8;
+      final d = 14 + 16 * out;
+      canvas.drawCircle(center + Offset(cos(a) * d, sin(a) * d), (i.isEven ? 2.8 : 2.0) * fade + 0.4, dot);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BurstPainter old) => old.t != t || old.color != color;
 }

@@ -4,6 +4,7 @@ import 'package:reminder_app/l10n/gen/app_localizations.dart';
 import 'package:reminder_app/ui/icons.dart';
 import 'package:reminder_app/ui/theme.dart';
 import 'package:reminder_app/ui/widgets.dart';
+import 'package:reminder_core/reminder_core.dart';
 
 Widget _app(Widget child) => MaterialApp(
   theme: buildTheme(Brightness.light),
@@ -58,5 +59,30 @@ void main() {
     await tester.pumpWidget(_app(const SectionHeader('Overdue', count: 2, trailing: Text('Nagging'))));
     final screen = tester.getSize(find.byType(Scaffold)).width;
     expect(tester.getRect(find.text('Nagging')).right, closeTo(screen - 16, 0.5));
+  });
+
+  testWidgets('SUB-1 subtype chips: every option plus Other, full names, picking reports it', (tester) async {
+    SubKind? picked = SubKind.birthday;
+    await tester.pumpWidget(
+      _app(
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: SubKindChips(kind: Kind.occasion, selected: SubKind.birthday, onChanged: (s) => picked = s),
+        ),
+      ),
+    );
+    for (final name in ["Birthday", "Anniversary", "Holiday", "Memorial", "Other"]) {
+      expect(find.text(name), findsOneWidget);
+    }
+    expect(tester.takeException(), isNull, reason: "chips wrap instead of truncating");
+    await tester.tap(find.text("Other"));
+    expect(picked, isNull);
+    await tester.tap(find.text("Holiday"));
+    expect(picked, SubKind.holiday);
+  });
+
+  testWidgets('SUB-1 no chips for types without subtypes', (tester) async {
+    await tester.pumpWidget(_app(SubKindChips(kind: Kind.task, selected: null, onChanged: (_) {})));
+    expect(find.text("Other"), findsNothing);
   });
 }

@@ -1774,4 +1774,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String notifTrialEndsNoAmount(String when) {
     return 'Trial ends $when · keep it or cancel?';
   }
+
+  @override
+  String get subBirthday => 'Birthday';
+
+  @override
+  String get subAnniversary => 'Anniversary';
+
+  @override
+  String get subHoliday => 'Holiday';
+
+  @override
+  String get subMemorial => 'Memorial';
+
+  @override
+  String get subVideo => 'Video call';
+
+  @override
+  String get subInPerson => 'In person';
+
+  @override
+  String get subPhone => 'Phone call';
+
+  @override
+  String get subAppointment => 'Appointment';
+
+  @override
+  String get subTravel => 'Travel';
+
+  @override
+  String get subSocial => 'Social';
+
+  @override
+  String get subOther => 'Other';
+
+  @override
+  String get homeNow => 'Now';
+
+  @override
+  String get homeNowPill => 'Now';
+
+  @override
+  String get actionJoin => 'Join';
 }

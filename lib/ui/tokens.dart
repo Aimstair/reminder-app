@@ -26,11 +26,17 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.occasion,
     required this.purple,
     required this.bill,
+    required this.anniversary,
+    required this.holiday,
+    required this.memorial,
   });
 
   final Color bgGrouped, surface, surfaceElevated, textPrimary, textSecondary, separator;
   final Color accent, danger, success, warning;
   final Color task, meeting, event, occasion, bill;
+
+  /// Occasion subtype accents for the home card (DS16, VW-15).
+  final Color anniversary, holiday, memorial;
 
   /// Extra accent for form icons (alerts row in mockup 03).
   final Color purple;
@@ -52,6 +58,9 @@ class AppColors extends ThemeExtension<AppColors> {
     occasion: Color(0xFFFF2D55),
     purple: Color(0xFFAF52DE),
     bill: Color(0xFF34C759), // BIL-1 green
+    anniversary: Color(0xFFFF3B30),
+    holiday: Color(0xFFF5A300),
+    memorial: Color(0xFF30B0C7),
   );
 
   static const dark = AppColors(
@@ -71,7 +80,18 @@ class AppColors extends ThemeExtension<AppColors> {
     occasion: Color(0xFFFF375F),
     purple: Color(0xFFBF5AF2),
     bill: Color(0xFF30D158),
+    anniversary: Color(0xFFFF453A),
+    holiday: Color(0xFFFFB340),
+    memorial: Color(0xFF40C8E0),
   );
+
+  /// VW-15: an occasion card's color by subtype; Birthday and Other keep the Occasion pink.
+  Color occasionSub(SubKind? s) => switch (s) {
+    SubKind.anniversary => anniversary,
+    SubKind.holiday => holiday,
+    SubKind.memorial => memorial,
+    _ => occasion,
+  };
 
   static AppColors of(BuildContext context) => Theme.of(context).extension<AppColors>()!;
 

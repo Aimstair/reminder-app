@@ -23,6 +23,14 @@ extension TemplateDef on Template {
     _ => BillKind.payment,
   };
 
+  /// SUB-1: Birthday is a birthday; Appointment an appointment; Night out a social event.
+  SubKind? get subKind => switch (this) {
+    Template.birthday => SubKind.birthday,
+    Template.appointment => SubKind.appointment,
+    Template.nightOut => SubKind.social,
+    _ => null,
+  };
+
   String? get rrule => switch (this) {
     Template.birthday || Template.renewal => 'FREQ=YEARLY',
     Template.billDue || Template.subscription => 'FREQ=MONTHLY',
@@ -97,5 +105,6 @@ ParseResult applyTemplate(Template t, ParseResult p, {required String input, req
     nag: t.nag ?? (t.kind == Kind.bill ? null : p.nag),
     amount: t.kind == Kind.bill ? p.amount : null,
     billKind: t.billKind,
+    subKind: t.subKind ?? (p.kind == t.kind ? p.subKind : null),
   );
 }

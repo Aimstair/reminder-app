@@ -2943,6 +2943,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Trial ends {when} · keep it or cancel?'**
   String notifTrialEndsNoAmount(String when);
+
+  /// copy.md §5 Subtypes (SUB-1)
+  ///
+  /// In en, this message translates to:
+  /// **'Birthday'**
+  String get subBirthday;
+
+  /// copy.md §5 Subtypes (SUB-1)
+  ///
+  /// In en, this message translates to:
+  /// **'Anniversary'**
+  String get subAnniversary;
+
+  /// copy.md §5 Subtypes (SUB-1)
+  ///
+  /// In en, this message translates to:
+  /// **'Holiday'**
+  String get subHoliday;
+
+  /// copy.md §5 Subtypes (SUB-1)
+  ///
+  /// In en, this message translates to:
+  /// **'Memorial'**
+  String get subMemorial;
+
+  /// copy.md §5 Subtypes (SUB-1)
+  ///
+  /// In en, this message translates to:
+  /// **'Video call'**
+  String get subVideo;
+
+  /// copy.md §5 Subtypes (SUB-1)
+  ///
+  /// In en, this message translates to:
+  /// **'In person'**
+  String get subInPerson;
+
+  /// copy.md §5 Subtypes (SUB-1)
+  ///
+  /// In en, this message translates to:
+  /// **'Phone call'**
+  String get subPhone;
+
+  /// copy.md §5 Subtypes (SUB-1)
+  ///
+  /// In en, this message translates to:
+  /// **'Appointment'**
+  String get subAppointment;
+
+  /// copy.md §5 Subtypes (SUB-1)
+  ///
+  /// In en, this message translates to:
+  /// **'Travel'**
+  String get subTravel;
+
+  /// copy.md §5 Subtypes (SUB-1)
+  ///
+  /// In en, this message translates to:
+  /// **'Social'**
+  String get subSocial;
+
+  /// copy.md §5 Subtypes (SUB-1): no subtype
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get subOther;
+
+  /// copy.md §5 Home meeting card label once the meeting has started (VW-15)
+  ///
+  /// In en, this message translates to:
+  /// **'Now'**
+  String get homeNow;
+
+  /// copy.md §5 Home meeting card countdown pill once started (VW-15)
+  ///
+  /// In en, this message translates to:
+  /// **'Now'**
+  String get homeNowPill;
+
+  /// copy.md §5 Home meeting card: opens the meeting link (VW-15)
+  ///
+  /// In en, this message translates to:
+  /// **'Join'**
+  String get actionJoin;
 }
 
 class _AppLocalizationsDelegate

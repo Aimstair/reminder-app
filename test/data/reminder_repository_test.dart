@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reminder_app/data/app_database.dart';
@@ -64,6 +66,50 @@ void main() {
     final task = (await meeting()).copyWith(amount: () => const Money(5, 'USD'));
     await repo.insert(task);
     expect((await repo.byId(task.id))!.amount, isNull);
+  });
+
+  test('SUB-1 a subtype round-trips; one that does not fit the type is dropped', () async {
+    final m = (await meeting()).copyWith(subKind: () => SubKind.video);
+    await repo.insert(m);
+    expect((await repo.byId(m.id))!.subKind, SubKind.video);
+    final b = await birthday();
+    await repo.insert(
+      Reminder(
+        meta: b.meta,
+        title: b.title,
+        kind: b.kind,
+        subKind: SubKind.travel, // an Event subtype on an Occasion
+        context: b.context,
+        timing: b.timing,
+        alertPlan: b.alertPlan,
+      ),
+    );
+    expect((await repo.byId(b.id))!.subKind, isNull);
+  });
+
+  test('SUB-3 upgrading from v3 guesses subtypes for existing reminders', () async {
+    final dir = await Directory.systemTemp.createTemp('sub3');
+    final file = File('${dir.path}/app.db');
+    // A v4 database turned back into v3: no sub_kind column, user_version 3.
+    final v4 = AppDatabase(NativeDatabase(file));
+    final r = ReminderRepository(v4, clock: () => now);
+    final xmas = (await birthday()).copyWith(title: 'Christmas', source: const ManualSource());
+    final zoom = (await meeting()).copyWith(title: 'Design review on Zoom');
+    final party = (await meeting()).copyWith(title: 'Quarterly review');
+    await r.insert(xmas);
+    await r.insert(zoom);
+    await r.insert(party);
+    await v4.customStatement('ALTER TABLE reminders DROP COLUMN sub_kind');
+    await v4.customStatement('PRAGMA user_version = 3');
+    await v4.close();
+
+    final upgraded = AppDatabase(NativeDatabase(file));
+    final repo2 = ReminderRepository(upgraded, clock: () => now);
+    expect((await repo2.byId(xmas.id))!.subKind, SubKind.holiday);
+    expect((await repo2.byId(zoom.id))!.subKind, SubKind.video);
+    expect((await repo2.byId(party.id))!.subKind, isNull);
+    await upgraded.close();
+    await dir.delete(recursive: true);
   });
 
   test('ATT-1 links and files round-trip; none stays an empty list', () async {

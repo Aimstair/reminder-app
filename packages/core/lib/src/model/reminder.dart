@@ -133,6 +133,7 @@ class Reminder {
     this.attachments = const [],
     this.amount,
     this.billKind = BillKind.payment,
+    this.subKind,
     this.rawInput,
     this.rrule,
     this.repeatMode = RecurrenceMode.fixed,
@@ -154,6 +155,9 @@ class Reminder {
 
   /// BIL-1: payment / subscription / free trial (bills only).
   final BillKind billKind;
+
+  /// SUB-1: birthday / video call / appointment…; only kept when it belongs to [kind].
+  final SubKind? subKind;
 
   /// Original typed/spoken text (CAP-8).
   final String? rawInput;
@@ -191,6 +195,7 @@ class Reminder {
     List<Attachment>? attachments,
     Money? Function()? amount,
     BillKind? billKind,
+    SubKind? Function()? subKind,
     Kind? kind,
     ReminderContext? context,
     Timing? timing,
@@ -201,25 +206,30 @@ class Reminder {
     ReminderSource? source,
     String? Function()? templateId,
     ReminderStatus? status,
-  }) => Reminder(
-    meta: meta ?? this.meta,
-    title: title ?? this.title,
-    notes: notes != null ? notes() : this.notes,
-    attachments: attachments ?? this.attachments,
-    amount: amount != null ? amount() : this.amount,
-    billKind: billKind ?? this.billKind,
-    rawInput: rawInput,
-    kind: kind ?? this.kind,
-    context: context ?? this.context,
-    timing: timing ?? this.timing,
-    alertPlan: alertPlan ?? this.alertPlan,
-    rrule: rrule != null ? rrule() : this.rrule,
-    repeatMode: repeatMode ?? this.repeatMode,
-    nagInterval: nagInterval != null ? nagInterval() : this.nagInterval,
-    source: source ?? this.source,
-    templateId: templateId != null ? templateId() : this.templateId,
-    status: status ?? this.status,
-  );
+  }) {
+    final k = kind ?? this.kind;
+    final sub = subKind != null ? subKind() : this.subKind;
+    return Reminder(
+      meta: meta ?? this.meta,
+      title: title ?? this.title,
+      notes: notes != null ? notes() : this.notes,
+      attachments: attachments ?? this.attachments,
+      amount: amount != null ? amount() : this.amount,
+      billKind: billKind ?? this.billKind,
+      subKind: sub?.kind == k ? sub : null, // SUB-1: changing the type drops a subtype that doesn't fit
+      rawInput: rawInput,
+      kind: k,
+      context: context ?? this.context,
+      timing: timing ?? this.timing,
+      alertPlan: alertPlan ?? this.alertPlan,
+      rrule: rrule != null ? rrule() : this.rrule,
+      repeatMode: repeatMode ?? this.repeatMode,
+      nagInterval: nagInterval != null ? nagInterval() : this.nagInterval,
+      source: source ?? this.source,
+      templateId: templateId != null ? templateId() : this.templateId,
+      status: status ?? this.status,
+    );
+  }
 }
 
 /// One instance of a reminder (OCC-*). Saved only when inside the 14-day window or changed (OCC-6).

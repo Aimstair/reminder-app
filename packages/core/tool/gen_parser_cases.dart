@@ -103,6 +103,7 @@ String _case(String id, String input, String title, String when, String type, St
       ? null
       : (RegExp(r'bill: (subscription|trial)').firstMatch(repeat)?.group(1) ?? 'payment');
   final amount = RegExp(r'amount ([A-Z]{3} [\d.]+)').firstMatch(repeat)?.group(1);
+  final subKind = RegExp(r'sub: (\w+)').firstMatch(repeat)?.group(1); // SUB-2
 
   final flags = RegExp(r'`(\w+)`').allMatches(notes).map((m) => m.group(1)!).where(_flags.contains).toList();
 
@@ -111,7 +112,7 @@ String _case(String id, String input, String title, String when, String type, St
       'rrule: ${rrule == null ? 'null' : _q(rrule)}, afterCompletion: $afterCompletion, '
       'alerts: ${alerts == null ? 'null' : '[${alerts.map(_q).join(', ')}]'}, '
       'nag: ${nag == null ? 'null' : _q(nag)}, '
-      'billKind: ${billKind == null ? 'null' : _q(billKind)}, amount: ${amount == null ? 'null' : _q(amount)}, flags: {${flags.map(_q).join(', ')}}),';
+      'billKind: ${billKind == null ? 'null' : _q(billKind)}, amount: ${amount == null ? 'null' : _q(amount)}, ${subKind == null ? '' : 'subKind: ${_q(subKind)}, '}flags: {${flags.map(_q).join(', ')}}),';
 }
 
 /// "Oct 11 18:00" · "Oct 12 (date)" · "2027-03-01 (date)" · "Oct 6 14:00–16:00"

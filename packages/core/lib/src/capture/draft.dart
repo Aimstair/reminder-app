@@ -38,6 +38,7 @@ Reminder reminderFromParse(ParseResult p, {required RecordMeta meta, required Us
     nagInterval: p.nag == null ? null : _duration(AlertOffset.parse(p.nag!)),
     amount: p.kind == Kind.bill ? p.amount : null, // BIL-2
     billKind: p.billKind,
+    subKind: p.subKind?.kind == p.kind ? p.subKind : null, // SUB-1
   );
 }
 

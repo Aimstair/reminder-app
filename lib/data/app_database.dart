@@ -30,6 +30,7 @@ class Reminders extends Table with Synced {
   IntColumn get amountMinor => integer().nullable()(); // BIL-2, in the currency's minor units
   TextColumn get currency => text().nullable()(); // BIL-2, ISO 4217
   TextColumn get billKind => text().nullable()(); // BIL-1: payment / subscription / trial; null = payment
+  TextColumn get subKind => text().nullable()(); // SUB-1: birthday, video, appointment…; null = none
   TextColumn get rawInput => text().nullable()();
   TextColumn get kind => textEnum<Kind>()();
   TextColumn get context => textEnum<ReminderContext>()();
@@ -104,7 +105,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'app'));
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -121,6 +122,19 @@ class AppDatabase extends _$AppDatabase {
         await customStatement(
           "UPDATE reminders SET kind = 'bill', bill_kind = 'trial' WHERE template_id = 'freeTrial'",
         );
+      }
+      if (from < 4) {
+        await m.addColumn(reminders, reminders.subKind);
+        // SUB-3: existing occasions, meetings and events get a subtype guessed from their title.
+        final rows = await customSelect(
+          "SELECT id, kind, title FROM reminders WHERE kind IN ('occasion', 'meeting', 'event')",
+        ).get();
+        for (final row in rows) {
+          final kind = Kind.values.byName(row.read<String>('kind'));
+          final sub = guessSubKind(kind, row.read<String>('title'));
+          if (sub == null) continue;
+          await customStatement('UPDATE reminders SET sub_kind = ? WHERE id = ?', [sub.name, row.read<String>('id')]);
+        }
       }
     },
     beforeOpen: (details) async {

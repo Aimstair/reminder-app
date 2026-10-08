@@ -7,6 +7,29 @@ enum Kind { task, meeting, event, occasion, bill }
 /// BIL-1: what kind of bill (only meaningful when the type is [Kind.bill]).
 enum BillKind { payment, subscription, trial }
 
+/// SUB-1: a finer kind within a type (bills use [BillKind]). No subtype = "Other" / plain type.
+enum SubKind {
+  birthday(Kind.occasion),
+  anniversary(Kind.occasion),
+  holiday(Kind.occasion),
+  memorial(Kind.occasion),
+  video(Kind.meeting),
+  inPerson(Kind.meeting),
+  phone(Kind.meeting),
+  appointment(Kind.event),
+  travel(Kind.event),
+  social(Kind.event);
+
+  const SubKind(this.kind);
+  final Kind kind;
+
+  /// The subtypes a type offers, in picker order (empty for Task and Bill).
+  static List<SubKind> of(Kind kind) => [
+    for (final s in values)
+      if (s.kind == kind) s,
+  ];
+}
+
 /// Personal / Work context (concept §Core Concepts 6).
 enum ReminderContext { personal, work }
 

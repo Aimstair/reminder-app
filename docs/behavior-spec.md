@@ -300,6 +300,17 @@ Detailed parser rules and examples live in `parser-test-set.md`. These are the d
 - **ATT-5** Web addresses inside notes are underlined and tappable.
 - **ATT-6** Files picked on a sheet or editor that is then cancelled are deleted. Files removed from a saved reminder are kept on disk (a "this and future" split may still use them).
 
+### Subtypes (`SUB`)
+
+- **SUB-1** Some types have **subtypes** — a finer kind that changes the icon, the label and the Schedule home card, not the behavior (alerts, repeat and completion still follow the type):
+  - **Occasion:** Birthday · Anniversary · Holiday · Memorial · *Other*
+  - **Meeting:** Video call · In person · Phone call · *Other*
+  - **Event:** Appointment · Travel · Social · *Other*
+  - **Bill** keeps its own kinds (`BIL-1`); **Task** has none.
+  *Other* = no subtype. A subtype only belongs to its type: changing the type clears it. The capture sheet and the editor show the choices under **Type** (a hand-picked subtype locks, `CAP-11`); the detail page shows the subtype's name in place of the type's.
+- **SUB-2** **Guessed** from the words within the chosen type (`PRS-40`): *birthday/bday* → Birthday; *anniversary* → Anniversary; holiday names (`PRS-39`) → Holiday; *death anniversary, passed away, memorial, remembrance, in memory* → Memorial; *phone, conference call, dial-in* → Phone call; *in person, office, coffee, lunch, visit* → In person; *zoom, meet, teams, video, webex, facetime, call with* → Video call; *appointment, dentist, doctor, haircut, check-up, vet…* → Appointment; *flight, trip, train, hotel, vacation…* → Travel; *dinner, drinks, party, concert, wedding, movie…* → Social. Templates set theirs (Birthday → Birthday, Appointment → Appointment, Night out → Social); Contacts imports are Birthday or Anniversary (`CON-4`); calendar events are guessed from their title.
+- **SUB-3** On upgrade, existing Occasions, Meetings and Events get a guessed subtype (`SUB-2`); the user can change it in the editor.
+
 ---
 
 ## 12. User settings (`PRF`)
@@ -329,6 +340,7 @@ Every user-adjustable default the rules above depend on. **Onboarding** settings
 
 | Date | Rule(s) | Decision |
 |---|---|---|
+| 2026-10-09 | `SUB-1`–`SUB-3`, `PRS-39`, `PRS-40`, `VW-15`, `VW-16`, DS16 | User request: **subtypes** for Occasion (birthday, anniversary, holiday, memorial), Meeting (video, in person, phone) and Event (appointment, travel, social); holidays are occasions. Schedule home cards (`VW-15`) now show the **next meeting within 7 days** (was: any timed item within 12 hours, so a meeting tomorrow never showed) and the next occasion within 30 days, each designed per subtype. Ticking a row plays a short completion animation before it leaves (`VW-16`). Month summary chips show an icon instead of the type's name, which was cut off. |
 | 2026-10-09 | `BIL-1`–`BIL-7`, `ALR-4`, `TPL-1`/`TPL-3`, `PRS-29`, `PRS-37`, `PRS-38`, `CAP-13`, S-61 | User decision: a fifth type **Bill** (payment / subscription / free trial) with an **optional amount**; subscriptions and free trials live inside Bill; a free trial asks "Keep it / I cancelled" before it ends. Capture gets a separate **Ends** row (`CAP-13`). Widget defaults to **4×2** with the tall Add button from mockup 05. |
 | 2026-10-08 | `ATT-1`–`ATT-6`, `PRS-13`, DS15 | User request after device testing: **links and files on reminders** move from the cut list into v1.0 (notes already existed; links in notes become tappable). Files are copied into app storage, not backed up. Parser: ranges written with "to / until / till / through" ("9pm to 10pm") — real-world miss, cases K9–K12. Design DS15: graphics on every screen (page heroes, picture pickers, icon rows). |
 | 2026-10-05 | `TIM-2`–`TIM-9` | Time zones work like Google Calendar: each timed reminder has a zone; user-set default zone; per-reminder override; option to move upcoming reminders when the default changes. Date-only reminders have no zone. |

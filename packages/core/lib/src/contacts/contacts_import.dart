@@ -48,6 +48,7 @@ Reminder reminderFromContact(ContactDate c, {required RecordMeta meta, required 
   meta: meta,
   title: contactTitle(c),
   kind: Kind.occasion,
+  subKind: c.field == ContactDateField.birthday ? SubKind.birthday : SubKind.anniversary, // SUB-1
   context: ReminderContext.personal,
   timing: Timing(type: TimingType.date, start: nextDate(c, today)),
   alertPlan: defaultAlertPlan(Kind.occasion, TimingType.date),

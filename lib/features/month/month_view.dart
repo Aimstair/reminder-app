@@ -156,15 +156,25 @@ class _MonthPage extends ConsumerWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: _Summary(count: occasions, label: l10n.summaryOccasions(occasions), color: c.occasion),
+                    child: _Summary(
+                      count: occasions,
+                      icon: AppIcons.birthday,
+                      label: l10n.summaryOccasions(occasions),
+                      color: c.occasion,
+                    ),
                   ),
                   const SizedBox(width: Space.s),
                   Expanded(
-                    child: _Summary(count: bills, label: l10n.summaryBills(bills), color: c.event),
+                    child: _Summary(count: bills, icon: AppIcons.bill, label: l10n.summaryBills(bills), color: c.bill),
                   ),
                   const SizedBox(width: Space.s),
                   Expanded(
-                    child: _Summary(count: meetings, label: l10n.summaryMeetings(meetings), color: c.meeting),
+                    child: _Summary(
+                      count: meetings,
+                      icon: AppIcons.meeting,
+                      label: l10n.summaryMeetings(meetings),
+                      color: c.meeting,
+                    ),
                   ),
                 ],
               ),
@@ -303,10 +313,12 @@ class _RoundButton extends StatelessWidget {
   );
 }
 
-/// "2 occasions" chip (mockup 08): tinted, big colored count + label.
+/// "2 occasions" chip (mockup 08): tinted, the type's icon + a big colored count. The name ("occasions")
+/// was cut off at a third of the width, so it is only read out (TalkBack) and shown on long-press.
 class _Summary extends StatelessWidget {
-  const _Summary({required this.count, required this.label, required this.color});
+  const _Summary({required this.count, required this.icon, required this.label, required this.color});
   final int count;
+  final IconData icon;
   final String label;
   final Color color;
 
@@ -314,27 +326,35 @@ class _Summary extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final deep = Color.lerp(color, Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black, 0.3)!;
-    return Container(
-      height: 52,
-      padding: const EdgeInsets.symmetric(horizontal: Space.m),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(Radii.card)),
-      child: Row(
-        children: [
-          Text(
-            '$count',
-            maxLines: 1,
-            style: text.titleLarge?.copyWith(color: deep, fontWeight: FontWeight.w700),
+    return Tooltip(
+      message: '$count $label',
+      excludeFromSemantics: true,
+      child: Semantics(
+        label: '$count $label',
+        excludeSemantics: true,
+        child: Container(
+          height: 52,
+          padding: const EdgeInsets.symmetric(horizontal: Space.m),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(Radii.card),
           ),
-          const SizedBox(width: Space.s),
-          Expanded(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: text.titleSmall?.copyWith(color: deep),
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 22, color: deep),
+              const SizedBox(width: Space.s),
+              Flexible(
+                child: Text(
+                  '$count',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: text.titleLarge?.copyWith(color: deep, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

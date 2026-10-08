@@ -345,7 +345,8 @@ class SegmentedPills<T> extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final dark = Theme.of(context).brightness == Brightness.dark;
     final index = items.indexWhere((i) => i.value == selected);
-    // Five or more segments (Task … Bill): smaller text, dot only on the selected one, so labels fit.
+    // Five or more segments (Task … Bill): smaller text and no dot — the selected label takes the dot's color
+    // instead — and a word that still doesn't fit shrinks rather than being cut ("Occasi…").
     final crowded = items.length > 4;
     return Container(
       height: 36,
@@ -381,7 +382,7 @@ class SegmentedPills<T> extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    if (i.dot != null && (!crowded || on)) ...[
+                    if (i.dot != null && !crowded) ...[
                       Container(
                         width: 7,
                         height: 7,
@@ -395,9 +396,13 @@ class SegmentedPills<T> extends StatelessWidget {
                         style: text.titleSmall!.copyWith(
                           fontSize: crowded ? 12.5 : 14,
                           fontWeight: on ? FontWeight.w600 : FontWeight.w500,
-                          color: on ? c.textPrimary : c.textPrimary.withValues(alpha: 0.75),
+                          color: on
+                              ? (crowded && i.dot != null ? i.dot : c.textPrimary)
+                              : c.textPrimary.withValues(alpha: 0.75),
                         ),
-                        child: Text(i.label, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        child: crowded
+                            ? FittedBox(fit: BoxFit.scaleDown, child: Text(i.label, maxLines: 1))
+                            : Text(i.label, maxLines: 1, overflow: TextOverflow.ellipsis),
                       ),
                     ),
                   ],
@@ -704,4 +709,65 @@ class SheetGrabber extends StatelessWidget {
       decoration: BoxDecoration(color: AppColors.of(context).separator, borderRadius: BorderRadius.circular(3)),
     ),
   );
+}
+
+/// SUB-1 subtype picker under Type: icon chips that wrap (never truncate), the chosen one filled in the
+/// type color. The last chip is "Other" (no subtype). Shows nothing for types without subtypes.
+class SubKindChips extends StatelessWidget {
+  const SubKindChips({super.key, required this.kind, required this.selected, required this.onChanged});
+  final Kind kind;
+  final SubKind? selected;
+  final ValueChanged<SubKind?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final options = SubKind.of(kind);
+    if (options.isEmpty) return const SizedBox(width: double.infinity);
+    final c = AppColors.of(context);
+    final f = Fmt.of(context);
+    final text = Theme.of(context).textTheme;
+    final color = c.kind(kind);
+    final fast = reduceMotion(context) ? Duration.zero : Motion.micro;
+    return SizedBox(
+      width: double.infinity,
+      child: Wrap(
+        spacing: Space.s,
+        runSpacing: Space.s,
+        children: [
+          for (final s in <SubKind?>[...options, null])
+            Semantics(
+              button: true,
+              selected: s == selected,
+              child: Pressable(
+                onTap: () => onChanged(s),
+                child: AnimatedContainer(
+                  duration: fast,
+                  curve: Curves.easeOut,
+                  height: 34,
+                  padding: const EdgeInsets.symmetric(horizontal: Space.m),
+                  decoration: BoxDecoration(
+                    color: s == selected ? color : color.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(17),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(subKindIcon(s, kind), size: 16, color: s == selected ? Colors.white : color),
+                      const SizedBox(width: 6),
+                      Text(
+                        f.subKind(s),
+                        style: text.labelLarge?.copyWith(
+                          color: s == selected ? Colors.white : c.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }

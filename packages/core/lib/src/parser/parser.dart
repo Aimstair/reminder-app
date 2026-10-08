@@ -5,6 +5,7 @@
 /// date/time with the CAP rules. Pure Dart; calendar math uses UTC DateTimes as wall-clock containers.
 library;
 
+import '../capture/subkind.dart';
 import '../model/money.dart';
 import '../time/zones.dart';
 import 'parse_result.dart';
@@ -225,6 +226,7 @@ class _Run {
       nag: untilDoneNag ? '2h' : null,
       amount: amount,
       billKind: billKind,
+      subKind: guessSubKind(kind, title), // SUB-2
       flags: flags,
     );
   }
@@ -677,6 +679,13 @@ class _Run {
     if (rec?.afterCompletion ?? false) return (Kind.task, pay); // REC-10
     final t = title.toLowerCase();
     if (RegExp(r'\b(birthday|bday|anniversary)\b(?!\s+(party|dinner|drinks)\b)').hasMatch(t)) {
+      return (Kind.occasion, pay);
+    }
+    // PRS-39: holidays are occasions, unless it's the party/dinner/shopping for one or a task about it.
+    if (_hasAny(t, holidayWords) &&
+        !RegExp(r'\b(party|dinner|drinks|lunch|brunch|shopping|gifts?|presents|market|concert|show|sale)\b')
+            .hasMatch(t) &&
+        !taskVerbs.any((v) => t == v || t.startsWith('$v '))) {
       return (Kind.occasion, pay);
     }
     if (_hasAny(t, meetingPhrases)) return (Kind.meeting, pay);

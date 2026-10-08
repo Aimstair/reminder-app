@@ -94,6 +94,10 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
   Money? _lockAmount;
   bool _lockNoAmount = false;
 
+  /// SUB-1: a subtype picked by hand ([_subLocked]; null = "Other").
+  SubKind? _lockSub;
+  bool _subLocked = false;
+
   @override
   void initState() {
     super.initState();
@@ -229,6 +233,10 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
       title: p.title,
       amount: kind != Kind.bill || _lockNoAmount ? null : (_lockAmount ?? p.amount),
       billKind: bill,
+      // SUB-1/SUB-2: the hand-picked subtype while it fits the type, else the guess for this type.
+      subKind: _subLocked && (_lockSub == null || _lockSub!.kind == kind)
+          ? _lockSub
+          : (kind == p.kind ? p.subKind : guessSubKind(kind, p.title)),
       timing: timing,
       kind: kind,
       context: _lockContext ?? p.context,
@@ -300,6 +308,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
       _template = t;
       _lockKind = null;
       _lockBillKind = null;
+      _subLocked = false;
       _lockRepeat = null;
       _lockAlerts = null;
       _lockNag = null;
@@ -404,7 +413,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                     children: [
                       Padding(
                         padding: const EdgeInsets.only(left: Space.m),
-                        child: _KindBadge(kind: p?.kind),
+                        child: _KindBadge(kind: p?.kind, sub: p?.subKind),
                       ),
                       Expanded(
                         child: TextField(
@@ -680,14 +689,28 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                 AnimatedSize(
                   duration: Motion.standard,
                   curve: Curves.easeOutCubic,
-                  child: p.kind != Kind.bill
-                      ? const SizedBox(width: double.infinity)
-                      : Padding(
+                  child: p.kind == Kind.bill
+                      ? Padding(
                           padding: const EdgeInsets.only(top: Space.m),
                           child: SegmentedPills<BillKind>(
                             items: [for (final b in BillKind.values) (value: b, label: f.billKind(b), dot: null)],
                             selected: p.billKind,
                             onChanged: (b) => setState(() => _lockBillKind = b),
+                          ),
+                        )
+                      : SubKind.of(p.kind).isEmpty
+                      ? const SizedBox(width: double.infinity)
+                      // SUB-1: Birthday · Anniversary · …; picking one locks it (CAP-11).
+                      : Padding(
+                          padding: const EdgeInsets.only(top: Space.m),
+                          child: SubKindChips(
+                            key: ValueKey(p.kind),
+                            kind: p.kind,
+                            selected: p.subKind,
+                            onChanged: (s) => setState(() {
+                              _lockSub = s;
+                              _subLocked = true;
+                            }),
                           ),
                         ),
                 ),
@@ -809,8 +832,9 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
 /// The input card's type badge: a sparkle while empty, then the parsed type's icon in its color,
 /// popping when the type changes (DS15).
 class _KindBadge extends StatelessWidget {
-  const _KindBadge({required this.kind});
+  const _KindBadge({required this.kind, this.sub});
   final Kind? kind;
+  final SubKind? sub;
 
   @override
   Widget build(BuildContext context) {
@@ -825,7 +849,12 @@ class _KindBadge extends StatelessWidget {
       ),
       child: k == null
           ? GlyphBadge(key: const ValueKey('none'), icon: AppIcons.sparkle, color: c.accent, size: 34)
-          : GlyphBadge(key: ValueKey(k), icon: kindIcon(k), color: c.kind(k), size: 34),
+          : GlyphBadge(
+              key: ValueKey((k, sub)),
+              icon: SubKind.of(k).isEmpty ? kindIcon(k) : subKindIcon(sub?.kind == k ? sub : null, k), // SUB-1
+              color: c.kind(k),
+              size: 34,
+            ),
     );
   }
 }

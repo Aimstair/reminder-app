@@ -14,6 +14,7 @@ class ParserCase {
     required this.nag,
     required this.billKind,
     required this.amount,
+    this.subKind,
     required this.flags,
   });
 
@@ -36,6 +37,9 @@ class ParserCase {
 
   /// 'USD 1200.00' (PRS-37); null = no amount.
   final String? amount;
+
+  /// SUB-2 subtype, e.g. 'holiday'; null = the row doesn't state one (not checked).
+  final String? subKind;
   final Set<String> flags;
 }
 

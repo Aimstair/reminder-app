@@ -154,6 +154,8 @@ Placeholders: *Whose birthday? When?* · *Which bill? Due on the…* · *What re
 Free trial detail line: "Your trial ends {when}, then it's {amount}. Keep it, or cancel before then." (without amount: "Your trial ends {when}. Keep it, or cancel before then.") · snackbars "Kept · now a subscription" · "Trial cancelled" · "Subscription ended".
 Bills filter chip *Bills*; summary card *Due this month* {total} · "{n} unpaid" / "All paid" · empty: "Nothing due this month".
 Template *Subscription* — placeholder *Which subscription? Renews on the…*; Free trial placeholder becomes *Which trial? Ends when?*
+
+**Subtypes (SUB-1, S-20 / S-22):** Occasion *Birthday · Anniversary · Holiday · Memorial · Other* · Meeting *Video call · In person · Phone call · Other* · Event *Appointment · Travel · Social · Other*. Home meeting card (VW-15): label *Up next* / *Now*, pill *in 45 min* / *Now* / *Tomorrow* / weekday, button **Join** (video call with a link); footer = subtype name.
 Add link dialog: title *Add link* · fields *Link* (hint *example.com*) and *Title (optional)* · buttons Cancel / Add. A link without a title shows its site ("example.com").
 Files show their name and size ("240 KB", "1.2 MB"). Tapping a link opens the browser; tapping a file opens it in another app.
 

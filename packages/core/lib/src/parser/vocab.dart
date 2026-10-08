@@ -251,3 +251,81 @@ const workWords = [
   'workshop',
   'budget',
 ];
+
+/// PRS-39 holidays → Occasion · holiday (SUB-2), unless a party/dinner/… word follows ("Halloween party").
+const holidayWords = [
+  'christmas',
+  'christmas eve',
+  'xmas',
+  "new year's",
+  'new years',
+  'new year',
+  "new year's eve",
+  'lunar new year',
+  'chinese new year',
+  'thanksgiving',
+  'easter',
+  'halloween',
+  'hanukkah',
+  'chanukah',
+  'diwali',
+  'eid',
+  'ramadan',
+  "valentine's day",
+  'valentines day',
+  "valentine's",
+  "mother's day",
+  'mothers day',
+  "father's day",
+  'fathers day',
+  'independence day',
+  'memorial day',
+  'labor day',
+  'labour day',
+  'july 4th',
+  'fourth of july',
+  "st patrick's day",
+  'public holiday',
+  'bank holiday',
+];
+
+/// SUB-2 subtype words, checked within the guessed type. First group that matches wins.
+const memorialWords = ['death anniversary', 'passing', 'passed away', 'memorial', 'remembrance', 'in memory', 'rip'];
+const videoWords = ['zoom', 'google meet', 'meet', 'teams', 'video', 'webex', 'facetime', 'hangout', 'call with'];
+const phoneWords = ['phone', 'phone call', 'dial in', 'dial-in', 'conference call'];
+const inPersonWords = ['in person', 'in-person', 'office', 'onsite', 'on-site', 'coffee', 'lunch', 'visit', 'room'];
+const appointmentWords = [
+  'appointment',
+  'appt',
+  'dentist',
+  'doctor',
+  'physio',
+  'haircut',
+  'checkup',
+  'check-up',
+  'vet',
+  'clinic',
+  'therapy',
+  'salon',
+  'massage',
+  'hospital',
+];
+const travelWords = ['flight', 'trip', 'travel', 'train', 'airport', 'hotel', 'vacation', 'cruise', 'road trip'];
+const socialWords = [
+  'dinner',
+  'lunch',
+  'brunch',
+  'breakfast',
+  'drinks',
+  'party',
+  'concert',
+  'game',
+  'wedding',
+  'date night',
+  'movie',
+  'show',
+  'festival',
+  'night out',
+  'bbq',
+  'barbecue',
+];

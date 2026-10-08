@@ -124,6 +124,17 @@ class $RemindersTable extends Reminders
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _subKindMeta = const VerificationMeta(
+    'subKind',
+  );
+  @override
+  late final GeneratedColumn<String> subKind = GeneratedColumn<String>(
+    'sub_kind',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _rawInputMeta = const VerificationMeta(
     'rawInput',
   );
@@ -304,6 +315,7 @@ class $RemindersTable extends Reminders
     amountMinor,
     currency,
     billKind,
+    subKind,
     rawInput,
     kind,
     context,
@@ -410,6 +422,12 @@ class $RemindersTable extends Reminders
       context.handle(
         _billKindMeta,
         billKind.isAcceptableOrUnknown(data['bill_kind']!, _billKindMeta),
+      );
+    }
+    if (data.containsKey('sub_kind')) {
+      context.handle(
+        _subKindMeta,
+        subKind.isAcceptableOrUnknown(data['sub_kind']!, _subKindMeta),
       );
     }
     if (data.containsKey('raw_input')) {
@@ -542,6 +560,10 @@ class $RemindersTable extends Reminders
         DriftSqlType.string,
         data['${effectivePrefix}bill_kind'],
       ),
+      subKind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sub_kind'],
+      ),
       rawInput: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}raw_input'],
@@ -650,6 +672,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
   final int? amountMinor;
   final String? currency;
   final String? billKind;
+  final String? subKind;
   final String? rawInput;
   final Kind kind;
   final ReminderContext context;
@@ -678,6 +701,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
     this.amountMinor,
     this.currency,
     this.billKind,
+    this.subKind,
     this.rawInput,
     required this.kind,
     required this.context,
@@ -720,6 +744,9 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
     }
     if (!nullToAbsent || billKind != null) {
       map['bill_kind'] = Variable<String>(billKind);
+    }
+    if (!nullToAbsent || subKind != null) {
+      map['sub_kind'] = Variable<String>(subKind);
     }
     if (!nullToAbsent || rawInput != null) {
       map['raw_input'] = Variable<String>(rawInput);
@@ -797,6 +824,9 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
       billKind: billKind == null && nullToAbsent
           ? const Value.absent()
           : Value(billKind),
+      subKind: subKind == null && nullToAbsent
+          ? const Value.absent()
+          : Value(subKind),
       rawInput: rawInput == null && nullToAbsent
           ? const Value.absent()
           : Value(rawInput),
@@ -843,6 +873,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
       amountMinor: serializer.fromJson<int?>(json['amountMinor']),
       currency: serializer.fromJson<String?>(json['currency']),
       billKind: serializer.fromJson<String?>(json['billKind']),
+      subKind: serializer.fromJson<String?>(json['subKind']),
       rawInput: serializer.fromJson<String?>(json['rawInput']),
       kind: $RemindersTable.$converterkind.fromJson(
         serializer.fromJson<String>(json['kind']),
@@ -886,6 +917,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
       'amountMinor': serializer.toJson<int?>(amountMinor),
       'currency': serializer.toJson<String?>(currency),
       'billKind': serializer.toJson<String?>(billKind),
+      'subKind': serializer.toJson<String?>(subKind),
       'rawInput': serializer.toJson<String?>(rawInput),
       'kind': serializer.toJson<String>(
         $RemindersTable.$converterkind.toJson(kind),
@@ -927,6 +959,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
     Value<int?> amountMinor = const Value.absent(),
     Value<String?> currency = const Value.absent(),
     Value<String?> billKind = const Value.absent(),
+    Value<String?> subKind = const Value.absent(),
     Value<String?> rawInput = const Value.absent(),
     Kind? kind,
     ReminderContext? context,
@@ -955,6 +988,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
     amountMinor: amountMinor.present ? amountMinor.value : this.amountMinor,
     currency: currency.present ? currency.value : this.currency,
     billKind: billKind.present ? billKind.value : this.billKind,
+    subKind: subKind.present ? subKind.value : this.subKind,
     rawInput: rawInput.present ? rawInput.value : this.rawInput,
     kind: kind ?? this.kind,
     context: context ?? this.context,
@@ -989,6 +1023,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
           : this.amountMinor,
       currency: data.currency.present ? data.currency.value : this.currency,
       billKind: data.billKind.present ? data.billKind.value : this.billKind,
+      subKind: data.subKind.present ? data.subKind.value : this.subKind,
       rawInput: data.rawInput.present ? data.rawInput.value : this.rawInput,
       kind: data.kind.present ? data.kind.value : this.kind,
       context: data.context.present ? data.context.value : this.context,
@@ -1036,6 +1071,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
           ..write('amountMinor: $amountMinor, ')
           ..write('currency: $currency, ')
           ..write('billKind: $billKind, ')
+          ..write('subKind: $subKind, ')
           ..write('rawInput: $rawInput, ')
           ..write('kind: $kind, ')
           ..write('context: $context, ')
@@ -1069,6 +1105,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
     amountMinor,
     currency,
     billKind,
+    subKind,
     rawInput,
     kind,
     context,
@@ -1101,6 +1138,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
           other.amountMinor == this.amountMinor &&
           other.currency == this.currency &&
           other.billKind == this.billKind &&
+          other.subKind == this.subKind &&
           other.rawInput == this.rawInput &&
           other.kind == this.kind &&
           other.context == this.context &&
@@ -1131,6 +1169,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
   final Value<int?> amountMinor;
   final Value<String?> currency;
   final Value<String?> billKind;
+  final Value<String?> subKind;
   final Value<String?> rawInput;
   final Value<Kind> kind;
   final Value<ReminderContext> context;
@@ -1160,6 +1199,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
     this.amountMinor = const Value.absent(),
     this.currency = const Value.absent(),
     this.billKind = const Value.absent(),
+    this.subKind = const Value.absent(),
     this.rawInput = const Value.absent(),
     this.kind = const Value.absent(),
     this.context = const Value.absent(),
@@ -1190,6 +1230,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
     this.amountMinor = const Value.absent(),
     this.currency = const Value.absent(),
     this.billKind = const Value.absent(),
+    this.subKind = const Value.absent(),
     this.rawInput = const Value.absent(),
     required Kind kind,
     required ReminderContext context,
@@ -1233,6 +1274,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
     Expression<int>? amountMinor,
     Expression<String>? currency,
     Expression<String>? billKind,
+    Expression<String>? subKind,
     Expression<String>? rawInput,
     Expression<String>? kind,
     Expression<String>? context,
@@ -1263,6 +1305,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
       if (amountMinor != null) 'amount_minor': amountMinor,
       if (currency != null) 'currency': currency,
       if (billKind != null) 'bill_kind': billKind,
+      if (subKind != null) 'sub_kind': subKind,
       if (rawInput != null) 'raw_input': rawInput,
       if (kind != null) 'kind': kind,
       if (context != null) 'context': context,
@@ -1295,6 +1338,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
     Value<int?>? amountMinor,
     Value<String?>? currency,
     Value<String?>? billKind,
+    Value<String?>? subKind,
     Value<String?>? rawInput,
     Value<Kind>? kind,
     Value<ReminderContext>? context,
@@ -1325,6 +1369,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
       amountMinor: amountMinor ?? this.amountMinor,
       currency: currency ?? this.currency,
       billKind: billKind ?? this.billKind,
+      subKind: subKind ?? this.subKind,
       rawInput: rawInput ?? this.rawInput,
       kind: kind ?? this.kind,
       context: context ?? this.context,
@@ -1380,6 +1425,9 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
     }
     if (billKind.present) {
       map['bill_kind'] = Variable<String>(billKind.value);
+    }
+    if (subKind.present) {
+      map['sub_kind'] = Variable<String>(subKind.value);
     }
     if (rawInput.present) {
       map['raw_input'] = Variable<String>(rawInput.value);
@@ -1459,6 +1507,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
           ..write('amountMinor: $amountMinor, ')
           ..write('currency: $currency, ')
           ..write('billKind: $billKind, ')
+          ..write('subKind: $subKind, ')
           ..write('rawInput: $rawInput, ')
           ..write('kind: $kind, ')
           ..write('context: $context, ')
@@ -3715,6 +3764,7 @@ typedef $$RemindersTableCreateCompanionBuilder = RemindersCompanion Function({
   Value<int?> amountMinor,
   Value<String?> currency,
   Value<String?> billKind,
+  Value<String?> subKind,
   Value<String?> rawInput,
   required Kind kind,
   required ReminderContext context,
@@ -3745,6 +3795,7 @@ typedef $$RemindersTableUpdateCompanionBuilder = RemindersCompanion Function({
   Value<int?> amountMinor,
   Value<String?> currency,
   Value<String?> billKind,
+  Value<String?> subKind,
   Value<String?> rawInput,
   Value<Kind> kind,
   Value<ReminderContext> context,
@@ -3848,6 +3899,11 @@ class $$RemindersTableFilterComposer
 
   ColumnFilters<String> get billKind => $composableBuilder(
     column: $table.billKind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get subKind => $composableBuilder(
+    column: $table.subKind,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4026,6 +4082,11 @@ class $$RemindersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get subKind => $composableBuilder(
+    column: $table.subKind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get rawInput => $composableBuilder(
     column: $table.rawInput,
     builder: (column) => ColumnOrderings(column),
@@ -4152,6 +4213,9 @@ class $$RemindersTableAnnotationComposer
 
   GeneratedColumn<String> get billKind =>
       $composableBuilder(column: $table.billKind, builder: (column) => column);
+
+  GeneratedColumn<String> get subKind =>
+      $composableBuilder(column: $table.subKind, builder: (column) => column);
 
   GeneratedColumn<String> get rawInput =>
       $composableBuilder(column: $table.rawInput, builder: (column) => column);
@@ -4282,6 +4346,7 @@ class $$RemindersTableTableManager
                 Value<int?> amountMinor = const Value.absent(),
                 Value<String?> currency = const Value.absent(),
                 Value<String?> billKind = const Value.absent(),
+                Value<String?> subKind = const Value.absent(),
                 Value<String?> rawInput = const Value.absent(),
                 Value<Kind> kind = const Value.absent(),
                 Value<ReminderContext> context = const Value.absent(),
@@ -4311,6 +4376,7 @@ class $$RemindersTableTableManager
                 amountMinor: amountMinor,
                 currency: currency,
                 billKind: billKind,
+                subKind: subKind,
                 rawInput: rawInput,
                 kind: kind,
                 context: context,
@@ -4342,6 +4408,7 @@ class $$RemindersTableTableManager
                 Value<int?> amountMinor = const Value.absent(),
                 Value<String?> currency = const Value.absent(),
                 Value<String?> billKind = const Value.absent(),
+                Value<String?> subKind = const Value.absent(),
                 Value<String?> rawInput = const Value.absent(),
                 required Kind kind,
                 required ReminderContext context,
@@ -4371,6 +4438,7 @@ class $$RemindersTableTableManager
                 amountMinor: amountMinor,
                 currency: currency,
                 billKind: billKind,
+                subKind: subKind,
                 rawInput: rawInput,
                 kind: kind,
                 context: context,
