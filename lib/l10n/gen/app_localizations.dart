@@ -2199,6 +2199,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No email app found. Write to us at {email}.'**
   String feedbackNoMailApp(String email);
+
+  /// copy.md §8 S-58
+  ///
+  /// In en, this message translates to:
+  /// **'Open-source licences'**
+  String get aboutLicenses;
 }
 
 class _AppLocalizationsDelegate

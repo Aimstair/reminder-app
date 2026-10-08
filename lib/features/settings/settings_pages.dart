@@ -570,6 +570,12 @@ class AboutPage extends ConsumerWidget {
               label: l10n.aboutFeedback,
               onTap: () => _sendFeedback(context, ref),
             ),
+            FormRow(
+              icon: Icons.description_outlined,
+              color: c.textSecondary,
+              label: l10n.aboutLicenses,
+              onTap: () => showLicensePage(context: context, applicationName: l10n.appName, applicationVersion: appVersion),
+            ),
             FormRow(icon: Icons.info_outline_rounded, color: c.textSecondary, label: l10n.aboutVersion(appVersion)),
           ],
         ),

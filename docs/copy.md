@@ -241,6 +241,8 @@ Calendars section is collapsed by default; when some are filtered out it shows "
 
 **Reliability screen (S-57):** Notifications — On / Off · Precise timing — On / Off · Battery optimization — Off / On (may delay reminders) — each with **Fix**.
 
+**Backup & about (S-58)** also lists **Open-source licences** (standard licences page; required for Inter's OFL).
+
 **Send feedback (S-58):** opens an email to aimteralabs@gmail.com. Subject: "Reminder App feedback ({version})" · Body: "Tell us what happened or what you'd like to see:" + blank lines + footer "App {version} · {device}". Never includes reminder content. No mail app: "No email app found. Write to us at {email}."
 
 ---

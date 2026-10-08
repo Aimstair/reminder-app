@@ -77,6 +77,17 @@ flutter:
   generate: true # gen-l10n from lib/l10n (copy.md keys)
   assets:
     - assets/sounds/
+    - assets/fonts/Inter-OFL.txt
+  fonts:
+    - family: Inter # design-direction.md §3, SIL OFL 1.1 (assets/fonts/Inter-OFL.txt)
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700
 
   # To add assets to your application, add an assets section, like this:
   # assets:

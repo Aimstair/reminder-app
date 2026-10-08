@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -21,6 +23,10 @@ import 'ui/theme.dart';
 /// Bootstrap (architecture.md §2): services → providers → router.
 Future<void> main() => runWithCrashReporting(() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // The OFL requires shipping Inter's licence; it shows on the standard licences page.
+  LicenseRegistry.addLicense(() async* {
+    yield LicenseEntryWithLineBreaks(['Inter'], await rootBundle.loadString('assets/fonts/Inter-OFL.txt'));
+  });
   final platform = PlatformGateway();
   final services = await AppServices.start(platform: platform);
   runApp(

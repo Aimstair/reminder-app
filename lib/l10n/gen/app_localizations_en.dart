@@ -1244,4 +1244,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String feedbackNoMailApp(String email) {
     return 'No email app found. Write to us at $email.';
   }
+
+  @override
+  String get aboutLicenses => 'Open-source licences';
 }

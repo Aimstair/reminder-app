@@ -15,7 +15,8 @@ ThemeData buildTheme(Brightness brightness) {
     onSurface: c.textPrimary,
     outlineVariant: c.separator,
   );
-  final base = ThemeData(colorScheme: scheme, brightness: brightness, useMaterial3: true);
+  // Inter everywhere (design-direction.md §3) — buttons, chips and dialogs pick it up from here.
+  final base = ThemeData(colorScheme: scheme, brightness: brightness, useMaterial3: true, fontFamily: 'Inter');
   final text = base.textTheme.copyWith(
     displaySmall: TextStyle(fontSize: 34, fontWeight: FontWeight.w700, color: c.textPrimary, letterSpacing: 0.4),
     titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: c.textPrimary),
@@ -24,7 +25,7 @@ ThemeData buildTheme(Brightness brightness) {
     bodyMedium: TextStyle(fontSize: 15, color: c.textSecondary),
     bodySmall: TextStyle(fontSize: 13, color: c.textSecondary),
     labelSmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: c.textSecondary),
-  );
+  ).apply(fontFamily: 'Inter'); // the styles above are new TextStyles, so set it again
   return base.copyWith(
     scaffoldBackgroundColor: c.bgGrouped,
     textTheme: text,

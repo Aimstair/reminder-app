@@ -419,5 +419,7 @@
   "feedbackBody": "Tell us what happened or what you'd like to see:\n\n\n\n—\nApp {version} · {device}",
   "@feedbackBody": { "description": "copy.md §8 S-58 — no reminder content", "placeholders": {"version": {"type": "String"}, "device": {"type": "String"}} },
   "feedbackNoMailApp": "No email app found. Write to us at {email}.",
-  "@feedbackNoMailApp": { "description": "copy.md §8 S-58", "placeholders": {"email": {"type": "String"}} }
+  "@feedbackNoMailApp": { "description": "copy.md §8 S-58", "placeholders": {"email": {"type": "String"}} },
+  "aboutLicenses": "Open-source licences",
+  "@aboutLicenses": { "description": "copy.md §8 S-58" }
 }
