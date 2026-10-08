@@ -250,11 +250,14 @@ class CalendarPicker extends ConsumerStatefulWidget {
 }
 
 class _CalendarPickerState extends ConsumerState<CalendarPicker> {
+  /// Shown immediately on tap; the save + calendar re-read + alarm resync can take a second.
+  Set<String>? _pending;
+
   @override
   Widget build(BuildContext context) {
     final cal = ref.read(servicesProvider).calendar;
     ref.watch(calendarRemindersProvider);
-    final selected = cal.selected;
+    final selected = _pending ?? cal.selected;
     return InsetGroup(
       indent: Space.l,
       children: [
@@ -268,9 +271,10 @@ class _CalendarPickerState extends ConsumerState<CalendarPicker> {
             onChanged: (v) async {
               final next = {...selected};
               v! ? next.add(c.id) : next.remove(c.id);
+              setState(() => _pending = next);
               await cal.setSelected(next);
               await ref.read(servicesProvider).service.resync();
-              setState(() {});
+              if (mounted && identical(_pending, next)) setState(() => _pending = null);
             },
           ),
       ],

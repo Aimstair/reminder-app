@@ -28,11 +28,24 @@ final prefsProvider = Provider<UserPrefs>((ref) {
   return ref.watch(servicesProvider).prefs.current;
 });
 
-/// Raw settings repository, rebuilt on change (for flags the core prefs don't model).
-final prefsRepoProvider = Provider<PrefsRepository>((ref) {
+/// Raw settings, rebuilt on change (for flags the core prefs don't model). A fresh [PrefsView] per
+/// change: returning the repository itself would be the same object every time, and Riverpod skips
+/// notifying when the value is identical, so filters and toggles never updated on screen.
+final prefsRepoProvider = Provider<PrefsView>((ref) {
   ref.watch(prefsTickProvider);
-  return ref.watch(servicesProvider).prefs;
+  return PrefsView(ref.watch(servicesProvider).prefs);
 });
+
+/// Snapshot handle on [PrefsRepository]; [set] writes through.
+class PrefsView {
+  PrefsView(this._repo);
+  final PrefsRepository _repo;
+
+  bool flag(String key, {bool fallback = false}) => _repo.flag(key, fallback: fallback);
+  String? string(String key) => _repo.string(key);
+  Set<String> stringSet(String key) => _repo.stringSet(key);
+  Future<void> set(String key, Object? value) => _repo.set(key, value);
+}
 
 /// "Now", ticking every minute so groups and overdue states roll over on screen. Invalidate on resume.
 final nowProvider = StreamProvider<DateTime>((ref) async* {
