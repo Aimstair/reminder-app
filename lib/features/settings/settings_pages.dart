@@ -698,6 +698,12 @@ class AboutPage extends ConsumerWidget {
               onTap: () => _sendFeedback(context, ref),
             ),
             FormRow(
+              icon: AppIcons.sparkle,
+              color: c.purple,
+              label: l10n.aboutReplayIntro,
+              onTap: () => context.push('/onboarding?replay=1'),
+            ),
+            FormRow(
               icon: AppIcons.licenses,
               color: c.textSecondary,
               label: l10n.aboutLicenses,

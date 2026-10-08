@@ -143,7 +143,7 @@ The home screen can show reminders in several **views**, switched from the top b
 | S-55 | **Calendars & contacts** | Connect/disconnect calendars, pick calendars · contact birthdays on/off, review list, auto-add new birthdays (`PRF-13`) · permission status |
 | S-56 | **Views & appearance** | Start in (last used / Schedule / Day / Month), show completed, theme (system / light / dark), completion sounds (`PRF-12`) |
 | S-57 | **Reliability** | Status of notifications, exact alarms, battery optimization — each with **[Fix]** · **[Send test reminder]** with last result (`PRM-7`) |
-| S-58 | **Backup & about** | Export / import (FL-17), privacy policy, version, feedback |
+| S-58 | **Backup & about** | Export / import (FL-17), privacy policy, feedback, **Replay intro** (FL-1 again; data and settings kept, ends back here), licences, version |
 
 ### Outside the app
 

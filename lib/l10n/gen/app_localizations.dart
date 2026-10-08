@@ -2203,6 +2203,12 @@ abstract class AppLocalizations {
   /// copy.md §8 S-58
   ///
   /// In en, this message translates to:
+  /// **'Replay intro'**
+  String get aboutReplayIntro;
+
+  /// copy.md §8 S-58
+  ///
+  /// In en, this message translates to:
   /// **'Open-source licences'**
   String get aboutLicenses;
 

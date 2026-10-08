@@ -25,7 +25,10 @@ import '../../ui/icons.dart';
 import '../../ui/motion.dart';
 
 class OnboardingPage extends ConsumerStatefulWidget {
-  const OnboardingPage({super.key});
+  const OnboardingPage({super.key, this.replay = false});
+
+  /// Opened from Settings → Replay intro (S-58): ends back in Settings, never opens capture.
+  final bool replay;
 
   @override
   ConsumerState<OnboardingPage> createState() => _OnboardingPageState();
@@ -51,6 +54,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     await s.prefs.set(PrefKeys.onboarded, true);
     await s.service.resync();
     if (!mounted) return;
+    if (widget.replay) {
+      context.pop();
+      return;
+    }
     context.go(_savedFirst ? '/' : '/?capture=1'); // FL-1 step 6
   }
 

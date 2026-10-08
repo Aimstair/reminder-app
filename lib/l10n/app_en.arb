@@ -420,6 +420,8 @@
   "@feedbackBody": { "description": "copy.md §8 S-58 — no reminder content", "placeholders": {"version": {"type": "String"}, "device": {"type": "String"}} },
   "feedbackNoMailApp": "No email app found. Write to us at {email}.",
   "@feedbackNoMailApp": { "description": "copy.md §8 S-58", "placeholders": {"email": {"type": "String"}} },
+  "aboutReplayIntro": "Replay intro",
+  "@aboutReplayIntro": { "description": "copy.md §8 S-58" },
   "aboutLicenses": "Open-source licences",
   "@aboutLicenses": { "description": "copy.md §8 S-58" },
   "hoursShort": "{count}h",

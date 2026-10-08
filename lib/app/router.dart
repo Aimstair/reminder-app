@@ -39,7 +39,10 @@ GoRouter buildRouter(PrefsRepository prefs) => GoRouter(
       path: '/',
       builder: (_, state) => HomeShell(openCapture: state.uri.queryParameters['capture'] == '1'),
     ),
-    GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingPage()),
+    GoRoute(
+      path: '/onboarding',
+      builder: (_, state) => OnboardingPage(replay: state.uri.queryParameters['replay'] == '1'),
+    ),
     GoRoute(
       path: '/item/:id/:key',
       builder: (_, state) => DetailPage(

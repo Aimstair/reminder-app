@@ -261,7 +261,7 @@ Calendars section is collapsed by default; when some are filtered out it shows "
 **Page headers (DS15):** each settings page opens with its icon and one line —
 Settings: "Private by design. Everything stays on this phone." · Your schedule: "When your day starts, when nagging stops, and what “tomorrow” means." · Time zone: "Reminders keep their local time, wherever you are." · Default alerts: "Alerts new reminders start with, by type." · Notifications: "Your daily summary, and alerts that arrive while the phone was off." · Calendars & contacts: "See calendar events next to your reminders, and never miss a birthday." · Views: "Choose how the app looks and where it opens." · Reliability: "Make sure reminders ring on time, even when the phone sleeps." · Backup: "Save your reminders to a file, or bring them back." · Completed: "{n} done" + "Everything you've finished, newest first." · Search (before typing): "Find any reminder by its name or notes."
 
-**Backup & about (S-58)** also lists **Open-source licences** (standard licences page; required for Inter's OFL).
+**Backup & about (S-58)** also lists **Replay intro** (shows the onboarding again; settings and reminders are kept) and **Open-source licences** (standard licences page; required for Inter's OFL).
 
 **Send feedback (S-58):** opens an email to aimteralabs@gmail.com. Subject: "Reminder App feedback ({version})" · Body: "Tell us what happened or what you'd like to see:" + blank lines + footer "App {version} · {device}". Never includes reminder content. No mail app: "No email app found. Write to us at {email}."
 

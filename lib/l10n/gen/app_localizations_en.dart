@@ -1246,6 +1246,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get aboutReplayIntro => 'Replay intro';
+
+  @override
   String get aboutLicenses => 'Open-source licences';
 
   @override
