@@ -10,6 +10,7 @@ export 'src/engine/digest.dart';
 export 'src/engine/occurrence_engine.dart';
 export 'src/engine/series.dart';
 export 'src/model/alert.dart';
+export 'src/model/attachment.dart';
 export 'src/model/enums.dart';
 export 'src/model/ids.dart';
 export 'src/model/prefs.dart';

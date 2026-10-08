@@ -16,7 +16,11 @@ import '../../l10n/gen/app_localizations.dart';
 import '../../ui/format.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
+import '../../native/platform_gateway.dart';
+import '../../ui/art.dart';
+import '../../ui/motion.dart';
 import '../actions/occurrence_actions.dart';
+import '../attachments/attachments.dart';
 import '../pickers/pickers.dart';
 import '../setup/permission_flow.dart';
 import '../../ui/icons.dart';
@@ -60,7 +64,11 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
   final _focus = FocusNode();
   final _example = Random().nextInt(5);
   ParseResult? _parsed;
-  String? _notes;
+  final _notes = TextEditingController();
+  bool _notesOpen = false;
+  List<Attachment> _attachments = const [];
+  bool _saved = false;
+  late final PlatformGateway? _platform = ref.read(servicesProvider).platform;
   Template? _template;
   bool _saving = false;
   bool _listening = false;
@@ -98,12 +106,22 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
     if (widget.text case final shared?) {
       final split = splitSharedText(shared); // CAP-12
       _input.text = split.input;
-      _notes = split.notes;
+      if (split.notes case final n?) {
+        _notes.text = n;
+        _notesOpen = true;
+      }
     }
   }
 
   @override
   void dispose() {
+    // ATT-6: files picked for a reminder that was never saved.
+    if (!_saved) {
+      for (final a in _attachments.where((a) => a.kind == AttachmentKind.file)) {
+        _platform?.deleteAttachment(a).catchError((_) {});
+      }
+    }
+    _notes.dispose();
     _input.dispose();
     _focus.dispose();
     super.dispose();
@@ -202,11 +220,17 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
         prefs: ref.read(prefsProvider),
         rawInput: _input.text.trim(), // CAP-8
       );
-      r = r.copyWith(notes: () => _notes, templateId: () => _template?.id);
+      final notes = _notes.text.trim();
+      r = r.copyWith(
+        notes: () => notes.isEmpty ? null : notes,
+        attachments: _attachments,
+        templateId: () => _template?.id,
+      );
       if (!r.completable && r.repeatMode == RecurrenceMode.afterCompletion) {
         r = r.copyWith(repeatMode: RecurrenceMode.fixed); // REC-10
       }
       await services.service.create(r);
+      _saved = true;
       navigator.pop();
       final when = r.timing.type == TimingType.date ? f.date(r.timing.start) : f.when(r.timing.start, allDay: false);
       messenger
@@ -331,6 +355,10 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                 children: [
                   Row(
                     children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: Space.m),
+                        child: _KindBadge(kind: p?.kind),
+                      ),
                       Expanded(
                         child: TextField(
                           controller: _input,
@@ -345,7 +373,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                           decoration: InputDecoration(
                             hintText: _placeholder(l10n),
                             border: InputBorder.none,
-                            contentPadding: const EdgeInsets.all(Space.l),
+                            contentPadding: const EdgeInsets.fromLTRB(Space.m, Space.l, Space.s, Space.l),
                           ),
                         ),
                       ),
@@ -394,7 +422,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                 ],
               ),
             ),
-            if (_notes != null && widget.text != null)
+            if (_notesOpen && widget.text != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(Space.l, Space.s, Space.l, 0),
                 child: Row(
@@ -410,131 +438,184 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                 padding: const EdgeInsets.only(top: Space.s),
                 child: Text(l10n.listening, style: text.bodySmall, textAlign: TextAlign.center),
               ),
-            // TPL-1: template chips while the input is empty.
-            if (p == null && _template == null) ...[
-              const SizedBox(height: Space.l),
-              Wrap(
-                spacing: Space.s,
-                runSpacing: Space.s,
-                children: [
-                  for (final t in Template.values)
-                    ActionChip(
-                      avatar: Icon(templateIcon(t), size: 18),
-                      label: Text(templateLabel(l10n, t)),
-                      onPressed: () => _setTemplate(t),
-                    ),
-                ],
-              ),
-            ],
-            if (p != null) ...[
-              if (_hint(p, l10n, f) case final hint?)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(Space.l, Space.s, Space.l, 0),
-                  child: Text(hint, style: text.bodySmall?.copyWith(color: c.warning)),
+            AnimatedSize(
+              duration: reduceMotion(context) ? Duration.zero : Motion.emphasized,
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child: AnimatedSwitcher(
+                duration: reduceMotion(context) ? Duration.zero : Motion.standard,
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                layoutBuilder: (current, previous) => Stack(
+                  alignment: Alignment.topCenter,
+                  children: [
+                    ...previous.map((w) => Positioned(left: 0, right: 0, top: 0, child: w)),
+                    ?current,
+                  ],
                 ),
-              GroupCaption(l10n.captureDetails, inset: Space.l),
-              InsetGroup(
-                margin: EdgeInsets.zero,
-                indent: 56,
-                children: [
-                  FormRow(
-                    icon: AppIcons.calendar,
-                    color: c.danger,
-                    label: l10n.rowDate,
-                    value: _date(p, f),
-                    flagged: p.flags.contains(ParseFlag.dateMissing) || p.flags.contains(ParseFlag.ambiguousDate),
-                    onTap: () async {
-                      final start = p.timing == null ? _nowWall : parseWall(p.timing!.start);
-                      final d = await pickDateTime(context, start, withTime: false);
-                      if (d != null) setState(() => _lockDate = d);
-                    },
-                  ),
-                  FormRow(
-                    icon: AppIcons.time,
-                    color: c.accent,
-                    label: l10n.rowTime,
-                    value: _time(p, l10n, f),
-                    flagged: p.flags.contains(ParseFlag.ambiguousTime) || p.flags.contains(ParseFlag.timeInPast),
-                    onTap: () => _pickTime(p),
-                  ),
-                  if (p.timing?.type == TimingType.datetime)
-                    FormRow(
-                      icon: AppIcons.timeZone,
-                      color: c.meeting,
-                      label: l10n.rowTimeZone,
-                      value: Fmt.city(p.timing!.tz ?? ref.read(prefsProvider).defaultTimeZone),
-                      onTap: () async {
-                        final z = await pickTimeZone(context, p.timing!.tz ?? ref.read(prefsProvider).defaultTimeZone);
-                        if (z != null) setState(() => _lockZone = z);
-                      },
-                    ),
-                  FormRow(
-                    icon: AppIcons.repeat,
-                    color: c.textSecondary,
-                    label: l10n.rowRepeat,
-                    value: f.repeat(p.rrule, p.repeatMode ?? RecurrenceMode.fixed),
-                    onTap: () async {
-                      final start = p.timing == null ? _nowWall : parseWall(p.timing!.start);
-                      final v = await pickRepeat(
-                        context,
-                        current: p.rrule,
-                        mode: p.repeatMode ?? RecurrenceMode.fixed,
-                        start: start,
-                        completable: p.kind == Kind.task || p.kind == Kind.occasion,
-                      );
-                      if (v != null) setState(() => _lockRepeat = v);
-                    },
-                  ),
-                  FormRow(
-                    icon: AppIcons.alert,
-                    color: c.purple,
-                    label: l10n.rowAlerts,
-                    value: f.alerts(_plan(p), allDay: p.timing?.type != TimingType.datetime),
-                    onTap: () async {
-                      final v = await pickAlerts(context, _plan(p));
-                      if (v != null) setState(() => _lockAlerts = v);
-                    },
-                  ),
-                  if (p.kind == Kind.task || p.kind == Kind.occasion)
-                    SwitchRow(
-                      icon: AppIcons.time,
-                      color: c.warning,
-                      label: l10n.rowNag,
-                      subtitle: _nagSubtitle(l10n, f),
-                      value: p.nag != null,
-                      onChanged: (v) => setState(() => _lockNag = v),
-                    ),
-                ],
+                child: p == null
+                    ? KeyedSubtree(key: const ValueKey('templates'), child: _templates(l10n))
+                    : KeyedSubtree(key: const ValueKey('details'), child: _details(context, p, l10n, f, c, text)),
               ),
-              if (_firstAlert(p, f) case final first?)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(Space.l, Space.s, Space.l, 0),
-                  child: Row(
-                    children: [
-                      Icon(AppIcons.alert, size: 16, color: c.textSecondary),
-                      const SizedBox(width: Space.s),
-                      Expanded(child: Text(first, style: text.bodySmall)),
-                    ],
-                  ),
-                ),
-              GroupCaption(l10n.fieldType, inset: Space.l),
-              SegmentedPills<Kind>(
-                items: [for (final k in Kind.values) (value: k, label: f.kind(k), dot: c.kind(k))],
-                selected: p.kind,
-                onChanged: (k) => setState(() => _lockKind = k),
-              ),
-              const SizedBox(height: Space.m),
-              SegmentedPills<ReminderContext>(
-                items: [for (final x in ReminderContext.values) (value: x, label: f.context(x), dot: null)],
-                selected: p.context,
-                onChanged: (x) => setState(() => _lockContext = x),
-              ),
-            ],
+            ),
           ],
         ),
       ),
     );
   }
+
+  /// TPL-1: template chips while the input is empty.
+  Widget _templates(AppLocalizations l10n) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      if (_template == null) ...[
+        const SizedBox(height: Space.l),
+        Wrap(
+          spacing: Space.s,
+          runSpacing: Space.s,
+          children: [
+            for (final t in Template.values)
+              ActionChip(
+                avatar: Icon(templateIcon(t), size: 18),
+                label: Text(templateLabel(l10n, t)),
+                onPressed: () => _setTemplate(t),
+              ),
+          ],
+        ),
+      ],
+    ],
+  );
+
+  /// Details, type and notes/attachments, each block sliding in after the one above it.
+  Widget _details(BuildContext context, ParseResult p, AppLocalizations l10n, Fmt f, AppColors c, TextTheme text) =>
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_hint(p, l10n, f) case final hint?)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(Space.l, Space.s, Space.l, 0),
+              child: Text(hint, style: text.bodySmall?.copyWith(color: c.warning)),
+            ),
+          GroupCaption(l10n.captureDetails, inset: Space.l),
+          FadeSlideIn(
+            index: 1,
+            child: InsetGroup(
+              margin: EdgeInsets.zero,
+              indent: 56,
+              children: [
+                FormRow(
+                  icon: AppIcons.calendar,
+                  color: c.danger,
+                  label: l10n.rowDate,
+                  value: _date(p, f),
+                  flagged: p.flags.contains(ParseFlag.dateMissing) || p.flags.contains(ParseFlag.ambiguousDate),
+                  onTap: () async {
+                    final start = p.timing == null ? _nowWall : parseWall(p.timing!.start);
+                    final d = await pickDateTime(context, start, withTime: false);
+                    if (d != null) setState(() => _lockDate = d);
+                  },
+                ),
+                FormRow(
+                  icon: AppIcons.time,
+                  color: c.accent,
+                  label: l10n.rowTime,
+                  value: _time(p, l10n, f),
+                  flagged: p.flags.contains(ParseFlag.ambiguousTime) || p.flags.contains(ParseFlag.timeInPast),
+                  onTap: () => _pickTime(p),
+                ),
+                if (p.timing?.type == TimingType.datetime)
+                  FormRow(
+                    icon: AppIcons.timeZone,
+                    color: c.meeting,
+                    label: l10n.rowTimeZone,
+                    value: Fmt.city(p.timing!.tz ?? ref.read(prefsProvider).defaultTimeZone),
+                    onTap: () async {
+                      final z = await pickTimeZone(context, p.timing!.tz ?? ref.read(prefsProvider).defaultTimeZone);
+                      if (z != null) setState(() => _lockZone = z);
+                    },
+                  ),
+                FormRow(
+                  icon: AppIcons.repeat,
+                  color: c.textSecondary,
+                  label: l10n.rowRepeat,
+                  value: f.repeat(p.rrule, p.repeatMode ?? RecurrenceMode.fixed),
+                  onTap: () async {
+                    final start = p.timing == null ? _nowWall : parseWall(p.timing!.start);
+                    final v = await pickRepeat(
+                      context,
+                      current: p.rrule,
+                      mode: p.repeatMode ?? RecurrenceMode.fixed,
+                      start: start,
+                      completable: p.kind == Kind.task || p.kind == Kind.occasion,
+                    );
+                    if (v != null) setState(() => _lockRepeat = v);
+                  },
+                ),
+                FormRow(
+                  icon: AppIcons.alert,
+                  color: c.purple,
+                  label: l10n.rowAlerts,
+                  value: f.alerts(_plan(p), allDay: p.timing?.type != TimingType.datetime),
+                  onTap: () async {
+                    final v = await pickAlerts(context, _plan(p));
+                    if (v != null) setState(() => _lockAlerts = v);
+                  },
+                ),
+                if (p.kind == Kind.task || p.kind == Kind.occasion)
+                  SwitchRow(
+                    icon: AppIcons.time,
+                    color: c.warning,
+                    label: l10n.rowNag,
+                    subtitle: _nagSubtitle(l10n, f),
+                    value: p.nag != null,
+                    onChanged: (v) => setState(() => _lockNag = v),
+                  ),
+              ],
+            ),
+          ),
+          if (_firstAlert(p, f) case final first?)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(Space.l, Space.s, Space.l, 0),
+              child: Row(
+                children: [
+                  Icon(AppIcons.alert, size: 16, color: c.textSecondary),
+                  const SizedBox(width: Space.s),
+                  Expanded(child: Text(first, style: text.bodySmall)),
+                ],
+              ),
+            ),
+          GroupCaption(l10n.fieldType, inset: Space.l),
+          FadeSlideIn(
+            index: 3,
+            child: Column(
+              children: [
+                SegmentedPills<Kind>(
+                  items: [for (final k in Kind.values) (value: k, label: f.kind(k), dot: c.kind(k))],
+                  selected: p.kind,
+                  onChanged: (k) => setState(() => _lockKind = k),
+                ),
+                const SizedBox(height: Space.m),
+                SegmentedPills<ReminderContext>(
+                  items: [for (final x in ReminderContext.values) (value: x, label: f.context(x), dot: null)],
+                  selected: p.context,
+                  onChanged: (x) => setState(() => _lockContext = x),
+                ),
+              ],
+            ),
+          ),
+          GroupCaption(l10n.attachTitle, inset: Space.l),
+          FadeSlideIn(
+            index: 5,
+            child: AttachmentsEditor(
+              notes: _notes,
+              notesOpen: _notesOpen,
+              onOpenNotes: () => setState(() => _notesOpen = true),
+              attachments: _attachments,
+              onChanged: (v) => setState(() => _attachments = v),
+            ),
+          ),
+        ],
+      );
 
   Future<void> _pickTime(ParseResult p) async {
     final t = p.timing;
@@ -609,5 +690,29 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
     final start = f.time(parseWall(t.start));
     final end = t.end == null ? '' : ' – ${f.time(parseWall(t.end!))}';
     return '$start$end';
+  }
+}
+
+/// The input card's type badge: a sparkle while empty, then the parsed type's icon in its color,
+/// popping when the type changes (DS15).
+class _KindBadge extends StatelessWidget {
+  const _KindBadge({required this.kind});
+  final Kind? kind;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final k = kind;
+    return AnimatedSwitcher(
+      duration: reduceMotion(context) ? Duration.zero : Motion.standard,
+      switchInCurve: Curves.easeOutBack,
+      transitionBuilder: (child, a) => ScaleTransition(
+        scale: a,
+        child: FadeTransition(opacity: a, child: child),
+      ),
+      child: k == null
+          ? GlyphBadge(key: const ValueKey('none'), icon: AppIcons.sparkle, color: c.accent, size: 34)
+          : GlyphBadge(key: ValueKey(k), icon: kindIcon(k), color: c.kind(k), size: 34),
+    );
   }
 }

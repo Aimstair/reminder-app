@@ -9,6 +9,7 @@ import 'package:reminder_core/reminder_core.dart';
 import '../../app/providers.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../../ui/bell.dart';
+import '../../ui/art.dart';
 import '../../ui/format.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
@@ -50,6 +51,13 @@ class _CompletedPageState extends ConsumerState<CompletedPage> {
           : ListView(
               padding: const EdgeInsets.only(bottom: Space.xxxl),
               children: [
+                if (occs.isNotEmpty)
+                  PageHero(
+                    icon: AppIcons.trophy,
+                    color: c.success,
+                    title: l10n.completedCount(occs.length),
+                    caption: l10n.heroCompleted,
+                  ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(Space.l, 0, Space.l, Space.s),
                   child: TextField(

@@ -1,4 +1,5 @@
-/// S-22 Full editor: title, notes, date/time/end, zone, type, context, repeat, alerts, nag until done.
+/// S-22 Full editor: type badge, title, date/time/end, zone, type, context, repeat, alerts, nag until
+/// done, and notes, links & files (ATT-1).
 /// Saving a repeating reminder asks "This one / This and future" (REC-11, S-34).
 library;
 
@@ -11,14 +12,21 @@ import '../../l10n/gen/app_localizations.dart';
 import '../../ui/format.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
+import '../../native/platform_gateway.dart';
+import '../../ui/art.dart';
+import '../../ui/motion.dart';
 import '../actions/occurrence_actions.dart';
+import '../attachments/attachments.dart';
 import '../pickers/pickers.dart';
 import '../../ui/icons.dart';
 
 /// Opens the editor for occurrence [key] of [r] and saves the result.
 Future<void> openEditor(BuildContext context, WidgetRef ref, Reminder r, DateTime key) async {
   final edited = await Navigator.of(context).push<Reminder>(
-    MaterialPageRoute(fullscreenDialog: true, builder: (_) => EditorPage(reminder: r, occurrenceKey: key)),
+    MaterialPageRoute(
+      fullscreenDialog: true,
+      builder: (_) => EditorPage(reminder: r, occurrenceKey: key),
+    ),
   );
   if (edited == null || !context.mounted) return;
   final s = ref.read(servicesProvider);
@@ -31,7 +39,9 @@ Future<void> openEditor(BuildContext context, WidgetRef ref, Reminder r, DateTim
     var e = edited;
     final s0 = e.source;
     if (s0 is ContactSource && e.timing.start != r.timing.start) {
-      e = e.copyWith(source: ContactSource(contactId: s0.contactId, field: s0.field, userEditedDate: true)); // CON-6
+      e = e.copyWith(
+        source: ContactSource(contactId: s0.contactId, field: s0.field, userEditedDate: true),
+      ); // CON-6
     }
     await s.service.edit(e);
   }
@@ -60,9 +70,20 @@ class _EditorPageState extends ConsumerState<EditorPage> {
   late RecurrenceMode _mode = widget.reminder.repeatMode;
   late List<AlertStage> _alerts = widget.reminder.alertPlan;
   late Duration? _nag = widget.reminder.nagInterval;
+  late List<Attachment> _attachments = widget.reminder.attachments;
+  late final PlatformGateway? _platform = ref.read(servicesProvider).platform;
+  bool _saved = false;
 
   @override
   void dispose() {
+    // ATT-6: files picked here but not saved. Removed files stay on disk: a split series may share them.
+    if (!_saved) {
+      for (final a in _attachments) {
+        if (a.kind == AttachmentKind.file && !widget.reminder.attachments.contains(a)) {
+          _platform?.deleteAttachment(a).catchError((_) {});
+        }
+      }
+    }
     _title.dispose();
     _notes.dispose();
     super.dispose();
@@ -76,6 +97,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     return widget.reminder.copyWith(
       title: _title.text.trim(),
       notes: () => _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+      attachments: _attachments,
       kind: _kind,
       context: _context,
       timing: Timing(
@@ -108,7 +130,12 @@ class _EditorPageState extends ConsumerState<EditorPage> {
         centerTitle: true,
         actions: [
           TextButton(
-            onPressed: valid ? () => Navigator.pop(context, _build()) : null,
+            onPressed: valid
+                ? () {
+                    _saved = true;
+                    Navigator.pop(context, _build());
+                  }
+                : null,
             child: Text(l10n.actionSave, style: const TextStyle(fontWeight: FontWeight.w600)),
           ),
         ],
@@ -118,7 +145,17 @@ class _EditorPageState extends ConsumerState<EditorPage> {
         child: ListView(
           padding: const EdgeInsets.only(bottom: Space.xxxl),
           children: [
-            const SizedBox(height: Space.s),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(top: Space.s, bottom: Space.l),
+                child: AnimatedSwitcher(
+                  duration: reduceMotion(context) ? Duration.zero : Motion.standard,
+                  switchInCurve: Curves.easeOutBack,
+                  transitionBuilder: (child, a) => ScaleTransition(scale: a, child: child),
+                  child: GlyphBadge(key: ValueKey(_kind), icon: kindIcon(_kind), color: c.kind(_kind), size: 64),
+                ),
+              ),
+            ),
             InsetGroup(
               indent: Space.l,
               children: [
@@ -129,17 +166,6 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     hintText: l10n.fieldTitle,
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.all(Space.l),
-                  ),
-                ),
-                TextField(
-                  controller: _notes,
-                  minLines: 2,
-                  maxLines: 6,
-                  style: text.bodyLarge,
-                  decoration: InputDecoration(
-                    hintText: l10n.fieldNotes,
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.all(Space.l),
                   ),
@@ -215,7 +241,13 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                   label: l10n.rowRepeat,
                   value: f.repeat(_rrule, _mode),
                   onTap: () async {
-                    final v = await pickRepeat(context, current: _rrule, mode: _mode, start: _start, completable: _completable);
+                    final v = await pickRepeat(
+                      context,
+                      current: _rrule,
+                      mode: _mode,
+                      start: _start,
+                      completable: _completable,
+                    );
                     if (v != null) setState(() => (_rrule = v.rrule, _mode = v.mode));
                   },
                 ),
@@ -245,23 +277,28 @@ class _EditorPageState extends ConsumerState<EditorPage> {
             GroupCaption(l10n.fieldType),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: Space.l),
-              child: SegmentedButton<Kind>(
-                showSelectedIcon: false,
-                segments: [for (final k in Kind.values) ButtonSegment(value: k, label: Text(f.kind(k)))],
-                selected: {_kind},
-                onSelectionChanged: (s) => setState(() => _kind = s.first),
+              child: SegmentedPills<Kind>(
+                items: [for (final k in Kind.values) (value: k, label: f.kind(k), dot: c.kind(k))],
+                selected: _kind,
+                onChanged: (k) => setState(() => _kind = k),
               ),
             ),
             const SizedBox(height: Space.m),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: Space.l),
-              child: SegmentedButton<ReminderContext>(
-                showSelectedIcon: false,
-                segments: [
-                  for (final x in ReminderContext.values) ButtonSegment(value: x, label: Text(f.context(x))),
-                ],
-                selected: {_context},
-                onSelectionChanged: (s) => setState(() => _context = s.first),
+              child: SegmentedPills<ReminderContext>(
+                items: [for (final x in ReminderContext.values) (value: x, label: f.context(x), dot: null)],
+                selected: _context,
+                onChanged: (x) => setState(() => _context = x),
+              ),
+            ),
+            GroupCaption(l10n.attachTitle),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Space.l),
+              child: AttachmentsEditor(
+                notes: _notes,
+                attachments: _attachments,
+                onChanged: (v) => setState(() => _attachments = v),
               ),
             ),
           ],

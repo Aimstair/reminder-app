@@ -146,6 +146,10 @@ Placeholders: *Whose birthday? When?* · *Which bill? Due on the…* · *What re
 
 **Shared text (CAP-12):** under the input when links or long text went to notes — "Shared text and links saved in notes"
 
+**Notes, links & files (ATT, S-20 / S-22 / S-30):** caption *Notes, links & files* · rows **Add note** · **Add link** · **Add file** · remove button "Remove".
+Add link dialog: title *Add link* · fields *Link* (hint *example.com*) and *Title (optional)* · buttons Cancel / Add. A link without a title shows its site ("example.com").
+Files show their name and size ("240 KB", "1.2 MB"). Tapping a link opens the browser; tapping a file opens it in another app.
+
 ## 5. Home, views & lists (S-10 – S-18)
 
 **Group headers:** Overdue · Today · Tomorrow · This week · Later · {Month Year}
@@ -254,6 +258,9 @@ Calendars section is collapsed by default; when some are filtered out it shows "
 
 **Reliability screen (S-57):** Notifications — On / Off · Precise timing — On / Off · Battery optimization — Off / On (may delay reminders) — each with **Fix**.
 
+**Page headers (DS15):** each settings page opens with its icon and one line —
+Settings: "Private by design. Everything stays on this phone." · Your schedule: "When your day starts, when nagging stops, and what “tomorrow” means." · Time zone: "Reminders keep their local time, wherever you are." · Default alerts: "Alerts new reminders start with, by type." · Notifications: "Your daily summary, and alerts that arrive while the phone was off." · Calendars & contacts: "See calendar events next to your reminders, and never miss a birthday." · Views: "Choose how the app looks and where it opens." · Reliability: "Make sure reminders ring on time, even when the phone sleeps." · Backup: "Save your reminders to a file, or bring them back." · Completed: "{n} done" + "Everything you've finished, newest first." · Search (before typing): "Find any reminder by its name or notes."
+
 **Backup & about (S-58)** also lists **Open-source licences** (standard licences page; required for Inter's OFL).
 
 **Send feedback (S-58):** opens an email to aimteralabs@gmail.com. Subject: "Reminder App feedback ({version})" · Body: "Tell us what happened or what you'd like to see:" + blank lines + footer "App {version} · {device}". Never includes reminder content. No mail app: "No email app found. Write to us at {email}."
@@ -268,6 +275,11 @@ Calendars section is collapsed by default; when some are filtered out it shows "
 | Didn't catch speech | Didn't catch that. Try again? |
 | Save failed (storage) | Couldn't save. Please try again. |
 | Calendar read failed | Couldn't load your calendar. Pull to retry. |
+| Link not valid (ATT-2) | That doesn't look like a link. Check it and try again. |
+| Link won't open (ATT-4) | Couldn't open this link. |
+| No app for a file (ATT-4) | No app on this phone can open this file. |
+| File too big (ATT-3) | Files can be up to 50 MB. |
+| File copy failed (ATT-3) | Couldn't add this file. Please try again. |
 | Generic | Something went wrong. Please try again. |
 
 Error messages never blame the user, never show codes, and always say what to do next.

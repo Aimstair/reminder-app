@@ -262,6 +262,67 @@ class DeviceEvent {
   }
 }
 
+/// ATT-3: a file the user picked, copied into app storage.
+class PickedFile {
+  PickedFile({
+    required this.path,
+    required this.name,
+    required this.size,
+    this.mime,
+  });
+
+  String path;
+
+  String name;
+
+  int size;
+
+  String? mime;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      path,
+      name,
+      size,
+      mime,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static PickedFile decode(Object result) {
+    result as List<Object?>;
+    return PickedFile(
+      path: result[0]! as String,
+      name: result[1]! as String,
+      size: result[2]! as int,
+      mime: result[3] as String?,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! PickedFile || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(path, other.path) && _deepEquals(name, other.name) && _deepEquals(size, other.size) && _deepEquals(mime, other.mime);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'PickedFile(path: $path, name: $name, size: $size, mime: $mime)';
+  }
+}
+
 
 class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
@@ -276,6 +337,9 @@ class _PigeonCodec extends StandardMessageCodec {
     }    else if (value is DeviceEvent) {
       buffer.putUint8(130);
       writeValue(buffer, value.encode());
+    }    else if (value is PickedFile) {
+      buffer.putUint8(131);
+      writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
     }
@@ -288,6 +352,8 @@ class _PigeonCodec extends StandardMessageCodec {
         return DeviceCalendar.decode(readValue(buffer)!);
       case 130:
         return DeviceEvent.decode(readValue(buffer)!);
+      case 131:
+        return PickedFile.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }
@@ -524,6 +590,65 @@ class PlatformHostApi {
     )
     ;
     return pigeonVar_replyValue! as String;
+  }
+
+  /// ATT-3: pick any file and copy it into app storage; null if cancelled.
+  Future<PickedFile?> pickAttachment() async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.reminder_app.PlatformHostApi.pickAttachment$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+    return pigeonVar_replyValue as PickedFile?;
+  }
+
+  /// ATT-4: open a stored file in another app; false when no app can open it or it's gone.
+  Future<bool> openAttachment(String path, String? mime) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.reminder_app.PlatformHostApi.openAttachment$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[path, mime]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as bool;
+  }
+
+  /// ATT-6: remove a stored file (attachment removed in the editor).
+  Future<void> deleteAttachment(String path) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.reminder_app.PlatformHostApi.deleteAttachment$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[path]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
   }
 
   /// Opens the system share sheet with [text] (All clear "share", mockup 10). Only what the user sees.

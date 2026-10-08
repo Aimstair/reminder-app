@@ -60,6 +60,15 @@ class DeviceEvent {
   int otherAttendees;
 }
 
+/// ATT-3: a file the user picked, copied into app storage.
+class PickedFile {
+  PickedFile({required this.path, required this.name, required this.size, this.mime});
+  String path;
+  String name;
+  int size;
+  String? mime;
+}
+
 @HostApi()
 abstract class PlatformHostApi {
   bool hasCalendarPermission();
@@ -93,6 +102,16 @@ abstract class PlatformHostApi {
 
   /// S-58 feedback email footer: "samsung SM-A736B · Android 15 (API 35)". Device info only.
   String deviceInfo();
+
+  /// ATT-3: pick any file and copy it into app storage; null if cancelled.
+  @async
+  PickedFile? pickAttachment();
+
+  /// ATT-4: open a stored file in another app; false when no app can open it or it's gone.
+  bool openAttachment(String path, String? mime);
+
+  /// ATT-6: remove a stored file (attachment removed in the editor).
+  void deleteAttachment(String path);
 
   /// Opens the system share sheet with [text] (All clear "share", mockup 10). Only what the user sees.
   void shareText(String text);

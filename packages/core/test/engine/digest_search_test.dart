@@ -51,4 +51,16 @@ void main() {
     expect(searchReminders(list, 'cafe ana').map((r) => r.title), ['Café with Ana']);
     expect(searchReminders(list, '  '), isEmpty);
   });
+
+  test('ATT-1 search finds a reminder by a link or file name', () {
+    final r = _r('Trip', Kind.event, DateTime.utc(2026, 10, 9)).copyWith(
+      attachments: [
+        Attachment.link('airline.com/booking', name: 'Boarding pass'),
+        const Attachment(kind: AttachmentKind.file, uri: '/x', name: 'Hotel-voucher.pdf'),
+      ],
+    );
+    expect(searchReminders([r], 'boarding'), [r]);
+    expect(searchReminders([r], 'voucher'), [r]);
+    expect(searchReminders([r], 'airline'), isEmpty, reason: 'names only, not addresses');
+  });
 }

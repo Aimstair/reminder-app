@@ -18,6 +18,7 @@ import '../../ui/motion.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
 import '../actions/occurrence_actions.dart';
+import '../attachments/attachments.dart';
 import '../editor/editor_page.dart';
 import '../pickers/pickers.dart' show pickAlerts;
 
@@ -174,7 +175,14 @@ class DetailPage extends ConsumerWidget {
             ),
           if ((r.notes ?? '').isNotEmpty)
             SliverToBoxAdapter(
-              child: _InfoCard(icon: AppIcons.chat, text: r.notes!, selectable: true),
+              child: _InfoCard(icon: AppIcons.notes, text: r.notes!, links: true), // ATT-5
+            ),
+          if (r.attachments.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(Space.l, 0, Space.l, Space.m),
+                child: AttachmentList(attachments: r.attachments), // ATT-4
+              ),
             ),
           if (r.source is ContactSource)
             SliverToBoxAdapter(
@@ -629,10 +637,12 @@ class _Card extends StatelessWidget {
 
 /// Icon + text card (notes, time zone note, calendar source).
 class _InfoCard extends StatelessWidget {
-  const _InfoCard({required this.icon, required this.text, this.selectable = false});
+  const _InfoCard({required this.icon, required this.text, this.links = false});
   final IconData icon;
   final String text;
-  final bool selectable;
+
+  /// Notes: selectable, with tappable web links (ATT-5).
+  final bool links;
 
   @override
   Widget build(BuildContext context) {
@@ -645,7 +655,7 @@ class _InfoCard extends StatelessWidget {
           Icon(icon, color: c.textSecondary),
           const SizedBox(width: Space.m),
           Expanded(
-            child: selectable ? SelectableText(text, style: style) : Text(text, style: style),
+            child: links ? LinkifiedText(text, style: style) : Text(text, style: style),
           ),
         ],
       ),

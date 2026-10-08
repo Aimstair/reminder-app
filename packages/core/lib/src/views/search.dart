@@ -1,4 +1,4 @@
-/// Local search (S-40): title and notes, active and archived, case- and accent-insensitive.
+/// Local search (S-40): title, notes and attachment names, active and archived, case- and accent-insensitive.
 library;
 
 import '../model/reminder.dart';
@@ -22,7 +22,7 @@ List<Reminder> searchReminders(Iterable<Reminder> reminders, String query) {
   for (final r in reminders) {
     if (r.meta.isDeleted) continue;
     final title = _fold(r.title);
-    final all = '$title ${_fold(r.notes ?? '')}';
+    final all = '$title ${_fold(r.notes ?? '')} ${_fold(r.attachments.map((a) => a.name).join(' '))}'; // ATT-1
     if (words.every(all.contains)) hits.add((r, words.every(title.contains)));
   }
   hits.sort((a, b) {

@@ -2577,6 +2577,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tomorrow'**
   String get obCard4Sub;
+
+  /// copy.md §4 Links & files (ATT)
+  ///
+  /// In en, this message translates to:
+  /// **'Notes, links & files'**
+  String get attachTitle;
+
+  /// copy.md §4 Links & files (ATT)
+  ///
+  /// In en, this message translates to:
+  /// **'Add note'**
+  String get actionAddNote;
+
+  /// copy.md §4 Links & files (ATT)
+  ///
+  /// In en, this message translates to:
+  /// **'Add link'**
+  String get actionAddLink;
+
+  /// copy.md §4 Links & files (ATT)
+  ///
+  /// In en, this message translates to:
+  /// **'Add file'**
+  String get actionAddFile;
+
+  /// copy.md §4 Links & files (ATT)
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get actionRemove;
+
+  /// copy.md §4 Links & files (ATT)
+  ///
+  /// In en, this message translates to:
+  /// **'Add link'**
+  String get linkDialogTitle;
+
+  /// copy.md §4 Links & files (ATT)
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get linkFieldUrl;
+
+  /// copy.md §4 Links & files (ATT)
+  ///
+  /// In en, this message translates to:
+  /// **'example.com'**
+  String get linkFieldUrlHint;
+
+  /// copy.md §4 Links & files (ATT)
+  ///
+  /// In en, this message translates to:
+  /// **'Title (optional)'**
+  String get linkFieldName;
+
+  /// copy.md §9 Errors (ATT-2)
+  ///
+  /// In en, this message translates to:
+  /// **'That doesn\'t look like a link. Check it and try again.'**
+  String get errBadLink;
+
+  /// copy.md §9 Errors (ATT-4)
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open this link.'**
+  String get errOpenLink;
+
+  /// copy.md §9 Errors (ATT-4)
+  ///
+  /// In en, this message translates to:
+  /// **'No app on this phone can open this file.'**
+  String get errNoAppForFile;
+
+  /// copy.md §9 Errors (ATT-3)
+  ///
+  /// In en, this message translates to:
+  /// **'Files can be up to 50 MB.'**
+  String get errFileTooLarge;
+
+  /// copy.md §9 Errors (ATT-3)
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t add this file. Please try again.'**
+  String get errAttach;
+
+  /// copy.md §4 file size
+  ///
+  /// In en, this message translates to:
+  /// **'{n} KB'**
+  String sizeKb(String n);
+
+  /// copy.md §4 file size
+  ///
+  /// In en, this message translates to:
+  /// **'{n} MB'**
+  String sizeMb(String n);
+
+  /// copy.md §8 Settings header
+  ///
+  /// In en, this message translates to:
+  /// **'Private by design. Everything stays on this phone.'**
+  String get settingsHeaderSub;
+
+  /// copy.md §8 page header
+  ///
+  /// In en, this message translates to:
+  /// **'When your day starts, when nagging stops, and what “tomorrow” means.'**
+  String get heroSchedule;
+
+  /// copy.md §8 page header
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders keep their local time, wherever you are.'**
+  String get heroTimeZone;
+
+  /// copy.md §8 page header
+  ///
+  /// In en, this message translates to:
+  /// **'Your daily summary, and alerts that arrive while the phone was off.'**
+  String get heroNotifications;
+
+  /// copy.md §8 page header
+  ///
+  /// In en, this message translates to:
+  /// **'See calendar events next to your reminders, and never miss a birthday.'**
+  String get heroCalendars;
+
+  /// copy.md §8 page header
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how the app looks and where it opens.'**
+  String get heroViews;
+
+  /// copy.md §8 page header
+  ///
+  /// In en, this message translates to:
+  /// **'Make sure reminders ring on time, even when the phone sleeps.'**
+  String get heroReliability;
+
+  /// copy.md §8 page header
+  ///
+  /// In en, this message translates to:
+  /// **'Save your reminders to a file, or bring them back.'**
+  String get heroBackup;
+
+  /// copy.md §5 Completed header
+  ///
+  /// In en, this message translates to:
+  /// **'Everything you\'ve finished, newest first.'**
+  String get heroCompleted;
+
+  /// copy.md §5 Completed header
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{1 done} other{{n} done}}'**
+  String completedCount(int n);
+
+  /// copy.md §5 Search header
+  ///
+  /// In en, this message translates to:
+  /// **'Find any reminder by its name or notes.'**
+  String get searchHero;
 }
 
 class _AppLocalizationsDelegate

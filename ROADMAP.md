@@ -212,7 +212,7 @@ Accounts, cloud sync, email, LLM parsing, templates, iOS, web.
 - **Testing:** every phase adds automated tests for its core logic; every alarm/notification change is tested on the real device matrix
 - **Feedback:** in-app feedback link from v1.0; review requests at v1.1 onward
 - **Analytics (privacy-respecting):** capture time, alert delivery, snooze/done rates, retention — no reminder content collected
-- **Cut list stays cut** unless users ask repeatedly: location triggers, messenger channels, attachments/subtasks
+- **Cut list stays cut** unless users ask repeatedly: location triggers, messenger channels, subtasks. *(Attachments — links and files — moved into v1.0 on 2026-10-08 at the user's request: `ATT-*` in behavior-spec.md.)*
 
 ## Key Dependencies
 

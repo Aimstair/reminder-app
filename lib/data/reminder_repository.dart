@@ -113,6 +113,7 @@ class ReminderRepository {
     meta: meta,
     title: r.title,
     notes: r.notes,
+    attachments: r.attachments,
     rawInput: r.rawInput,
     kind: r.kind,
     context: r.context,
@@ -136,6 +137,7 @@ class ReminderRepository {
     deletedAt: r.meta.deletedAt,
     title: r.title,
     notes: r.notes,
+    attachments: r.attachments.isEmpty ? null : jsonEncode(r.attachments.map((a) => a.toJson()).toList()),
     rawInput: r.rawInput,
     kind: r.kind,
     context: r.context,
@@ -164,6 +166,9 @@ class ReminderRepository {
     ),
     title: row.title,
     notes: row.notes,
+    attachments: row.attachments == null
+        ? const []
+        : (jsonDecode(row.attachments!) as List).map((j) => Attachment.fromJson((j as Map).cast())).toList(),
     rawInput: row.rawInput,
     kind: row.kind,
     context: row.context,

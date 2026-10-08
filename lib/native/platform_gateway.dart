@@ -75,7 +75,10 @@ class PlatformGateway implements PlatformFlutterApi {
   }) async {
     if (calendarIds.isEmpty) return const [];
     final cals = await _api.readCalendars();
-    final birthdays = {for (final c in cals) if (c.isBirthdays) c.id};
+    final birthdays = {
+      for (final c in cals)
+        if (c.isBirthdays) c.id,
+    };
     final raw = await _api.readEvents(from.millisecondsSinceEpoch, to.millisecondsSinceEpoch, calendarIds.toList());
     return [for (final e in raw) calendarEventFrom(e, fromBirthdayCalendar: birthdays.contains(e.calendarId))];
   }
@@ -93,4 +96,16 @@ class PlatformGateway implements PlatformFlutterApi {
   Future<String> deviceBrand() => _api.deviceBrand();
   Future<String> deviceInfo() => _api.deviceInfo();
   Future<void> shareText(String text) => _api.shareText(text);
+
+  // ---- attachments (ATT-3…ATT-6) ----
+
+  /// Null if cancelled. Throws [PlatformException] `too_large` for files over 50 MB.
+  Future<Attachment?> pickAttachment() async {
+    final f = await _api.pickAttachment();
+    if (f == null) return null;
+    return Attachment(kind: AttachmentKind.file, uri: f.path, name: f.name, mime: f.mime, size: f.size);
+  }
+
+  Future<bool> openAttachment(Attachment a) => _api.openAttachment(a.uri, a.mime);
+  Future<void> deleteAttachment(Attachment a) => _api.deleteAttachment(a.uri);
 }

@@ -108,16 +108,16 @@ The home screen can show reminders in several **views**, switched from the top b
 
 | ID | Screen | Contents | Actions → |
 |---|---|---|---|
-| S-20 | **Capture sheet** | iOS-form layout: **Cancel · New Reminder · Save** bar · input card (text + 🎤 voice + removable template tag) · **template row when input is empty** (`TPL-1`) · grouped **Details** rows parsed from the text — Date, Time, Repeat, Alerts (colored icon, value, chevron; flagged values in warning style) · **Nag until done** switch · one-line "first alert" summary · **Type** and **Personal/Work** segmented controls. While typing, rows update live; the keyboard collapses to review | Row → S-21 picker · Save / Enter → closes + snackbar |
+| S-20 | **Capture sheet** | iOS-form layout: **Cancel · New Reminder · Save** bar · input card (text + 🎤 voice + removable template tag) · **template row when input is empty** (`TPL-1`) · grouped **Details** rows parsed from the text — Date, Time, Repeat, Alerts (colored icon, value, chevron; flagged values in warning style) · **Nag until done** switch · one-line "first alert" summary · **Type** and **Personal/Work** segmented controls · **Notes, links & files** group (Add note · Add link · Add file, `ATT-*`). A type badge left of the input shows the parsed type; the details slide in as the sheet grows (DS15). While typing, rows update live; the keyboard collapses to review | Row → S-21 picker · Save / Enter → closes + snackbar |
 | S-21 | **Chip pickers** (small sheets) | a Date · b Time (+ end time) · c Time zone · d Type · e Context · f Repeat (incl. "after completion") · g Alerts (stages, start-by, nag) | Done → back to S-20 (field locked, `CAP-11`) |
-| S-22 | **Full editor** | All fields: title, notes, date/time/end, zone, type, context, repeat, alerts, nag until done | **[Save]** · ⤷ recurring → S-34 |
+| S-22 | **Full editor** | Type badge, then all fields: title, date/time/end, zone, type, context, repeat, alerts, nag until done, notes, links & files (`ATT-*`) | **[Save]** · ⤷ recurring → S-34 |
 | S-23 | **Overlay capture host** | S-20 shown over the home screen / current app (widget, tile, share) | Save/close → back to where the user was |
 
 ### Details & actions
 
 | ID | Screen | Contents | Actions → |
 |---|---|---|---|
-| S-30 | **Reminder detail** | Title, type/context chips, when (+ original zone if different), repeat summary, alert plan, notes, occurrence state, merge banner if duplicate (`CAL-9`) | **[Done]** / **[I'm prepared]** · **[Reschedule]** → S-33 · **[Skip]** · **[Edit]** → S-22 · **[Delete]** |
+| S-30 | **Reminder detail** | Title, type/context chips, when (+ original zone if different), repeat summary, alert plan, notes (links tappable, `ATT-5`), links & files (tap to open, `ATT-4`), occurrence state, merge banner if duplicate (`CAL-9`) | **[Done]** / **[I'm prepared]** · **[Reschedule]** → S-33 · **[Skip]** · **[Edit]** → S-22 · **[Delete]** |
 | S-31 | **Calendar event detail** | Title, time, calendar name/color, attendee count, type chip (changeable, `CAL-5`), alerts if set | **[Remind me]** → S-32 · type chip → S-21d |
 | S-32 | **Remind me picker** | Presets: 10 min, 1 hour, 1 day before, Custom; multi-select | **[Save]** → ⤷ series → S-34 |
 | S-33 | **Reschedule sheet** | Later today · This evening · Tomorrow · Next week · Pick date & time | Tap → saved, sheet closes |

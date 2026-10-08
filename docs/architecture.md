@@ -119,7 +119,7 @@ Derived from `reminder-app-concept.md` and `behavior-spec.md`. Every app table h
 
 | Table | Key columns |
 |---|---|
-| `reminders` | title, notes, raw_input, kind, context, timing_type, start_local, end_local, tz (null for date), tz_set_manually, rrule, repeat_mode, alert_plan (JSON), nag_interval, completable, source (JSON: manual / device_calendar / contact), template_id, status |
+| `reminders` | title, notes, attachments (JSON list: kind link/file, uri, name, mime, size — `ATT-1`; schema v2), raw_input, kind, context, timing_type, start_local, end_local, tz (null for date), tz_set_manually, rrule, repeat_mode, alert_plan (JSON), nag_interval, completable, source (JSON: manual / device_calendar / contact), template_id, status |
 | `occurrences` | reminder_id, occurrence_key (original start), state, override_start/end, override_alert_plan, snoozed_until, resolved_at, alerts_sent (JSON of stage keys) |
 | `calendar_overlays` | calendar_id, event_id, series_id, alert_plan, kind_override, context_override, scope (event/series), orphaned_at |
 | `prefs` | key, value (JSON) — all `PRF-*` settings |
@@ -155,6 +155,7 @@ Derived from `reminder-app-concept.md` and `behavior-spec.md`. Every app table h
 | `scheduleTest()` / `getTestResult()` | Test reminder (`PRM-7`) |
 | `getFireLog(since)` | Delivery metrics |
 | `readCalendars()` / `readEvents(range, calendarIds)` | Device calendar import (`CAL-*`) |
+| `pickAttachment()` / `openAttachment(path, mime)` / `deleteAttachment(path)` | Files on reminders (`ATT-3`/`ATT-4`/`ATT-6`): system picker → copy to `files/attachments/<uuid>/`; open via a read-only `FileProvider` URI. Links open with `url_launcher`. |
 
 **Native responsibilities**
 - Register alarms with `AlarmManager` exact APIs when allowed; fall back to inexact windows (`SCH-9`).

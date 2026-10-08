@@ -351,7 +351,12 @@ class _Run {
 
   void _ranges() {
     // PRS-13
-    final r = _take(RegExp(r'\b(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?\s*[-–]\s*(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)\b'));
+    final r = _take(
+      RegExp(
+        r'\b(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?(?:\s*[-–]\s*|\s+(?:to|until|till|through)\s+)'
+        r'(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)\b',
+      ),
+    );
     if (r.isNotEmpty) {
       final m = r.first;
       final em = m.group(6)!;

@@ -31,6 +31,29 @@ void main() {
     expect(tester.takeException(), isNull, reason: 'long values truncate instead of overflowing');
   });
 
+  testWidgets('DS15 segmented control: labels sit in the middle of their segment', (tester) async {
+    await tester.pumpWidget(
+      _app(
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: SegmentedPills<int>(
+            items: const [(value: 0, label: 'Personal', dot: null), (value: 1, label: 'Work', dot: null)],
+            selected: 0,
+            onChanged: (_) {},
+          ),
+        ),
+      ),
+    );
+    final track = tester.getRect(find.byType(SegmentedPills<int>));
+    for (final label in ['Personal', 'Work']) {
+      final r = tester.getRect(find.text(label));
+      expect(r.center.dy, closeTo(track.center.dy, 1), reason: '$label vertically centered');
+    }
+    final half = track.width / 2;
+    expect(tester.getRect(find.text('Personal')).center.dx, closeTo(track.left + half / 2, 1));
+    expect(tester.getRect(find.text('Work')).center.dx, closeTo(track.left + half * 1.5, 1));
+  });
+
   testWidgets('DS14 section header: the trailing note sits on the right edge', (tester) async {
     await tester.pumpWidget(_app(const SectionHeader('Overdue', count: 2, trailing: Text('Nagging'))));
     final screen = tester.getSize(find.byType(Scaffold)).width;

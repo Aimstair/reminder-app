@@ -1547,4 +1547,104 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get obCard4Sub => 'Tomorrow';
+
+  @override
+  String get attachTitle => 'Notes, links & files';
+
+  @override
+  String get actionAddNote => 'Add note';
+
+  @override
+  String get actionAddLink => 'Add link';
+
+  @override
+  String get actionAddFile => 'Add file';
+
+  @override
+  String get actionRemove => 'Remove';
+
+  @override
+  String get linkDialogTitle => 'Add link';
+
+  @override
+  String get linkFieldUrl => 'Link';
+
+  @override
+  String get linkFieldUrlHint => 'example.com';
+
+  @override
+  String get linkFieldName => 'Title (optional)';
+
+  @override
+  String get errBadLink =>
+      'That doesn\'t look like a link. Check it and try again.';
+
+  @override
+  String get errOpenLink => 'Couldn\'t open this link.';
+
+  @override
+  String get errNoAppForFile => 'No app on this phone can open this file.';
+
+  @override
+  String get errFileTooLarge => 'Files can be up to 50 MB.';
+
+  @override
+  String get errAttach => 'Couldn\'t add this file. Please try again.';
+
+  @override
+  String sizeKb(String n) {
+    return '$n KB';
+  }
+
+  @override
+  String sizeMb(String n) {
+    return '$n MB';
+  }
+
+  @override
+  String get settingsHeaderSub =>
+      'Private by design. Everything stays on this phone.';
+
+  @override
+  String get heroSchedule =>
+      'When your day starts, when nagging stops, and what “tomorrow” means.';
+
+  @override
+  String get heroTimeZone =>
+      'Reminders keep their local time, wherever you are.';
+
+  @override
+  String get heroNotifications =>
+      'Your daily summary, and alerts that arrive while the phone was off.';
+
+  @override
+  String get heroCalendars =>
+      'See calendar events next to your reminders, and never miss a birthday.';
+
+  @override
+  String get heroViews => 'Choose how the app looks and where it opens.';
+
+  @override
+  String get heroReliability =>
+      'Make sure reminders ring on time, even when the phone sleeps.';
+
+  @override
+  String get heroBackup => 'Save your reminders to a file, or bring them back.';
+
+  @override
+  String get heroCompleted => 'Everything you\'ve finished, newest first.';
+
+  @override
+  String completedCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n done',
+      one: '1 done',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get searchHero => 'Find any reminder by its name or notes.';
 }

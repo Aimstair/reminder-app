@@ -5,6 +5,7 @@
 library;
 
 import 'alert.dart';
+import 'attachment.dart';
 import 'enums.dart';
 
 /// Fields every synced row carries (DAT-1, DAT-4).
@@ -128,6 +129,7 @@ class Reminder {
     required this.timing,
     required this.alertPlan,
     this.notes,
+    this.attachments = const [],
     this.rawInput,
     this.rrule,
     this.repeatMode = RecurrenceMode.fixed,
@@ -140,6 +142,9 @@ class Reminder {
   final RecordMeta meta;
   final String title;
   final String? notes;
+
+  /// Links and files (ATT-1).
+  final List<Attachment> attachments;
 
   /// Original typed/spoken text (CAP-8).
   final String? rawInput;
@@ -173,6 +178,7 @@ class Reminder {
     RecordMeta? meta,
     String? title,
     String? Function()? notes,
+    List<Attachment>? attachments,
     Kind? kind,
     ReminderContext? context,
     Timing? timing,
@@ -187,6 +193,7 @@ class Reminder {
     meta: meta ?? this.meta,
     title: title ?? this.title,
     notes: notes != null ? notes() : this.notes,
+    attachments: attachments ?? this.attachments,
     rawInput: rawInput,
     kind: kind ?? this.kind,
     context: context ?? this.context,

@@ -26,6 +26,7 @@ mixin Synced on Table {
 class Reminders extends Table with Synced {
   TextColumn get title => text()();
   TextColumn get notes => text().nullable()();
+  TextColumn get attachments => text().nullable()(); // JSON list of Attachment (ATT-1); null = none
   TextColumn get rawInput => text().nullable()();
   TextColumn get kind => textEnum<Kind>()();
   TextColumn get context => textEnum<ReminderContext>()();
@@ -100,10 +101,13 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'app'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (m, from, to) async {
+      if (from < 2) await m.addColumn(reminders, reminders.attachments); // ATT-1
+    },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },

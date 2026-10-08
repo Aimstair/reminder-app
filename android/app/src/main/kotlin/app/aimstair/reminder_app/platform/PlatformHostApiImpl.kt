@@ -2,12 +2,17 @@ package app.aimstair.reminder_app.platform
 
 import android.Manifest
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.net.Uri
 import android.os.Build
 import android.provider.CalendarContract
+import android.provider.OpenableColumns
+import androidx.core.content.FileProvider
+import java.io.File
+import java.util.UUID
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -31,6 +36,7 @@ class PlatformHostApiImpl(private val activity: Activity) : PlatformHostApi {
     private var permissionResult: CompletableDeferred<Boolean>? = null
     private var createDocResult: CompletableDeferred<Uri?>? = null
     private var openDocResult: CompletableDeferred<Uri?>? = null
+    private var pickFileResult: CompletableDeferred<Uri?>? = null
     private var pendingBackupJson: String? = null
 
     // ---- calendar (CAL-*) ----
@@ -195,12 +201,72 @@ class PlatformHostApiImpl(private val activity: Activity) : PlatformHostApi {
         }
     }
 
+    // ---- attachments (ATT-3, ATT-4, ATT-6) ----
+
+    /** Copies the picked file into app storage so it keeps opening even if the original moves. */
+    override suspend fun pickAttachment(): PickedFile? {
+        val result = CompletableDeferred<Uri?>()
+        pickFileResult = result
+        activity.startActivityForResult(
+            Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*"),
+            REQ_PICK_FILE,
+        )
+        val uri = result.await() ?: return null
+        return withContext(Dispatchers.IO) {
+            var name = "file"
+            var size = 0L
+            resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE), null, null, null)?.use {
+                if (it.moveToFirst()) {
+                    it.str(0)?.let { n -> name = n }
+                    if (!it.isNull(1)) size = it.getLong(1)
+                }
+            }
+            if (size > MAX_ATTACHMENT_BYTES) throw FlutterError("too_large", "File is over 50 MB", null)
+            val dir = File(activity.filesDir, "attachments/${UUID.randomUUID()}").apply { mkdirs() }
+            val safe = name.replace(Regex("[/\\\\:*?\"<>|]"), "_").take(120)
+            val out = File(dir, safe)
+            resolver.openInputStream(uri)?.use { input -> out.outputStream().use { input.copyTo(it) } }
+                ?: return@withContext null
+            PickedFile(out.absolutePath, name, out.length(), resolver.getType(uri))
+        }
+    }
+
+    override fun openAttachment(path: String, mime: String?): Boolean {
+        val file = File(path)
+        if (!file.exists() || !file.canonicalPath.startsWith(attachmentsDir().canonicalPath)) return false
+        val uri = FileProvider.getUriForFile(activity, "${activity.packageName}.files", file)
+        val view = Intent(Intent.ACTION_VIEW)
+            .setDataAndType(uri, mime ?: resolver.getType(uri) ?: "*/*")
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        return try {
+            activity.startActivity(Intent.createChooser(view, null).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
+            true
+        } catch (_: ActivityNotFoundException) {
+            false
+        }
+    }
+
+    override fun deleteAttachment(path: String) {
+        val file = File(path)
+        if (!file.canonicalPath.startsWith(attachmentsDir().canonicalPath)) return
+        // Each file sits in its own attachments/<uuid>/ folder; remove the folder with it.
+        val folder = file.parentFile
+        if (folder != null && folder.parentFile?.canonicalPath == attachmentsDir().canonicalPath) {
+            folder.deleteRecursively()
+        } else {
+            file.delete()
+        }
+    }
+
+    private fun attachmentsDir() = File(activity.filesDir, "attachments")
+
     /** Called from MainActivity.onActivityResult. */
     fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         val uri = if (resultCode == Activity.RESULT_OK) data?.data else null
         when (requestCode) {
             REQ_CREATE_DOC -> { createDocResult?.complete(uri); createDocResult = null }
             REQ_OPEN_DOC -> { openDocResult?.complete(uri); openDocResult = null }
+            REQ_PICK_FILE -> { pickFileResult?.complete(uri); pickFileResult = null }
             else -> return false
         }
         return true
@@ -227,6 +293,8 @@ class PlatformHostApiImpl(private val activity: Activity) : PlatformHostApi {
         private const val REQ_CALENDAR = 2001
         private const val REQ_CREATE_DOC = 3001
         private const val REQ_OPEN_DOC = 3002
+        private const val REQ_PICK_FILE = 3003
+        private const val MAX_ATTACHMENT_BYTES = 50L * 1024 * 1024
 
         /** CAL-4 rule 1 / CON-7: Google's and Samsung's contact birthday calendars. */
         fun isBirthdayCalendar(name: String, accountType: String?, owner: String?): Boolean =

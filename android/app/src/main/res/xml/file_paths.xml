@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ATT-4: attached files are shared read-only with the app that opens them. -->
+<paths>
+    <files-path name="attachments" path="attachments/" />
+</paths>

@@ -333,6 +333,59 @@ data class DeviceEvent (
     return "DeviceEvent(calendarId=$calendarId, eventId=$eventId, title=$title, beginMs=$beginMs, endMs=$endMs, allDay=$allDay, timeZone=$timeZone, rrule=$rrule, otherAttendees=$otherAttendees)"
   }
 }
+
+/**
+ * ATT-3: a file the user picked, copied into app storage.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class PickedFile (
+  val path: String,
+  val name: String,
+  val size: Long,
+  val mime: String? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): PickedFile {
+      val path = pigeonVar_list[0] as String
+      val name = pigeonVar_list[1] as String
+      val size = pigeonVar_list[2] as Long
+      val mime = pigeonVar_list[3] as String?
+      return PickedFile(path, name, size, mime)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      path,
+      name,
+      size,
+      mime,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as PickedFile
+    return PlatformApiPigeonUtils.deepEquals(this.path, other.path) && PlatformApiPigeonUtils.deepEquals(this.name, other.name) && PlatformApiPigeonUtils.deepEquals(this.size, other.size) && PlatformApiPigeonUtils.deepEquals(this.mime, other.mime)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + PlatformApiPigeonUtils.deepHash(this.path)
+    result = 31 * result + PlatformApiPigeonUtils.deepHash(this.name)
+    result = 31 * result + PlatformApiPigeonUtils.deepHash(this.size)
+    result = 31 * result + PlatformApiPigeonUtils.deepHash(this.mime)
+    return result
+  }
+  override fun toString(): String {
+    return "PickedFile(path=$path, name=$name, size=$size, mime=$mime)"
+  }
+}
 private open class PlatformApiPigeonCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
     return when (type) {
@@ -346,6 +399,11 @@ private open class PlatformApiPigeonCodec : StandardMessageCodec() {
           DeviceEvent.fromList(it)
         }
       }
+      131.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          PickedFile.fromList(it)
+        }
+      }
       else -> super.readValueOfType(type, buffer)
     }
   }
@@ -357,6 +415,10 @@ private open class PlatformApiPigeonCodec : StandardMessageCodec() {
       }
       is DeviceEvent -> {
         stream.write(130)
+        writeValue(stream, value.toList())
+      }
+      is PickedFile -> {
+        stream.write(131)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -385,6 +447,12 @@ interface PlatformHostApi {
   fun deviceBrand(): String
   /** S-58 feedback email footer: "samsung SM-A736B · Android 15 (API 35)". Device info only. */
   fun deviceInfo(): String
+  /** ATT-3: pick any file and copy it into app storage; null if cancelled. */
+  suspend fun pickAttachment(): PickedFile?
+  /** ATT-4: open a stored file in another app; false when no app can open it or it's gone. */
+  fun openAttachment(path: String, mime: String?): Boolean
+  /** ATT-6: remove a stored file (attachment removed in the editor). */
+  fun deleteAttachment(path: String)
   /** Opens the system share sheet with [text] (All clear "share", mockup 10). Only what the user sees. */
   fun shareText(text: String)
 
@@ -569,6 +637,59 @@ interface PlatformHostApi {
           channel.setMessageHandler { _, reply ->
             val wrapped: List<Any?> = try {
               listOf(api.deviceInfo())
+            } catch (exception: Throwable) {
+              PlatformApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.reminder_app.PlatformHostApi.pickAttachment$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            CoroutineScope(Dispatchers.Main).launch {
+              val wrapped: List<Any?> = try {
+                listOf(api.pickAttachment())
+              } catch (exception: Throwable) {
+                PlatformApiPigeonUtils.wrapError(exception)
+              }
+              reply.reply(wrapped)
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.reminder_app.PlatformHostApi.openAttachment$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val pathArg = args[0] as String
+            val mimeArg = args[1] as String?
+            val wrapped: List<Any?> = try {
+              listOf(api.openAttachment(pathArg, mimeArg))
+            } catch (exception: Throwable) {
+              PlatformApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.reminder_app.PlatformHostApi.deleteAttachment$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val pathArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              api.deleteAttachment(pathArg)
+              listOf(null)
             } catch (exception: Throwable) {
               PlatformApiPigeonUtils.wrapError(exception)
             }

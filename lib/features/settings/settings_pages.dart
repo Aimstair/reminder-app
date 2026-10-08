@@ -12,7 +12,10 @@ import '../../app/providers.dart';
 import '../../app/version.dart';
 import '../../data/prefs_repository.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../../ui/art.dart';
+import '../../ui/bell.dart';
 import '../../ui/format.dart';
+import '../../ui/motion.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
 import '../pickers/pickers.dart';
@@ -41,12 +44,28 @@ class SettingsPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.only(top: Space.s, bottom: Space.xxxl),
         children: [
-          InsetGroup(
-            indent: 56,
-            children: [
-              for (final (label, icon, color, path) in rows)
-                FormRow(label: label, icon: icon, color: color, onTap: () => context.push('/settings/$path')),
-            ],
+          const FadeSlideIn(child: _SettingsHeader()),
+          const SizedBox(height: Space.xxl),
+          FadeSlideIn(
+            index: 1,
+            child: InsetGroup(
+              indent: 56,
+              children: [
+                for (final (label, icon, color, path) in rows.take(4))
+                  FormRow(label: label, icon: icon, color: color, onTap: () => context.push('/settings/$path')),
+              ],
+            ),
+          ),
+          const SizedBox(height: Space.xxl),
+          FadeSlideIn(
+            index: 2,
+            child: InsetGroup(
+              indent: 56,
+              children: [
+                for (final (label, icon, color, path) in rows.skip(4))
+                  FormRow(label: label, icon: icon, color: color, onTap: () => context.push('/settings/$path')),
+              ],
+            ),
           ),
         ],
       ),
@@ -54,16 +73,77 @@ class SettingsPage extends StatelessWidget {
   }
 }
 
-/// Scaffold for a settings sub-screen.
+/// Apple-ID-style card at the top of Settings: the bell, the app name and the privacy line.
+class _SettingsHeader extends StatelessWidget {
+  const _SettingsHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final c = AppColors.of(context);
+    final text = Theme.of(context).textTheme;
+    return Container(
+      height: 88,
+      margin: const EdgeInsets.symmetric(horizontal: Space.l),
+      padding: const EdgeInsets.symmetric(horizontal: Space.l),
+      decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(Radii.row)),
+      child: Row(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [c.accent.withValues(alpha: 0.18), c.purple.withValues(alpha: 0.22)],
+              ),
+            ),
+            child: const Center(
+              child: Floating(amplitude: 2, child: Bell(size: 44, mood: BellMood.happy)),
+            ),
+          ),
+          const SizedBox(width: Space.m + 2),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.appName, style: text.titleLarge, maxLines: 1, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 2),
+                Text(l10n.settingsHeaderSub, style: text.bodySmall, maxLines: 2, overflow: TextOverflow.ellipsis),
+              ],
+            ),
+          ),
+          Icon(AppIcons.privacy, color: c.success, size: 22),
+        ],
+      ),
+    );
+  }
+}
+
+/// Scaffold for a settings sub-screen: a page hero (DS15) with the section's icon and one line,
+/// then the groups, sliding in one after another.
 class _Sub extends StatelessWidget {
-  const _Sub({required this.title, required this.children});
+  const _Sub({required this.title, required this.children, required this.icon, required this.color, this.caption});
   final String title;
   final List<Widget> children;
+  final IconData icon;
+  final Color color;
+  final String? caption;
 
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: Text(title)),
-    body: ListView(padding: const EdgeInsets.only(top: Space.s, bottom: Space.xxxl), children: children),
+    body: ListView(
+      padding: const EdgeInsets.only(bottom: Space.xxxl),
+      children: [
+        PageHero(icon: icon, color: color, caption: caption),
+        const SizedBox(height: Space.s),
+        for (var i = 0; i < children.length; i++) FadeSlideIn(index: i + 1, child: children[i]),
+      ],
+    ),
   );
 }
 
@@ -85,6 +165,9 @@ class ScheduleSettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => _Sub(
     title: AppLocalizations.of(context).secSchedule,
+    icon: AppIcons.day,
+    color: AppColors.of(context).event,
+    caption: AppLocalizations.of(context).heroSchedule,
     children: [ScheduleSettings(onZoneTap: () => context.push('/settings/timezone'))],
   );
 }
@@ -101,6 +184,9 @@ class TimeZoneSettingsPage extends ConsumerWidget {
     final s = ref.read(servicesProvider);
     return _Sub(
       title: l10n.secTimeZone,
+      icon: AppIcons.timeZone,
+      color: c.meeting,
+      caption: l10n.heroTimeZone,
       children: [
         InsetGroup(
           indent: 56,
@@ -185,6 +271,9 @@ class AlertDefaultsPage extends ConsumerWidget {
     final repo = ref.read(servicesProvider).prefs;
     return _Sub(
       title: l10n.secDefaultAlerts,
+      icon: AppIcons.alerts,
+      color: c.warning,
+      caption: l10n.setDefaultAlertsDesc,
       children: [
         InsetGroup(
           indent: 56,
@@ -208,7 +297,6 @@ class AlertDefaultsPage extends ConsumerWidget {
               ),
           ],
         ),
-        _Desc(l10n.setDefaultAlertsDesc),
       ],
     );
   }
@@ -229,10 +317,18 @@ class NotificationSettingsPage extends ConsumerWidget {
       await s.service.resync();
     }
 
-    final cutoffs = <(String, int?)>[(l10n.late30m, 30), (l10n.late2h, 120), (l10n.late6h, 360), (l10n.lateAlways, null)];
+    final cutoffs = <(String, int?)>[
+      (l10n.late30m, 30),
+      (l10n.late2h, 120),
+      (l10n.late6h, 360),
+      (l10n.lateAlways, null),
+    ];
     final current = p.lateAlertCutoff?.inMinutes;
     return _Sub(
       title: l10n.secNotifications,
+      icon: AppIcons.digest,
+      color: c.danger,
+      caption: l10n.heroNotifications,
       children: [
         InsetGroup(
           indent: 56,
@@ -260,12 +356,14 @@ class NotificationSettingsPage extends ConsumerWidget {
         ),
         GroupCaption(l10n.setLateAlerts),
         InsetGroup(
-          indent: Space.l,
+          indent: 56,
           children: [
-            for (final (label, mins) in cutoffs)
-              ListTile(
-                title: Text(label),
-                trailing: current == mins ? Icon(AppIcons.check, color: c.accent) : null,
+            for (final (i, (label, mins)) in cutoffs.indexed)
+              ChoiceRow(
+                icon: [AppIcons.precise, AppIcons.waiting, AppIcons.evening, AppIcons.alerts][i],
+                color: [c.accent, c.meeting, c.purple, c.warning][i],
+                label: label,
+                selected: current == mins,
                 onTap: () => save(PrefKeys.lateAlertCutoffMin, mins),
               ),
           ],
@@ -296,6 +394,9 @@ class _CalendarSettingsPageState extends ConsumerState<CalendarSettingsPage> {
     final connected = cal.connected && cal.permission;
     return _Sub(
       title: l10n.secCalendars,
+      icon: AppIcons.calendar,
+      color: c.accent,
+      caption: l10n.heroCalendars,
       children: [
         InsetGroup(
           indent: 56,
@@ -380,30 +481,34 @@ class ViewSettingsPage extends ConsumerWidget {
     final p = ref.watch(prefsProvider);
     final startIn = repo.string(PrefKeys.startIn) ?? 'last';
     final theme = repo.string(PrefKeys.theme) ?? 'system';
-    Widget choice(String key, String current, List<(String, String)> options) => InsetGroup(
-      indent: Space.l,
-      children: [
-        for (final (value, label) in options)
-          ListTile(
-            title: Text(label),
-            trailing: current == value ? Icon(AppIcons.check, color: c.accent) : null,
-            onTap: () => repo.set(key, value),
-          ),
-      ],
-    );
     return _Sub(
       title: l10n.secViews,
+      icon: AppIcons.appearance,
+      color: c.occasion,
+      caption: l10n.heroViews,
       children: [
-        GroupCaption(l10n.setStartIn),
-        choice(PrefKeys.startIn, startIn, [
-          ('last', l10n.startLast),
-          ('schedule', l10n.viewSchedule),
-          ('day', l10n.viewDay),
-          ('month', l10n.viewMonth),
-        ]),
         GroupCaption(l10n.setTheme),
-        choice(PrefKeys.theme, theme, [('system', l10n.themeSystem), ('light', l10n.themeLight), ('dark', l10n.themeDark)]),
-        const SizedBox(height: Space.l),
+        PreviewChoices<String>(
+          selected: theme,
+          onChanged: (v) => repo.set(PrefKeys.theme, v),
+          items: [
+            (value: 'system', label: l10n.themeSystem, preview: const MiniScreen.system()),
+            (value: 'light', label: l10n.themeLight, preview: const MiniScreen.light()),
+            (value: 'dark', label: l10n.themeDark, preview: const MiniScreen.dark()),
+          ],
+        ),
+        GroupCaption(l10n.setStartIn),
+        PreviewChoices<String>(
+          selected: startIn,
+          onChanged: (v) => repo.set(PrefKeys.startIn, v),
+          items: [
+            (value: 'last', label: l10n.startLast, preview: const MiniView.last()),
+            (value: 'schedule', label: l10n.viewSchedule, preview: const MiniView.schedule()),
+            (value: 'day', label: l10n.viewDay, preview: const MiniView.day()),
+            (value: 'month', label: l10n.viewMonth, preview: const MiniView.month()),
+          ],
+        ),
+        const SizedBox(height: Space.xxl),
         InsetGroup(
           indent: 56,
           children: [
@@ -471,16 +576,34 @@ class _ReliabilityPageState extends ConsumerState<ReliabilityPage> with WidgetsB
     );
     return _Sub(
       title: l10n.secReliability,
+      icon: AppIcons.reliability,
+      color: p.notifications && p.exactAlarms && p.batteryUnrestricted ? c.success : c.warning,
+      caption: l10n.heroReliability,
       children: [
         InsetGroup(
           indent: 56,
           children: [
-            status(l10n.relNotifications, p.notifications, p.notifications ? l10n.relOn : l10n.relOff,
-                AppIcons.notifications, a.requestNotificationPermission),
-            status(l10n.relPrecise, p.exactAlarms, p.exactAlarms ? l10n.relOn : l10n.relOff, AppIcons.precise,
-                a.openExactAlarmSettings),
-            status(l10n.relBattery, p.batteryUnrestricted, p.batteryUnrestricted ? l10n.relOff : l10n.relBatteryOn,
-                AppIcons.battery, a.openBatteryOptimizationSettings),
+            status(
+              l10n.relNotifications,
+              p.notifications,
+              p.notifications ? l10n.relOn : l10n.relOff,
+              AppIcons.notifications,
+              a.requestNotificationPermission,
+            ),
+            status(
+              l10n.relPrecise,
+              p.exactAlarms,
+              p.exactAlarms ? l10n.relOn : l10n.relOff,
+              AppIcons.precise,
+              a.openExactAlarmSettings,
+            ),
+            status(
+              l10n.relBattery,
+              p.batteryUnrestricted,
+              p.batteryUnrestricted ? l10n.relOff : l10n.relBatteryOn,
+              AppIcons.battery,
+              a.openBatteryOptimizationSettings,
+            ),
           ],
         ),
         const Padding(padding: EdgeInsets.all(Space.l), child: TestReminderPanel()),
@@ -524,6 +647,9 @@ class AboutPage extends ConsumerWidget {
     final messenger = ScaffoldMessenger.of(context);
     return _Sub(
       title: l10n.secBackup,
+      icon: AppIcons.backup,
+      color: c.meeting,
+      caption: l10n.heroBackup,
       children: [
         InsetGroup(
           indent: 56,
@@ -575,7 +701,8 @@ class AboutPage extends ConsumerWidget {
               icon: AppIcons.licenses,
               color: c.textSecondary,
               label: l10n.aboutLicenses,
-              onTap: () => showLicensePage(context: context, applicationName: l10n.appName, applicationVersion: appVersion),
+              onTap: () =>
+                  showLicensePage(context: context, applicationName: l10n.appName, applicationVersion: appVersion),
             ),
             FormRow(icon: AppIcons.info, color: c.textSecondary, label: l10n.aboutVersion(appVersion)),
           ],

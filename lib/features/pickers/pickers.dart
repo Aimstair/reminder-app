@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:reminder_core/reminder_core.dart';
 
 import '../../l10n/gen/app_localizations.dart';
+import '../../ui/art.dart';
 import '../../ui/format.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
@@ -21,11 +22,10 @@ Future<RepeatChoice?> pickRepeat(
   required RecurrenceMode mode,
   required DateTime start,
   required bool completable,
-}) =>
-    showAppSheet<RepeatChoice>(
-      context,
-      (ctx) => _RepeatSheet(current: current, mode: mode, start: start, completable: completable),
-    );
+}) => showAppSheet<RepeatChoice>(
+  context,
+  (ctx) => _RepeatSheet(current: current, mode: mode, start: start, completable: completable),
+);
 
 class _RepeatSheet extends StatefulWidget {
   const _RepeatSheet({required this.current, required this.mode, required this.start, required this.completable});
@@ -52,15 +52,20 @@ class _RepeatSheetState extends State<_RepeatSheet> {
     final f = Fmt.of(context);
     final c = AppColors.of(context);
     final wd = _codes[widget.start.weekday - 1];
-    final options = <(String, String?)>[
-      (l10n.repeatNever, null),
-      (l10n.repeatDaily, 'FREQ=DAILY'),
-      (l10n.repeatWeekdays, 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR'),
-      (f.repeat('FREQ=WEEKLY;BYDAY=$wd', RecurrenceMode.fixed), 'FREQ=WEEKLY;BYDAY=$wd'),
-      (l10n.everyWeeks(2), 'FREQ=WEEKLY;INTERVAL=2;BYDAY=$wd'),
-      (l10n.repeatMonthly, 'FREQ=MONTHLY;BYMONTHDAY=${widget.start.day}'),
-      (l10n.repeatLastBusinessDay, 'FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1'), // REC-5
-      (l10n.repeatYearly, 'FREQ=YEARLY;BYMONTH=${widget.start.month};BYMONTHDAY=${widget.start.day}'),
+    final options = <(String, String?, IconData, Color)>[
+      (l10n.repeatNever, null, AppIcons.close, c.textSecondary),
+      (l10n.repeatDaily, 'FREQ=DAILY', AppIcons.day, c.warning),
+      (l10n.repeatWeekdays, 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR', AppIcons.work, c.meeting),
+      (f.repeat('FREQ=WEEKLY;BYDAY=$wd', RecurrenceMode.fixed), 'FREQ=WEEKLY;BYDAY=$wd', AppIcons.calendar, c.accent),
+      (l10n.everyWeeks(2), 'FREQ=WEEKLY;INTERVAL=2;BYDAY=$wd', AppIcons.monthView, c.accent),
+      (l10n.repeatMonthly, 'FREQ=MONTHLY;BYMONTHDAY=${widget.start.day}', AppIcons.calendarCheck, c.success),
+      (l10n.repeatLastBusinessDay, 'FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1', AppIcons.bill, c.danger), // REC-5
+      (
+        l10n.repeatYearly,
+        'FREQ=YEARLY;BYMONTH=${widget.start.month};BYMONTHDAY=${widget.start.day}',
+        AppIcons.star,
+        c.occasion,
+      ),
     ];
     final customRule = 'FREQ=$_unit;INTERVAL=$_interval${_unit == 'WEEKLY' ? ';BYDAY=$wd' : ''}';
     final known = options.any((o) => o.$2 == _rule);
@@ -75,7 +80,9 @@ class _RepeatSheetState extends State<_RepeatSheet> {
             onPressed: () => Navigator.pop(context, (
               rrule: _rule,
               // REC-10: after completion only for completable types; meetings/events stay fixed.
-              mode: _rule != null && _afterDone && widget.completable ? RecurrenceMode.afterCompletion : RecurrenceMode.fixed,
+              mode: _rule != null && _afterDone && widget.completable
+                  ? RecurrenceMode.afterCompletion
+                  : RecurrenceMode.fixed,
             )),
             child: Text(l10n.pickerDone),
           ),
@@ -85,19 +92,23 @@ class _RepeatSheetState extends State<_RepeatSheet> {
             shrinkWrap: true,
             children: [
               InsetGroup(
-                indent: Space.l,
+                indent: 56,
                 color: c.bgGrouped,
                 children: [
-                  for (final (label, rule) in options)
-                    ListTile(
-                      title: Text(label),
-                      trailing: _rule == rule ? Icon(AppIcons.check, color: c.accent) : null,
+                  for (final (label, rule, icon, color) in options)
+                    ChoiceRow(
+                      icon: icon,
+                      color: color,
+                      label: label,
+                      selected: _rule == rule,
                       onTap: () => setState(() => _rule = rule),
                     ),
-                  ListTile(
-                    title: Text(l10n.repeatCustom),
-                    subtitle: Text(f.repeat(customRule, RecurrenceMode.fixed)),
-                    trailing: !known && _rule != null ? Icon(AppIcons.check, color: c.accent) : null,
+                  ChoiceRow(
+                    icon: AppIcons.custom,
+                    color: c.purple,
+                    label: l10n.repeatCustom,
+                    subtitle: f.repeat(customRule, RecurrenceMode.fixed),
+                    selected: !known && _rule != null,
                     onTap: () => setState(() => _rule = customRule),
                   ),
                 ],
@@ -251,9 +262,11 @@ class _AlertsSheetState extends State<_AlertsSheet> {
 
   void _add(AlertOffset o) {
     if (_plan.length >= 10 || _plan.any((s) => s.offset == o)) return;
-    setState(() => _plan
-      ..add(AlertStage(o))
-      ..sort((a, b) => alertSortKey(a).compareTo(alertSortKey(b))));
+    setState(
+      () => _plan
+        ..add(AlertStage(o))
+        ..sort((a, b) => alertSortKey(a).compareTo(alertSortKey(b))),
+    );
   }
 
   @override
@@ -296,7 +309,11 @@ class _AlertsSheetState extends State<_AlertsSheet> {
             children: [
               for (final o in _quick)
                 if (!_plan.any((s) => s.offset == o))
-                  ActionChip(label: Text(f.offset(o)), avatar: const Icon(AppIcons.add, size: 18), onPressed: () => _add(o)),
+                  ActionChip(
+                    label: Text(f.offset(o)),
+                    avatar: const Icon(AppIcons.add, size: 18),
+                    onPressed: () => _add(o),
+                  ),
               ActionChip(
                 label: Text(l10n.remindCustom),
                 avatar: const Icon(AppIcons.custom, size: 18),
@@ -319,25 +336,36 @@ Future<Duration?> pickNag(BuildContext context, Duration? current) async {
   final l10n = AppLocalizations.of(context);
   final f = Fmt.of(context);
   const options = [Duration(minutes: 30), Duration(hours: 1), Duration(hours: 2), Duration(hours: 4)];
+  final c = AppColors.of(context);
   final picked = await showAppSheet<Duration>(
     context,
     (ctx) => Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(l10n.rowNag, style: Theme.of(ctx).textTheme.titleMedium),
-        const SizedBox(height: Space.s),
-        ListTile(
-          title: Text(l10n.nagOff),
-          trailing: current == null ? const Icon(AppIcons.check) : null,
-          onTap: () => Navigator.pop(ctx, Duration.zero),
+        const SizedBox(height: Space.m),
+        InsetGroup(
+          indent: 56,
+          color: c.bgGrouped,
+          children: [
+            ChoiceRow(
+              icon: AppIcons.notificationsOff,
+              color: c.textSecondary,
+              label: l10n.nagOff,
+              selected: current == null,
+              onTap: () => Navigator.pop(ctx, Duration.zero),
+            ),
+            for (final (i, d) in options.indexed)
+              ChoiceRow(
+                icon: AppIcons.nag,
+                color: [c.danger, c.warning, c.success, c.accent][i],
+                label: l10n.nagEvery(f.duration(d)),
+                selected: current == d,
+                onTap: () => Navigator.pop(ctx, d),
+              ),
+          ],
         ),
-        for (final d in options)
-          ListTile(
-            title: Text(l10n.nagEvery(f.duration(d))),
-            trailing: current == d ? const Icon(AppIcons.check) : null,
-            onTap: () => Navigator.pop(ctx, d),
-          ),
-        const SizedBox(height: Space.l),
+        const SizedBox(height: Space.xl),
       ],
     ),
   );

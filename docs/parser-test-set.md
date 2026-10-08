@@ -6,7 +6,7 @@ Related: [`behavior-spec.md`](behavior-spec.md) §8 (`CAP-*` rules) · [`product
 
 **v0 exit criterion:** ≥ 90% of counted cases pass. **v1.0 release:** ≥ 95%. Stretch cases (§S) are not counted.
 
-**Status (2026-10-06):** ✅ **133 / 133 pass** — implementation `packages/core/lib/src/parser/`, tests `packages/core/test/parser/` (cases generated from this file: `cd packages/core && dart run tool/gen_parser_cases.dart`). Stretch cases S1–S6 not yet supported.
+**Status (2026-10-08):** ✅ **137 / 137 pass** — implementation `packages/core/lib/src/parser/`, tests `packages/core/test/parser/` (cases generated from this file: `cd packages/core && dart run tool/gen_parser_cases.dart`). Stretch cases S1–S6 not yet supported.
 
 ---
 
@@ -79,7 +79,7 @@ A row **passes** when every field shown in the row matches. Title comparison ign
 - **PRS-10** Bare hours follow `CAP-5` (1–6 → PM, 7–11 → AM, 12 → noon) and set `ambiguous_time`. Applies to "at 6", "6", and "9:30" without am/pm.
 - **PRS-11** Time words: *morning* → day time · *noon* → 12:00 · *afternoon* → 15:00 · *evening* → 18:00 · *tonight / night* → 20:00 · *midnight* → 00:00 of the **next** day.
 - **PRS-12** Relative times: *in N minutes/min/hours/hrs* → datetime from now. A number + unit **without "in"** is not a time ("5 minute meditation").
-- **PRS-13** Ranges: *2-4pm, 2–4pm, 10am-1pm, from 9 to 11* set start and end (`CAP-10`). An end earlier than the start rolls to the next day.
+- **PRS-13** Ranges: *2-4pm, 2–4pm, 10am-1pm, 9pm to 10pm, 7 to 9pm, 6pm till 7:30pm, from 9 to 11* (separators: -, –, to, until, till, through) set start and end (`CAP-10`). An end earlier than the start rolls to the next day.
 - **PRS-14** Meal defaults when an Event has no time: *breakfast* 08:00 · *lunch / brunch* 12:00 · *dinner / drinks* 19:00.
 - **PRS-15** An explicit date with a time that's already past keeps that date and sets `time_in_past` ("today 1pm" said at 14:00).
 
@@ -282,6 +282,10 @@ Types: **T** Task · **M** Meeting · **E** Event · **O** Occasion. Context: **
 | K6 | focus time from 9 to 11 tomorrow | Focus time | Oct 6 09:00–11:00 | T | P | | `ambiguous_time` |
 | K7 | workshop Oct 20 10am-1pm | Workshop | Oct 20 10:00–13:00 | E | W | | |
 | K8 | party 9pm-1am Saturday | Party | Oct 10 21:00 – Oct 11 01:00 | E | P | | End rolls to next day |
+| K9 | movie night tomorrow 9pm to 10pm | Movie night | Oct 6 21:00–22:00 | T | P | | Real-world miss (2026-10-08): "to" between times |
+| K10 | study 7 to 9pm tomorrow | Study | Oct 6 19:00–21:00 | T | P | | Start takes the end's am/pm |
+| K11 | gym tomorrow from 6pm till 7:30pm | Gym | Oct 6 18:00–19:30 | T | P | | |
+| K12 | concert Friday at 8pm until 11pm | Concert | Oct 9 20:00–23:00 | E | P | | |
 
 ### L. Locale
 | # | Input | Title | When | Type | Ctx | Repeat / alerts | Flags · notes |

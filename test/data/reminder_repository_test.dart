@@ -51,6 +51,21 @@ void main() {
     expect(a, hasLength(36));
   });
 
+  test('ATT-1 links and files round-trip; none stays an empty list', () async {
+    final m = (await meeting()).copyWith(
+      attachments: [
+        Attachment.link('zoom.us/j/123', name: 'Zoom'),
+        const Attachment(kind: AttachmentKind.file, uri: '/files/a/agenda.pdf', name: 'Agenda.pdf', mime: 'application/pdf', size: 42),
+      ],
+    );
+    await repo.insert(m);
+    final back = (await repo.byId(m.id))!;
+    expect(back.attachments, m.attachments);
+    final plain = await birthday();
+    await repo.insert(plain);
+    expect((await repo.byId(plain.id))!.attachments, isEmpty);
+  });
+
   test('round-trips every field (date occasion from Contacts)', () async {
     final r = await birthday();
     await repo.insert(r);

@@ -273,6 +273,15 @@ Detailed parser rules and examples live in `parser-test-set.md`. These are the d
 - **DAT-4** Every record has `id` (UUID generated on device), `created_at`, `updated_at`, `device_id` — required for v1.1 sync *(v1.1+)*.
 - **DAT-5** **Local backup:** export all data to a file and import it back. Import merges by `id`; on conflict, the newer `updated_at` wins.
 
+### Notes, links & files (`ATT`)
+
+- **ATT-1** A reminder can carry **notes** (free text) and any number of **attachments**: web links and files. Attachments are stored with the reminder (name, address or file, type, size) and shown on the capture sheet, the editor and the detail page; rows with attachments show a 📎. Search matches attachment names (S-40).
+- **ATT-2** **Links:** the user types or pastes an address (pre-filled from the clipboard when it holds one) and an optional title. "example.com" becomes "https://example.com"; only web (http/https), mail and phone links are accepted. An untitled link is named after its site ("example.com").
+- **ATT-3** **Files:** picked with the system file picker and **copied into the app's private storage**, so they keep opening if the original moves or is deleted. Limit 50 MB per file. Files stay on the device: they are not in backups (DAT-5) — a restored reminder keeps the file's name but it won't open.
+- **ATT-4** Tapping a link opens it in the browser (or mail/phone app); tapping a file opens it read-only in an app that can show it (system chooser). If nothing can open it, say so.
+- **ATT-5** Web addresses inside notes are underlined and tappable.
+- **ATT-6** Files picked on a sheet or editor that is then cancelled are deleted. Files removed from a saved reminder are kept on disk (a "this and future" split may still use them).
+
 ---
 
 ## 12. User settings (`PRF`)
@@ -302,6 +311,7 @@ Every user-adjustable default the rules above depend on. **Onboarding** settings
 
 | Date | Rule(s) | Decision |
 |---|---|---|
+| 2026-10-08 | `ATT-1`–`ATT-6`, `PRS-13`, DS15 | User request after device testing: **links and files on reminders** move from the cut list into v1.0 (notes already existed; links in notes become tappable). Files are copied into app storage, not backed up. Parser: ranges written with "to / until / till / through" ("9pm to 10pm") — real-world miss, cases K9–K12. Design DS15: graphics on every screen (page heroes, picture pickers, icon rows). |
 | 2026-10-05 | `TIM-2`–`TIM-9` | Time zones work like Google Calendar: each timed reminder has a zone; user-set default zone; per-reminder override; option to move upcoming reminders when the default changes. Date-only reminders have no zone. |
 | 2026-10-05 | `ALR-11`, `PRF-4` | Nag hours are user-adjustable in onboarding; default 08:00–22:00. |
 | 2026-10-05 | `NTF-4`, `PRF-5` | "Tomorrow" snooze time is user-adjustable in onboarding; default day time (09:00). |

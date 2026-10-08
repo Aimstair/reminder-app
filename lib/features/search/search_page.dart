@@ -8,6 +8,7 @@ import 'package:reminder_core/reminder_core.dart';
 
 import '../../app/providers.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../../ui/art.dart';
 import '../../ui/format.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
@@ -55,7 +56,12 @@ class _SearchPageState extends ConsumerState<SearchPage> {
         actions: const [SizedBox(width: Space.l)],
       ),
       body: _q.trim().isEmpty
-          ? const SizedBox.shrink()
+          ? ListView(
+              children: [
+                const SizedBox(height: Space.xxl),
+                PageHero(icon: AppIcons.search, color: c.accent, caption: l10n.searchHero),
+              ],
+            )
           : results.isEmpty
           ? EmptyState(
               title: l10n.searchEmpty(_q.trim()),

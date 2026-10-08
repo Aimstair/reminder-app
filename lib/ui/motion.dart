@@ -218,8 +218,12 @@ class SlidingCells extends StatelessWidget {
               bottom: inset.bottom,
               child: AnimatedOpacity(opacity: show ? 1 : 0, duration: Motion.micro, child: highlight),
             ),
-            Row(
-              children: [for (var i = 0; i < count; i++) SizedBox(width: w, child: cell(context, i))],
+            // Filled and stretched so each cell's content centres vertically in the track.
+            Positioned.fill(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [for (var i = 0; i < count; i++) SizedBox(width: w, child: cell(context, i))],
+              ),
             ),
           ],
         );

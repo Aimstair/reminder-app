@@ -216,6 +216,10 @@ class ReminderRow extends StatelessWidget {
                           const SizedBox(width: Space.xs),
                           Icon(AppIcons.repeat, size: 14, color: sub),
                         ],
+                        if (r.attachments.isNotEmpty) ...[
+                          const SizedBox(width: Space.xs),
+                          Icon(AppIcons.attach, size: 14, color: sub), // ATT-1
+                        ],
                         if (nagLabel case final nag?) ...[
                           const SizedBox(width: Space.xs),
                           Flexible(child: MiniChip(nag, color: overdue ? c.danger : c.textSecondary)),
