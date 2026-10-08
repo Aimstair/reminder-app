@@ -29,6 +29,10 @@ Future<void> pumpFor(WidgetTester tester, [int frames = 12]) async {
 
 void main() {
   testWidgets('FL-2: type a reminder, save, see it on Schedule; swipe right = Done', (tester) async {
+    // A phone-sized screen (Pixel-like, 411 × 914 dp): the home header, week strip and chips need room.
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.625;
+    addTearDown(tester.view.reset);
     final db = AppDatabase(NativeDatabase.memory());
     final gateway = FakeGateway();
     final services = (await tester.runAsync(() async {
@@ -57,7 +61,9 @@ void main() {
     expect(find.text('Tomorrow'), findsOneWidget);
     expect(gateway.synced, isNotEmpty, reason: 'alarms scheduled on save');
 
-    await tester.drag(find.text('Call mom'), const Offset(500, 0));
+    await tester.ensureVisible(find.text('Call mom'));
+    await tester.pump();
+    await tester.drag(find.text('Call mom'), const Offset(350, 0));
     await settleUntil(tester, () => gateway.synced.isEmpty && find.text('Call mom').evaluate().isEmpty);
     expect(find.text('Call mom'), findsNothing);
     expect(gateway.synced, isEmpty, reason: 'alarms cancelled when done');
