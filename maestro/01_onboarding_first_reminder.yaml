@@ -16,7 +16,7 @@ name: FL-1 onboarding saves the first reminder
 - assertVisible: "Just type it\\..*"
 # The demo types "Mom's birthday Oct 12" by itself, then the parser fills the chips.
 - extendedWaitUntil:
-    visible: "Occasion"
+    visible: ".*Occasion.*"
     timeout: 8000
 - tapOn: "Save this"
 # PRM-6 runs after the first save with alerts; on a slow emulator the sheets take a few seconds.

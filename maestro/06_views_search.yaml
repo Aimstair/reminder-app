@@ -1,4 +1,5 @@
-# FL-12: Schedule → Day → Month and back; search finds a reminder and offers Create for a miss.
+# FL-12: Schedule → Month → Day → Schedule via the view pill; search finds a reminder and offers
+# Create for a miss.
 appId: app.aimstair.reminder_app
 name: FL-12 views and search
 ---
@@ -7,13 +8,14 @@ name: FL-12 views and search
     file: common/save_reminder.yaml
     env:
       TEXT: "Dentist tomorrow 3pm"
-- tapOn: "Schedule"          # view switcher (its tooltip) → menu
+- tapOn: "Schedule"          # view pill (shows the current view) → menu
 - tapOn: "Month"
-- assertVisible: ".*Dentist.*"
-- tapOn: "Schedule"
+- assertVisible: ".*events?.*|.*meetings?.*|.*occasions?.*"   # month summary chips (mockup 08)
+- tapOn: "Month"             # pill → menu
 - tapOn: "Day"
-- tapOn: "Schedule"          # view switcher → menu
-- tapOn: "Schedule"          # the "Schedule" item in the open menu
+- assertVisible: ".*busy.*"  # Day header pill (mockup 06)
+- tapOn: "Day"               # pill → menu
+- tapOn: "Schedule"
 - assertVisible: ".*Dentist.*"
 - tapOn: "Search"
 - inputText: "dent"
