@@ -10,6 +10,7 @@ import '../../ui/format.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
 import '../detail/detail_page.dart' show alertSortKey, pickOffset;
+import '../../ui/icons.dart';
 
 typedef RepeatChoice = ({String? rrule, RecurrenceMode mode});
 
@@ -90,13 +91,13 @@ class _RepeatSheetState extends State<_RepeatSheet> {
                   for (final (label, rule) in options)
                     ListTile(
                       title: Text(label),
-                      trailing: _rule == rule ? Icon(Icons.check_rounded, color: c.accent) : null,
+                      trailing: _rule == rule ? Icon(AppIcons.check, color: c.accent) : null,
                       onTap: () => setState(() => _rule = rule),
                     ),
                   ListTile(
                     title: Text(l10n.repeatCustom),
                     subtitle: Text(f.repeat(customRule, RecurrenceMode.fixed)),
-                    trailing: !known && _rule != null ? Icon(Icons.check_rounded, color: c.accent) : null,
+                    trailing: !known && _rule != null ? Icon(AppIcons.check, color: c.accent) : null,
                     onTap: () => setState(() => _rule = customRule),
                   ),
                 ],
@@ -107,12 +108,12 @@ class _RepeatSheetState extends State<_RepeatSheet> {
                   children: [
                     IconButton.filledTonal(
                       onPressed: _interval > 1 ? () => setState(() => _interval--) : null,
-                      icon: const Icon(Icons.remove_rounded),
+                      icon: const Icon(AppIcons.minus),
                     ),
                     SizedBox(width: 40, child: Text('$_interval', textAlign: TextAlign.center)),
                     IconButton.filledTonal(
                       onPressed: () => setState(() => _interval++),
-                      icon: const Icon(Icons.add_rounded),
+                      icon: const Icon(AppIcons.add),
                     ),
                     const SizedBox(width: Space.m),
                     Expanded(
@@ -190,7 +191,7 @@ class _ZoneSheetState extends State<_ZoneSheet> {
             autofocus: true,
             decoration: InputDecoration(
               hintText: l10n.zoneSearch,
-              prefixIcon: const Icon(Icons.search_rounded),
+              prefixIcon: const Icon(AppIcons.search),
               filled: true,
               fillColor: c.bgGrouped,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(Radii.row), borderSide: BorderSide.none),
@@ -210,7 +211,7 @@ class _ZoneSheetState extends State<_ZoneSheet> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(f.time(instantToWall(now, z)), style: Theme.of(context).textTheme.bodyMedium),
-                    if (z == widget.current) ...[const SizedBox(width: Space.s), Icon(Icons.check_rounded, color: c.accent)],
+                    if (z == widget.current) ...[const SizedBox(width: Space.s), Icon(AppIcons.check, color: c.accent)],
                   ],
                 ),
                 onTap: () => Navigator.pop(context, z),
@@ -277,10 +278,10 @@ class _AlertsSheetState extends State<_AlertsSheet> {
             children: [
               for (final s in _plan)
                 ListTile(
-                  leading: Icon(Icons.notifications_none_rounded, color: c.warning),
+                  leading: Icon(AppIcons.alert, color: c.warning),
                   title: Text(s.label == 'start_by' ? '${l10n.startBy} · ${f.offset(s.offset)}' : f.offset(s.offset)),
                   trailing: IconButton(
-                    icon: Icon(Icons.remove_circle_outline_rounded, color: c.danger),
+                    icon: Icon(AppIcons.remove, color: c.danger),
                     onPressed: () => setState(() => _plan.remove(s)),
                   ),
                 ),
@@ -295,10 +296,10 @@ class _AlertsSheetState extends State<_AlertsSheet> {
             children: [
               for (final o in _quick)
                 if (!_plan.any((s) => s.offset == o))
-                  ActionChip(label: Text(f.offset(o)), avatar: const Icon(Icons.add_rounded, size: 18), onPressed: () => _add(o)),
+                  ActionChip(label: Text(f.offset(o)), avatar: const Icon(AppIcons.add, size: 18), onPressed: () => _add(o)),
               ActionChip(
                 label: Text(l10n.remindCustom),
-                avatar: const Icon(Icons.tune_rounded, size: 18),
+                avatar: const Icon(AppIcons.custom, size: 18),
                 onPressed: () async {
                   final o = await pickOffset(context);
                   if (o != null) _add(o);
@@ -327,13 +328,13 @@ Future<Duration?> pickNag(BuildContext context, Duration? current) async {
         const SizedBox(height: Space.s),
         ListTile(
           title: Text(l10n.nagOff),
-          trailing: current == null ? const Icon(Icons.check_rounded) : null,
+          trailing: current == null ? const Icon(AppIcons.check) : null,
           onTap: () => Navigator.pop(ctx, Duration.zero),
         ),
         for (final d in options)
           ListTile(
             title: Text(l10n.nagEvery(f.duration(d))),
-            trailing: current == d ? const Icon(Icons.check_rounded) : null,
+            trailing: current == d ? const Icon(AppIcons.check) : null,
             onTap: () => Navigator.pop(ctx, d),
           ),
         const SizedBox(height: Space.l),

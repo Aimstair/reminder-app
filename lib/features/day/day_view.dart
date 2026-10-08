@@ -18,6 +18,7 @@ import '../../ui/tokens.dart';
 import '../actions/occurrence_actions.dart';
 import '../capture/capture_sheet.dart';
 import '../digest/digest_card.dart';
+import '../../ui/icons.dart';
 
 const _hourHeight = 60.0;
 const _gutter = 52.0;
@@ -146,7 +147,7 @@ class _DayPageState extends ConsumerState<_DayPage> {
                       padding: const EdgeInsets.symmetric(horizontal: Space.xs, vertical: Space.xs),
                       child: Row(
                         children: [
-                          Icon(_overdueOpen ? Icons.expand_less_rounded : Icons.expand_more_rounded, color: c.danger, size: 18),
+                          Icon(_overdueOpen ? AppIcons.collapse : AppIcons.expand, color: c.danger, size: 18),
                           Text(l10n.overdueCount(overdue.length), style: text.bodyMedium?.copyWith(color: c.danger)),
                         ],
                       ),

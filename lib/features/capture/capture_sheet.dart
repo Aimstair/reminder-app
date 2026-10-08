@@ -19,6 +19,7 @@ import '../../ui/widgets.dart';
 import '../actions/occurrence_actions.dart';
 import '../pickers/pickers.dart';
 import '../setup/permission_flow.dart';
+import '../../ui/icons.dart';
 
 /// [at]: a time slot (Day view, VW-8) — date and time locked. [day]: a date (Month long-press).
 /// [text]: shared text (S-63, CAP-12).
@@ -277,12 +278,12 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
   };
 
   static IconData templateIcon(Template t) => switch (t) {
-    Template.birthday => Icons.cake_outlined,
-    Template.billDue => Icons.receipt_long_outlined,
-    Template.renewal => Icons.autorenew_rounded,
-    Template.freeTrial => Icons.timer_outlined,
-    Template.nightOut => Icons.local_bar_outlined,
-    Template.appointment => Icons.medical_services_outlined,
+    Template.birthday => AppIcons.birthday,
+    Template.billDue => AppIcons.bill,
+    Template.renewal => AppIcons.renewal,
+    Template.freeTrial => AppIcons.precise,
+    Template.nightOut => AppIcons.nightOut,
+    Template.appointment => AppIcons.appointment,
   };
 
   @override
@@ -354,7 +355,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                         tooltip: l10n.actionSpeak,
                         onPressed: _voice,
                         icon: Icon(
-                          _listening ? Icons.stop_circle_rounded : Icons.mic_none_rounded,
+                          _listening ? AppIcons.stop : AppIcons.mic,
                           color: _listening ? c.danger : c.accent,
                         ),
                       ),
@@ -368,7 +369,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                 padding: const EdgeInsets.fromLTRB(Space.l, Space.s, Space.l, 0),
                 child: Row(
                   children: [
-                    Icon(Icons.link_rounded, size: 16, color: c.textSecondary),
+                    Icon(AppIcons.link, size: 16, color: c.textSecondary),
                     const SizedBox(width: Space.xs),
                     Text(l10n.captureSharedInNotes, style: text.bodySmall),
                   ],
@@ -408,7 +409,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                 color: c.bgGrouped,
                 children: [
                   FormRow(
-                    icon: Icons.calendar_today_rounded,
+                    icon: AppIcons.calendar,
                     color: c.danger,
                     label: l10n.rowDate,
                     value: _date(p, f),
@@ -420,7 +421,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                     },
                   ),
                   FormRow(
-                    icon: Icons.schedule_rounded,
+                    icon: AppIcons.time,
                     color: c.accent,
                     label: l10n.rowTime,
                     value: _time(p, l10n, f),
@@ -429,7 +430,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                   ),
                   if (p.timing?.type == TimingType.datetime)
                     FormRow(
-                      icon: Icons.public_rounded,
+                      icon: AppIcons.timeZone,
                       color: c.meeting,
                       label: l10n.rowTimeZone,
                       value: Fmt.city(p.timing!.tz ?? ref.read(prefsProvider).defaultTimeZone),
@@ -439,7 +440,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                       },
                     ),
                   FormRow(
-                    icon: Icons.repeat_rounded,
+                    icon: AppIcons.repeat,
                     color: c.meeting,
                     label: l10n.rowRepeat,
                     value: f.repeat(p.rrule, p.repeatMode ?? RecurrenceMode.fixed),
@@ -456,7 +457,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                     },
                   ),
                   FormRow(
-                    icon: Icons.notifications_active_outlined,
+                    icon: AppIcons.alerts,
                     color: c.warning,
                     label: l10n.rowAlerts,
                     value: f.alerts(_plan(p)),
@@ -467,7 +468,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                   ),
                   if (p.kind == Kind.task || p.kind == Kind.occasion)
                     SwitchRow(
-                      icon: Icons.replay_rounded,
+                      icon: AppIcons.nag,
                       color: c.success,
                       label: l10n.rowNag,
                       value: p.nag != null,

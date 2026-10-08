@@ -15,6 +15,7 @@ import '../../ui/format.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
 import '../pickers/pickers.dart';
+import '../../ui/icons.dart';
 
 Future<ClockTime?> pickClockTime(BuildContext context, ClockTime current) async {
   final t = await showTimePicker(context: context, initialTime: TimeOfDay(hour: current.hour, minute: current.minute));
@@ -46,7 +47,7 @@ class ScheduleSettings extends ConsumerWidget {
       indent: 56,
       children: [
         FormRow(
-          icon: Icons.public_rounded,
+          icon: AppIcons.timeZone,
           color: c.meeting,
           label: l10n.rowTimeZone,
           value: Fmt.city(p.defaultTimeZone),
@@ -57,7 +58,7 @@ class ScheduleSettings extends ConsumerWidget {
               },
         ),
         FormRow(
-          icon: Icons.wb_sunny_outlined,
+          icon: AppIcons.day,
           color: c.event,
           label: l10n.rowDateOnlyAt,
           subtitle: l10n.rowDateOnlyAtSub,
@@ -68,7 +69,7 @@ class ScheduleSettings extends ConsumerWidget {
           },
         ),
         FormRow(
-          icon: Icons.replay_rounded,
+          icon: AppIcons.nag,
           color: c.success,
           label: l10n.rowNagHours,
           subtitle: l10n.rowNagHoursSub,
@@ -83,7 +84,7 @@ class ScheduleSettings extends ConsumerWidget {
           },
         ),
         FormRow(
-          icon: Icons.snooze_rounded,
+          icon: AppIcons.snooze,
           color: c.accent,
           label: l10n.rowTomorrowMeans,
           value: p.tomorrowMode == TomorrowMode.dayTime
@@ -174,16 +175,16 @@ class _TestReminderPanelState extends ConsumerState<TestReminderPanel> with Widg
     final text = Theme.of(context).textTheme;
     final perms = ref.watch(permissionsProvider);
     final (icon, color, title, sub) = switch (_state) {
-      TestState.idle => (Icons.notifications_active_outlined, c.accent, l10n.testTitle, l10n.testSub),
-      TestState.waiting => (Icons.hourglass_top_rounded, c.accent, l10n.testWaiting, l10n.testSub),
-      TestState.ok => (Icons.check_circle_rounded, c.success, l10n.testOk, null),
+      TestState.idle => (AppIcons.alerts, c.accent, l10n.testTitle, l10n.testSub),
+      TestState.waiting => (AppIcons.waiting, c.accent, l10n.testWaiting, l10n.testSub),
+      TestState.ok => (AppIcons.ok, c.success, l10n.testOk, null),
       TestState.late => (
-          Icons.warning_amber_rounded,
+          AppIcons.warning,
           c.warning,
           l10n.testLate(_lateSeconds),
           !perms.exactAlarms ? l10n.testFixExact : l10n.testFixBattery,
         ),
-      TestState.failed => (Icons.error_outline_rounded, c.danger, l10n.testFail, l10n.testSteps),
+      TestState.failed => (AppIcons.error, c.danger, l10n.testFail, l10n.testSteps),
     };
     return Material(
       color: c.surface,
@@ -229,7 +230,7 @@ class _TestReminderPanelState extends ConsumerState<TestReminderPanel> with Widg
               const SizedBox(height: Space.m),
               FilledButton.tonalIcon(
                 onPressed: _send,
-                icon: const Icon(Icons.send_rounded, size: 18),
+                icon: const Icon(AppIcons.send, size: 18),
                 label: Text(l10n.actionSendTest),
               ),
             ],
@@ -261,7 +262,7 @@ class _CalendarPickerState extends ConsumerState<CalendarPicker> {
           CheckboxListTile(
             value: selected.contains(c.id),
             activeColor: Color(c.color | 0xFF000000),
-            secondary: Icon(Icons.circle, size: 16, color: Color(c.color | 0xFF000000)),
+            secondary: Icon(AppIcons.dot, size: 16, color: Color(c.color | 0xFF000000)),
             title: Text(c.name),
             subtitle: Text(c.accountName),
             onChanged: (v) async {
@@ -333,7 +334,7 @@ class _ContactsReviewState extends ConsumerState<_ContactsReview> {
                 CheckboxListTile(
                   value: _chosen.contains(x.key),
                   secondary: Icon(
-                    x.field == ContactDateField.birthday ? Icons.cake_outlined : Icons.favorite_border_rounded,
+                    x.field == ContactDateField.birthday ? AppIcons.birthday : AppIcons.anniversary,
                     color: c.occasion,
                   ),
                   title: Text(contactTitle(x)),

@@ -23,9 +23,10 @@ import 'ui/theme.dart';
 /// Bootstrap (architecture.md §2): services → providers → router.
 Future<void> main() => runWithCrashReporting(() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // The OFL requires shipping Inter's licence; it shows on the standard licences page.
+  // Font licences (Inter OFL, Phosphor MIT) must ship with the app; they show on the licences page.
   LicenseRegistry.addLicense(() async* {
     yield LicenseEntryWithLineBreaks(['Inter'], await rootBundle.loadString('assets/fonts/Inter-OFL.txt'));
+    yield LicenseEntryWithLineBreaks(['Phosphor Icons'], await rootBundle.loadString('assets/fonts/Phosphor-MIT.txt'));
   });
   final platform = PlatformGateway();
   final services = await AppServices.start(platform: platform);

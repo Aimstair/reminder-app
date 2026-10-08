@@ -12,6 +12,7 @@ import '../../l10n/gen/app_localizations.dart';
 import '../../ui/format.dart';
 import '../../ui/tokens.dart';
 import '../actions/occurrence_actions.dart';
+import '../../ui/icons.dart';
 
 class DigestCard extends ConsumerWidget {
   const DigestCard({super.key});
@@ -73,7 +74,7 @@ class DigestCard extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.wb_twilight_rounded, color: c.warning),
+                  Icon(AppIcons.digest, color: c.warning),
                   const SizedBox(width: Space.s),
                   Expanded(child: Text(l10n.digestTitle, style: text.titleMedium)),
                   TextButton(
@@ -136,7 +137,7 @@ class DigestCard extends ConsumerWidget {
                         children: [
                           TextButton(onPressed: () => s.contacts.addSuggestion(cd), child: Text(l10n.actionAdd)),
                           IconButton(
-                            icon: const Icon(Icons.close_rounded, size: 18),
+                            icon: const Icon(AppIcons.close, size: 18),
                             onPressed: () => s.contacts.dismissSuggestion(cd),
                           ),
                         ],

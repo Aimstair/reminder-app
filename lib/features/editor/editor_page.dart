@@ -13,6 +13,7 @@ import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
 import '../actions/occurrence_actions.dart';
 import '../pickers/pickers.dart';
+import '../../ui/icons.dart';
 
 /// Opens the editor for occurrence [key] of [r] and saves the result.
 Future<void> openEditor(BuildContext context, WidgetRef ref, Reminder r, DateTime key) async {
@@ -151,13 +152,13 @@ class _EditorPageState extends ConsumerState<EditorPage> {
               children: [
                 SwitchRow(
                   label: l10n.fieldAllDay,
-                  icon: Icons.wb_sunny_outlined,
+                  icon: AppIcons.day,
                   color: c.event,
                   value: _allDay,
                   onChanged: (v) => setState(() => _allDay = v),
                 ),
                 FormRow(
-                  icon: Icons.calendar_today_rounded,
+                  icon: AppIcons.calendar,
                   color: c.danger,
                   label: l10n.fieldStart,
                   value: _allDay ? f.date(_start) : '${f.date(_start)} · ${f.time(_start)}',
@@ -172,7 +173,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                 ),
                 if (!_allDay) ...[
                   FormRow(
-                    icon: Icons.timelapse_rounded,
+                    icon: AppIcons.endTime,
                     color: c.accent,
                     label: l10n.fieldEnd,
                     value: _end == null ? l10n.noEnd : f.time(_end!),
@@ -187,12 +188,12 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                     trailing: _end == null
                         ? null
                         : IconButton(
-                            icon: const Icon(Icons.close_rounded, size: 18),
+                            icon: const Icon(AppIcons.close, size: 18),
                             onPressed: () => setState(() => _end = null),
                           ),
                   ),
                   FormRow(
-                    icon: Icons.public_rounded,
+                    icon: AppIcons.timeZone,
                     color: c.meeting,
                     label: l10n.fieldTimeZone,
                     value: Fmt.city(_zone),
@@ -209,7 +210,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
               indent: 56,
               children: [
                 FormRow(
-                  icon: Icons.repeat_rounded,
+                  icon: AppIcons.repeat,
                   color: c.meeting,
                   label: l10n.rowRepeat,
                   value: f.repeat(_rrule, _mode),
@@ -219,7 +220,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                   },
                 ),
                 FormRow(
-                  icon: Icons.notifications_active_outlined,
+                  icon: AppIcons.alerts,
                   color: c.warning,
                   label: l10n.rowAlerts,
                   value: f.alerts(_alerts),
@@ -230,7 +231,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                 ),
                 if (_completable)
                   FormRow(
-                    icon: Icons.replay_rounded,
+                    icon: AppIcons.nag,
                     color: c.success,
                     label: l10n.rowNag,
                     value: _nag == null ? l10n.nagOff : l10n.nagEvery(f.duration(_nag!)),

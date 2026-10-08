@@ -7,6 +7,7 @@ import 'package:reminder_core/reminder_core.dart';
 
 import 'bell.dart';
 import 'tokens.dart';
+import 'icons.dart';
 
 /// Rounded-square tile tinted in a type color with a line icon (DS11).
 class IconTile extends StatelessWidget {
@@ -171,20 +172,20 @@ class ReminderRow extends StatelessWidget {
                         ),
                         if (r.rrule != null) ...[
                           const SizedBox(width: Space.xs),
-                          Icon(Icons.repeat_rounded, size: 14, color: small),
+                          Icon(AppIcons.repeat, size: 14, color: small),
                         ],
                         if (r.alertPlan.isNotEmpty && !r.isCalendarEvent) ...[
                           const SizedBox(width: Space.xs),
-                          Icon(Icons.notifications_none_rounded, size: 14, color: small),
+                          Icon(AppIcons.alert, size: 14, color: small),
                         ],
                         if (r.isCalendarEvent) ...[
                           const SizedBox(width: Space.xs),
-                          Icon(Icons.calendar_today_outlined, size: 13, color: small),
-                          if (r.alertPlan.isNotEmpty) Icon(Icons.notifications_none_rounded, size: 14, color: small),
+                          Icon(AppIcons.calendar, size: 13, color: small),
+                          if (r.alertPlan.isNotEmpty) Icon(AppIcons.alert, size: 14, color: small),
                         ],
                         if (r.context == ReminderContext.work) ...[
                           const SizedBox(width: Space.xs),
-                          Icon(Icons.work_outline_rounded, size: 14, color: small),
+                          Icon(AppIcons.work, size: 14, color: small),
                         ],
                       ],
                     ),
@@ -224,7 +225,7 @@ class InfoBanner extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(Space.m, Space.s, Space.xs, Space.s),
           child: Row(
             children: [
-              Icon(icon ?? Icons.info_outline_rounded, color: color, size: 20),
+              Icon(icon ?? AppIcons.info, color: color, size: 20),
               const SizedBox(width: Space.s),
               Expanded(child: Text(text, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: c.textPrimary))),
               if (action != null) TextButton(onPressed: onAction, child: Text(action!)),
@@ -358,7 +359,7 @@ class FormRow extends StatelessWidget {
                 ),
               if (trailing != null) trailing! else if (onTap != null) ...[
                 const SizedBox(width: Space.xs),
-                Icon(Icons.chevron_right_rounded, color: c.textSecondary, size: 20),
+                Icon(AppIcons.next, color: c.textSecondary, size: 20),
               ],
             ],
           ),

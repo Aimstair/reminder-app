@@ -13,6 +13,7 @@ import '../../ui/format.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
 import '../actions/occurrence_actions.dart';
+import '../../ui/icons.dart';
 
 final _resolvedProvider = StreamProvider<List<Occurrence>>(
   (ref) => ref.watch(servicesProvider).occurrences.watchResolved(),
@@ -57,7 +58,7 @@ class _CompletedPageState extends ConsumerState<CompletedPage> {
                       filled: true,
                       fillColor: c.surface,
                       isDense: true,
-                      prefixIcon: const Icon(Icons.search_rounded),
+                      prefixIcon: const Icon(AppIcons.search),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(Radii.row),
                         borderSide: BorderSide.none,
@@ -83,7 +84,7 @@ class _CompletedPageState extends ConsumerState<CompletedPage> {
                           onTap: () => openDetail(context, r, o.occurrenceKey),
                           trailing: IconButton(
                             tooltip: l10n.actionMarkNotDone,
-                            icon: Icon(Icons.undo_rounded, color: c.textSecondary),
+                            icon: Icon(AppIcons.undo, color: c.textSecondary),
                             onPressed: () async {
                               final s = ref.read(servicesProvider);
                               if (r.status == ReminderStatus.archived) {

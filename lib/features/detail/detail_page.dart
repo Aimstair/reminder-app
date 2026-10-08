@@ -14,6 +14,7 @@ import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
 import '../actions/occurrence_actions.dart';
 import '../editor/editor_page.dart';
+import '../../ui/icons.dart';
 
 /// One occurrence of one reminder, resolved for display.
 class DetailData {
@@ -84,13 +85,13 @@ class DetailPage extends ConsumerWidget {
               if (!r.isCalendarEvent && !resolved)
                 IconButton(
                   tooltip: l10n.actionEdit,
-                  icon: const Icon(Icons.edit_outlined),
+                  icon: const Icon(AppIcons.edit),
                   onPressed: () => openEditor(context, ref, r, d.key),
                 ),
               if (!r.isCalendarEvent)
                 IconButton(
                   tooltip: l10n.actionDelete,
-                  icon: const Icon(Icons.delete_outline_rounded),
+                  icon: const Icon(AppIcons.delete),
                   onPressed: () async {
                     if (await actions.delete(r, d.key) && context.mounted) context.pop();
                   },
@@ -141,26 +142,26 @@ class DetailPage extends ConsumerWidget {
               indent: 56,
               children: [
                 FormRow(
-                  icon: Icons.schedule_rounded,
+                  icon: AppIcons.time,
                   color: c.accent,
                   label: l10n.detailWhen,
                   value: f.when(startLocal, allDay: allDay, end: endLocal),
                 ),
                 if (otherZone)
                   FormRow(
-                    icon: Icons.public_rounded,
+                    icon: AppIcons.timeZone,
                     color: c.meeting,
                     label: l10n.detailTimeZone,
                     value: l10n.zoneNote(f.time(d.occurrence?.overrideStart ?? d.key), Fmt.city(zone)), // TIM-6
                   ),
                 FormRow(
-                  icon: Icons.repeat_rounded,
+                  icon: AppIcons.repeat,
                   color: c.meeting,
                   label: l10n.rowRepeat,
                   value: f.repeat(r.rrule, r.repeatMode),
                 ),
                 FormRow(
-                  icon: Icons.notifications_active_outlined,
+                  icon: AppIcons.alerts,
                   color: c.warning,
                   label: l10n.rowAlerts,
                   value: f.alerts(d.occurrence?.overrideAlertPlan ?? r.alertPlan),
@@ -168,14 +169,14 @@ class DetailPage extends ConsumerWidget {
                 ),
                 if (r.nagInterval != null)
                   FormRow(
-                    icon: Icons.replay_rounded,
+                    icon: AppIcons.nag,
                     color: c.success,
                     label: l10n.rowNag,
                     value: l10n.nagEvery(f.duration(r.nagInterval!)),
                   ),
                 if (r.isCalendarEvent)
                   FormRow(
-                    icon: Icons.calendar_today_outlined,
+                    icon: AppIcons.calendar,
                     color: c.event,
                     label: l10n.detailFromCalendar(ref.read(servicesProvider).calendar.calendarFor(r)?.name ?? ''),
                   ),
@@ -367,7 +368,7 @@ class _ContactRow extends ConsumerWidget {
       builder: (context, snap) => (snap.data ?? true)
           ? const SizedBox.shrink()
           : FormRow(
-              icon: Icons.person_off_outlined,
+              icon: AppIcons.contactRemoved,
               color: AppColors.of(context).textSecondary,
               label: l10n.contactRemoved, // CON-6
             ),
@@ -441,7 +442,7 @@ class _Actions extends ConsumerWidget {
     if (r.isCalendarEvent) {
       buttons.add(_wide(FilledButton.icon(
         onPressed: () => remindMeFlow(context, ref, r),
-        icon: const Icon(Icons.notifications_active_outlined),
+        icon: const Icon(AppIcons.alerts),
         label: Text(l10n.actionRemindMe),
       )));
     } else if (state == OccurrenceState.done || state == OccurrenceState.skipped) {
@@ -457,14 +458,14 @@ class _Actions extends ConsumerWidget {
             await a.done(r, data.key);
             if (context.mounted && context.canPop()) context.pop();
           },
-          icon: const Icon(Icons.check_rounded),
+          icon: const Icon(AppIcons.check),
           label: Text(l10n.actionDone),
         )));
       }
       if (r.kind == Kind.occasion && open && r.alertPlan.any((s) => s.offset.amount < 0)) {
         buttons.add(_wide(FilledButton.tonalIcon(
           onPressed: () => a.prepared(r, data.key), // OCC-3
-          icon: const Icon(Icons.card_giftcard_rounded),
+          icon: const Icon(AppIcons.gift),
           label: Text(l10n.actionPrepared),
         )));
       }
@@ -473,7 +474,7 @@ class _Actions extends ConsumerWidget {
           Expanded(
             child: OutlinedButton.icon(
               onPressed: () => a.reschedule(r, data.key, currentStart: data.occurrence?.overrideStart),
-              icon: const Icon(Icons.event_repeat_rounded),
+              icon: const Icon(AppIcons.reschedule),
               label: Text(l10n.actionReschedule),
             ),
           ),
@@ -485,7 +486,7 @@ class _Actions extends ConsumerWidget {
                   await a.skip(r, data.key);
                   if (context.mounted && context.canPop()) context.pop();
                 },
-                icon: const Icon(Icons.skip_next_rounded),
+                icon: const Icon(AppIcons.skip),
                 label: Text(l10n.actionSkip),
               ),
             ),
@@ -565,7 +566,7 @@ class _RemindMeSheetState extends State<_RemindMeSheet> {
               ),
             ListTile(
               title: Text(l10n.remindCustom),
-              trailing: const Icon(Icons.add_rounded),
+              trailing: const Icon(AppIcons.add),
               onTap: () async {
                 final o = await pickOffset(context);
                 if (o != null) setState(() => _chosen.add(o.toString()));
@@ -629,12 +630,12 @@ class _OffsetPickerState extends State<_OffsetPicker> {
           children: [
             IconButton.filledTonal(
               onPressed: _amount > 1 ? () => setState(() => _amount--) : null,
-              icon: const Icon(Icons.remove_rounded),
+              icon: const Icon(AppIcons.minus),
             ),
             SizedBox(width: 56, child: Text('$_amount', textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge)),
             IconButton.filledTonal(
               onPressed: _amount < 99 ? () => setState(() => _amount++) : null,
-              icon: const Icon(Icons.add_rounded),
+              icon: const Icon(AppIcons.add),
             ),
           ],
         ),

@@ -142,7 +142,7 @@ The app **looks** Apple-inspired but **behaves** like a good Android app. Users 
 
 **Font:** Apple's SF Pro is licensed for Apple platforms only. Use **Inter** (free, open source, very close to SF Pro's feel).
 
-**Icons:** an open-source set with SF Symbols-like style, e.g. **Phosphor** or **Lucide** (line icons, consistent weight). Don't use Apple's SF Symbols.
+**Icons:** **Phosphor** (decided 2026-10-08 over Lucide: SF Symbols-like, and has filled versions for selected/solid states). Regular weight for line icons, Fill only for solid shapes (status ticks, dots). All icons go through `lib/ui/icons.dart` (`AppIcons`). Don't use Apple's SF Symbols.
 
 ---
 

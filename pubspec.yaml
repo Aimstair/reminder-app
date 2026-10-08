@@ -78,6 +78,7 @@ flutter:
   assets:
     - assets/sounds/
     - assets/fonts/Inter-OFL.txt
+    - assets/fonts/Phosphor-MIT.txt
   fonts:
     - family: Inter # design-direction.md §3, SIL OFL 1.1 (assets/fonts/Inter-OFL.txt)
       fonts:
@@ -88,6 +89,12 @@ flutter:
           weight: 600
         - asset: assets/fonts/Inter-Bold.ttf
           weight: 700
+    - family: Phosphor # icons, MIT (assets/fonts/Phosphor-MIT.txt) — lib/ui/icons.dart
+      fonts:
+        - asset: assets/fonts/Phosphor-Regular.ttf
+    - family: PhosphorFill
+      fonts:
+        - asset: assets/fonts/Phosphor-Fill.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:

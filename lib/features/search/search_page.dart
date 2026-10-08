@@ -13,6 +13,7 @@ import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
 import '../actions/occurrence_actions.dart';
 import '../capture/capture_sheet.dart';
+import '../../ui/icons.dart';
 
 class SearchPage extends ConsumerStatefulWidget {
   const SearchPage({super.key});
@@ -46,7 +47,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
             filled: true,
             fillColor: c.surface,
             isDense: true,
-            prefixIcon: const Icon(Icons.search_rounded),
+            prefixIcon: const Icon(AppIcons.search),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(Radii.row), borderSide: BorderSide.none),
           ),
           onChanged: (v) => setState(() => _q = v),

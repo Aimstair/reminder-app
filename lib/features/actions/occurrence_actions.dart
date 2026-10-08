@@ -15,6 +15,7 @@ import '../../ui/format.dart';
 import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
 import '../celebrate/celebration.dart';
+import '../../ui/icons.dart';
 
 /// Route to an occurrence's detail screen (S-30 / S-31).
 String detailPath(String reminderId, DateTime occurrenceKey) =>
@@ -124,11 +125,11 @@ class OccurrenceActions {
     final today = dateOnly(nowWall);
     final laterToday = nowWall.add(const Duration(hours: 3));
     final options = <(String, IconData, DateTime)>[
-      if (laterToday.day == nowWall.day) (l10n.reschedLaterToday, Icons.schedule_rounded, at(today, laterToday.hour, 0)),
-      if (nowWall.hour < 18) (l10n.reschedEvening, Icons.nights_stay_outlined, at(today, 19, 0)),
-      (l10n.reschedTomorrow, Icons.wb_sunny_outlined,
+      if (laterToday.day == nowWall.day) (l10n.reschedLaterToday, AppIcons.time, at(today, laterToday.hour, 0)),
+      if (nowWall.hour < 18) (l10n.reschedEvening, AppIcons.evening, at(today, 19, 0)),
+      (l10n.reschedTomorrow, AppIcons.day,
           keepTime ? at(addDays(today, 1), start.hour, start.minute) : at(addDays(today, 1), prefs.dayTime.hour, prefs.dayTime.minute)),
-      (l10n.reschedNextWeek, Icons.date_range_outlined,
+      (l10n.reschedNextWeek, AppIcons.nextWeek,
           keepTime ? at(addDays(today, 7), start.hour, start.minute) : at(addDays(today, 7), prefs.dayTime.hour, 0)),
     ];
     final chosen = await showAppSheet<DateTime>(context, (ctx) {
@@ -153,7 +154,7 @@ class OccurrenceActions {
                 ),
               FormRow(
                 label: l10n.reschedPick,
-                icon: Icons.edit_calendar_outlined,
+                icon: AppIcons.pickDate,
                 color: c.meeting,
                 onTap: () async {
                   final picked = await pickDateTime(ctx, start, withTime: keepTime);

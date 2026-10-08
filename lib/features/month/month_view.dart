@@ -14,6 +14,7 @@ import '../../l10n/gen/app_localizations.dart';
 import '../../ui/format.dart';
 import '../../ui/tokens.dart';
 import '../capture/capture_sheet.dart';
+import '../../ui/icons.dart';
 
 const _origin = 10000;
 
@@ -254,12 +255,12 @@ class _MiniMonthState extends ConsumerState<_MiniMonth> {
             children: [
               IconButton(
                 onPressed: () => setState(() => _month = DateTime.utc(_month.year, _month.month - 1)),
-                icon: const Icon(Icons.chevron_left_rounded),
+                icon: const Icon(AppIcons.previous),
               ),
               Expanded(child: Text(f.monthYear(_month), textAlign: TextAlign.center, style: text.titleMedium)),
               IconButton(
                 onPressed: () => setState(() => _month = DateTime.utc(_month.year, _month.month + 1)),
-                icon: const Icon(Icons.chevron_right_rounded),
+                icon: const Icon(AppIcons.next),
               ),
             ],
           ),

@@ -21,6 +21,7 @@ import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
 import '../setup/permission_flow.dart';
 import '../setup/setup_widgets.dart';
+import '../../ui/icons.dart';
 
 class OnboardingPage extends ConsumerStatefulWidget {
   const OnboardingPage({super.key});
@@ -337,10 +338,10 @@ class _JustTypeItState extends ConsumerState<_JustTypeIt> {
         : [
             (kindIcon(p.kind), f.kind(p.kind), c.kind(p.kind)),
             if (p.timing != null)
-              (Icons.calendar_today_rounded, f.date(parseWall(p.timing!.start)), c.danger),
+              (AppIcons.calendar, f.date(parseWall(p.timing!.start)), c.danger),
             if (p.timing?.type == TimingType.datetime)
-              (Icons.schedule_rounded, f.time(parseWall(p.timing!.start)), c.accent),
-            if (p.rrule != null) (Icons.repeat_rounded, f.repeat(p.rrule, p.repeatMode ?? RecurrenceMode.fixed), c.meeting),
+              (AppIcons.time, f.time(parseWall(p.timing!.start)), c.accent),
+            if (p.rrule != null) (AppIcons.repeat, f.repeat(p.rrule, p.repeatMode ?? RecurrenceMode.fixed), c.meeting),
           ];
     final typedDone = _input.text.trim() == l10n.obTypeDemo;
     return _Step(
@@ -587,8 +588,8 @@ class _Sky extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: const [
-          Padding(padding: EdgeInsets.all(Space.l), child: Icon(Icons.wb_sunny_rounded, color: Colors.white, size: 32)),
-          Padding(padding: EdgeInsets.all(Space.l), child: Icon(Icons.nightlight_round, color: Colors.white, size: 28)),
+          Padding(padding: EdgeInsets.all(Space.l), child: Icon(AppIcons.sun, color: Colors.white, size: 32)),
+          Padding(padding: EdgeInsets.all(Space.l), child: Icon(AppIcons.night, color: Colors.white, size: 28)),
         ],
       ),
     );
@@ -650,7 +651,7 @@ class _CalendarState extends ConsumerState<_Calendar> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.calendar_today_outlined, size: 16, color: c.kind(k)),
+                  Icon(AppIcons.calendar, size: 16, color: c.kind(k)),
                   const SizedBox(width: Space.s),
                   Text(Fmt.of(context).kind(k)),
                 ],

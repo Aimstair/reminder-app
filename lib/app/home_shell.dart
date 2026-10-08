@@ -18,6 +18,7 @@ import '../ui/format.dart';
 import '../ui/tokens.dart';
 import '../ui/widgets.dart';
 import 'providers.dart';
+import '../ui/icons.dart';
 
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key, this.openCapture = false});
@@ -29,9 +30,9 @@ class HomeShell extends ConsumerStatefulWidget {
   ConsumerState<HomeShell> createState() => _HomeShellState();
 
   static IconData viewIcon(HomeView v) => switch (v) {
-    HomeView.schedule => Icons.view_agenda_outlined,
-    HomeView.day => Icons.view_day_outlined,
-    HomeView.month => Icons.calendar_month_outlined,
+    HomeView.schedule => AppIcons.scheduleView,
+    HomeView.day => AppIcons.dayView,
+    HomeView.month => AppIcons.monthView,
   };
 
   static String viewName(AppLocalizations l10n, HomeView v) => switch (v) {
@@ -87,7 +88,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(title, style: Theme.of(context).textTheme.titleLarge),
-                const Icon(Icons.arrow_drop_down_rounded),
+                const Icon(AppIcons.dropDown),
               ],
             ),
           ),
@@ -95,7 +96,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         actions: [
           IconButton(
             tooltip: l10n.topSearch,
-            icon: const Icon(Icons.search_rounded),
+            icon: const Icon(AppIcons.search),
             onPressed: () => context.push('/search'),
           ),
           if (showToday)
@@ -136,7 +137,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       floatingActionButton: FloatingActionButton(
         tooltip: l10n.newReminder,
         onPressed: () => showCaptureSheet(context, day: home.view == HomeView.schedule || home.date == today ? null : home.date),
-        child: const Icon(Icons.add_rounded, size: 30),
+        child: const Icon(AppIcons.add, size: 30),
       ),
     );
   }
@@ -157,7 +158,7 @@ class _Banners extends ConsumerWidget {
       children: [
         if (!p.notifications)
           InfoBanner(
-            icon: Icons.notifications_off_outlined,
+            icon: AppIcons.notificationsOff,
             text: l10n.bannerNotifOff,
             action: l10n.actionTurnOn,
             onAction: () async {
@@ -167,14 +168,14 @@ class _Banners extends ConsumerWidget {
           ),
         if (p.notifications && !p.exactAlarms)
           InfoBanner(
-            icon: Icons.timer_off_outlined,
+            icon: AppIcons.preciseOff,
             text: l10n.bannerExact,
             action: l10n.actionFix,
             onAction: s.alarms.openExactAlarmSettings,
           ),
         if (calendarLost)
           InfoBanner(
-            icon: Icons.event_busy_outlined,
+            icon: AppIcons.calendarOff,
             text: l10n.bannerCalendarOff,
             action: l10n.actionReconnect,
             onAction: () => s.calendar.connect().then((_) => s.service.resync()),
@@ -250,7 +251,7 @@ class _Drawer extends ConsumerWidget {
               CheckboxListTile(
                 dense: true,
                 value: !filters.hiddenContexts.contains(x.name),
-                secondary: Icon(x == ReminderContext.work ? Icons.work_outline_rounded : Icons.person_outline_rounded),
+                secondary: Icon(x == ReminderContext.work ? AppIcons.work : AppIcons.personal),
                 title: Text(f.context(x)),
                 onChanged: (_) => toggle(PrefKeys.hiddenContexts, filters.hiddenContexts, x.name),
               ),
@@ -272,7 +273,7 @@ class _Drawer extends ConsumerWidget {
                         dense: true,
                         value: !filters.hiddenCalendars.contains(cal.id),
                         activeColor: Color(cal.color | 0xFF000000),
-                        secondary: Icon(Icons.circle, size: 14, color: Color(cal.color | 0xFF000000)),
+                        secondary: Icon(AppIcons.dot, size: 14, color: Color(cal.color | 0xFF000000)),
                         title: Text(cal.name, maxLines: 1, overflow: TextOverflow.ellipsis),
                         // Same-named calendars (e.g. holidays) come from different accounts.
                         subtitle: cal.accountName.isEmpty || cal.accountName == cal.name
@@ -285,17 +286,17 @@ class _Drawer extends ConsumerWidget {
               ),
             const Divider(),
             ListTile(
-              leading: const Icon(Icons.task_alt_rounded),
+              leading: const Icon(AppIcons.done),
               title: Text(l10n.drawerCompleted),
               onTap: () => go('/completed'),
             ),
             ListTile(
-              leading: const Icon(Icons.settings_outlined),
+              leading: const Icon(AppIcons.settings),
               title: Text(l10n.drawerSettings),
               onTap: () => go('/settings'),
             ),
             ListTile(
-              leading: const Icon(Icons.help_outline_rounded),
+              leading: const Icon(AppIcons.help),
               title: Text(l10n.drawerHelp),
               onTap: () => go('/settings/about'),
             ),

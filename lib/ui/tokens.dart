@@ -3,6 +3,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:reminder_core/reminder_core.dart';
+import 'icons.dart';
 
 /// Colors not covered by Material's ColorScheme, read with `AppColors.of(context)`.
 @immutable
@@ -80,10 +81,10 @@ class AppColors extends ThemeExtension<AppColors> {
 }
 
 IconData kindIcon(Kind k) => switch (k) {
-  Kind.task => Icons.check_circle_outline_rounded,
-  Kind.meeting => Icons.groups_outlined,
-  Kind.event => Icons.event_outlined,
-  Kind.occasion => Icons.cake_outlined,
+  Kind.task => AppIcons.task,
+  Kind.meeting => AppIcons.meeting,
+  Kind.event => AppIcons.event,
+  Kind.occasion => AppIcons.birthday,
 };
 
 /// Spacing (4-pt grid) and radii.

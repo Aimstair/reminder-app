@@ -16,6 +16,7 @@ import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
 import '../actions/occurrence_actions.dart';
 import '../digest/digest_card.dart';
+import '../../ui/icons.dart';
 
 class SchedulePage extends ConsumerWidget {
   const SchedulePage({super.key});
@@ -311,7 +312,7 @@ class _UpNextCard extends ConsumerWidget {
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right_rounded, color: c.textSecondary),
+              Icon(AppIcons.next, color: c.textSecondary),
             ],
           ),
         ),
@@ -353,7 +354,7 @@ class _SpotlightCard extends ConsumerWidget {
                   colors: [c.occasion, Color.lerp(c.occasion, c.event, 0.5)!],
                 ),
               ),
-              child: const Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 44),
+              child: const Icon(AppIcons.gift, color: Colors.white, size: 44),
             ),
             Expanded(
               child: Padding(
@@ -376,7 +377,7 @@ class _SpotlightCard extends ConsumerWidget {
                         child: TextButton.icon(
                           style: TextButton.styleFrom(padding: EdgeInsets.zero, visualDensity: VisualDensity.compact),
                           onPressed: () => OccurrenceActions(context, ref).prepared(r, item.occurrenceKey),
-                          icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
+                          icon: const Icon(AppIcons.task, size: 18),
                           label: Text(l10n.actionPrepared),
                         ),
                       ),
@@ -422,13 +423,13 @@ class _SwipeRow extends ConsumerWidget {
         color: c.success,
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.only(left: Space.xxl),
-        child: const Icon(Icons.check_rounded, color: Colors.white),
+        child: const Icon(AppIcons.check, color: Colors.white),
       ),
       secondaryBackground: Container(
         color: c.meeting,
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: Space.xxl),
-        child: const Icon(Icons.event_repeat_rounded, color: Colors.white),
+        child: const Icon(AppIcons.reschedule, color: Colors.white),
       ),
       confirmDismiss: (dir) async {
         if (dir == DismissDirection.endToStart) {

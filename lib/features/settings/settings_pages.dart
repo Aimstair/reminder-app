@@ -17,6 +17,7 @@ import '../../ui/tokens.dart';
 import '../../ui/widgets.dart';
 import '../pickers/pickers.dart';
 import '../setup/setup_widgets.dart';
+import '../../ui/icons.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -26,14 +27,14 @@ class SettingsPage extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final c = AppColors.of(context);
     final rows = <(String, IconData, Color, String)>[
-      (l10n.secSchedule, Icons.wb_sunny_outlined, c.event, 'schedule'),
-      (l10n.secTimeZone, Icons.public_rounded, c.meeting, 'timezone'),
-      (l10n.secDefaultAlerts, Icons.notifications_active_outlined, c.warning, 'alerts'),
-      (l10n.secNotifications, Icons.wb_twilight_rounded, c.danger, 'notifications'),
-      (l10n.secCalendars, Icons.calendar_today_outlined, c.accent, 'calendars'),
-      (l10n.secViews, Icons.palette_outlined, c.occasion, 'views'),
-      (l10n.secReliability, Icons.verified_outlined, c.success, 'reliability'),
-      (l10n.secBackup, Icons.inventory_2_outlined, c.textSecondary, 'about'),
+      (l10n.secSchedule, AppIcons.day, c.event, 'schedule'),
+      (l10n.secTimeZone, AppIcons.timeZone, c.meeting, 'timezone'),
+      (l10n.secDefaultAlerts, AppIcons.alerts, c.warning, 'alerts'),
+      (l10n.secNotifications, AppIcons.digest, c.danger, 'notifications'),
+      (l10n.secCalendars, AppIcons.calendar, c.accent, 'calendars'),
+      (l10n.secViews, AppIcons.appearance, c.occasion, 'views'),
+      (l10n.secReliability, AppIcons.reliability, c.success, 'reliability'),
+      (l10n.secBackup, AppIcons.backup, c.textSecondary, 'about'),
     ];
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsTitle)),
@@ -105,14 +106,14 @@ class TimeZoneSettingsPage extends ConsumerWidget {
           indent: 56,
           children: [
             FormRow(
-              icon: Icons.public_rounded,
+              icon: AppIcons.timeZone,
               color: c.meeting,
               label: l10n.setDefaultZone,
               value: Fmt.city(p.defaultTimeZone),
               onTap: () => changeDefaultZone(context, ref),
             ),
             SwitchRow(
-              icon: Icons.flight_takeoff_rounded,
+              icon: AppIcons.travel,
               color: c.accent,
               label: l10n.setAskTravel,
               value: p.askOnTravel,
@@ -237,7 +238,7 @@ class NotificationSettingsPage extends ConsumerWidget {
           indent: 56,
           children: [
             FormRow(
-              icon: Icons.wb_twilight_rounded,
+              icon: AppIcons.digest,
               color: c.warning,
               label: l10n.setDigestTime,
               subtitle: l10n.setDigestTimeDesc,
@@ -248,7 +249,7 @@ class NotificationSettingsPage extends ConsumerWidget {
               },
             ),
             SwitchRow(
-              icon: Icons.notifications_outlined,
+              icon: AppIcons.notifications,
               color: c.danger,
               label: l10n.setDigestNotif,
               subtitle: l10n.setDigestNotifDesc,
@@ -264,7 +265,7 @@ class NotificationSettingsPage extends ConsumerWidget {
             for (final (label, mins) in cutoffs)
               ListTile(
                 title: Text(label),
-                trailing: current == mins ? Icon(Icons.check_rounded, color: c.accent) : null,
+                trailing: current == mins ? Icon(AppIcons.check, color: c.accent) : null,
                 onTap: () => save(PrefKeys.lateAlertCutoffMin, mins),
               ),
           ],
@@ -301,7 +302,7 @@ class _CalendarSettingsPageState extends ConsumerState<CalendarSettingsPage> {
           children: [
             if (!connected)
               FormRow(
-                icon: Icons.calendar_today_outlined,
+                icon: AppIcons.calendar,
                 color: c.accent,
                 label: l10n.actionConnectCalendar,
                 subtitle: cal.connected ? l10n.calPermissionOff : null,
@@ -312,7 +313,7 @@ class _CalendarSettingsPageState extends ConsumerState<CalendarSettingsPage> {
               )
             else
               FormRow(
-                icon: Icons.link_off_rounded,
+                icon: AppIcons.disconnect,
                 color: c.danger,
                 label: l10n.calDisconnect,
                 destructive: true,
@@ -330,7 +331,7 @@ class _CalendarSettingsPageState extends ConsumerState<CalendarSettingsPage> {
           indent: 56,
           children: [
             SwitchRow(
-              icon: Icons.cake_outlined,
+              icon: AppIcons.birthday,
               color: c.occasion,
               label: l10n.contactsBirthdays,
               value: s.contacts.enabled,
@@ -345,7 +346,7 @@ class _CalendarSettingsPageState extends ConsumerState<CalendarSettingsPage> {
             ),
             if (s.contacts.enabled) ...[
               SwitchRow(
-                icon: Icons.person_add_alt_outlined,
+                icon: AppIcons.autoAdd,
                 color: c.success,
                 label: l10n.setAutoAdd,
                 subtitle: l10n.setAutoAddDesc,
@@ -353,7 +354,7 @@ class _CalendarSettingsPageState extends ConsumerState<CalendarSettingsPage> {
                 onChanged: (v) => s.prefs.set(PrefKeys.autoAddBirthdays, v),
               ),
               FormRow(
-                icon: Icons.checklist_rounded,
+                icon: AppIcons.review,
                 color: c.accent,
                 label: l10n.contactsReview,
                 onTap: () => showContactsReview(context, ref),
@@ -385,7 +386,7 @@ class ViewSettingsPage extends ConsumerWidget {
         for (final (value, label) in options)
           ListTile(
             title: Text(label),
-            trailing: current == value ? Icon(Icons.check_rounded, color: c.accent) : null,
+            trailing: current == value ? Icon(AppIcons.check, color: c.accent) : null,
             onTap: () => repo.set(key, value),
           ),
       ],
@@ -407,14 +408,14 @@ class ViewSettingsPage extends ConsumerWidget {
           indent: 56,
           children: [
             SwitchRow(
-              icon: Icons.task_alt_rounded,
+              icon: AppIcons.done,
               color: c.success,
               label: l10n.setShowCompleted,
               value: repo.flag(PrefKeys.showCompleted, fallback: true),
               onChanged: (v) => repo.set(PrefKeys.showCompleted, v),
             ),
             SwitchRow(
-              icon: Icons.music_note_outlined,
+              icon: AppIcons.sound,
               color: c.occasion,
               label: l10n.setSounds,
               subtitle: l10n.setSoundsDesc,
@@ -466,7 +467,7 @@ class _ReliabilityPageState extends ConsumerState<ReliabilityPage> with WidgetsB
       color: good ? c.success : c.warning,
       label: label,
       value: value,
-      trailing: good ? Icon(Icons.check_circle_rounded, color: c.success) : TextButton(onPressed: fix, child: Text(l10n.actionFix)),
+      trailing: good ? Icon(AppIcons.ok, color: c.success) : TextButton(onPressed: fix, child: Text(l10n.actionFix)),
     );
     return _Sub(
       title: l10n.secReliability,
@@ -475,11 +476,11 @@ class _ReliabilityPageState extends ConsumerState<ReliabilityPage> with WidgetsB
           indent: 56,
           children: [
             status(l10n.relNotifications, p.notifications, p.notifications ? l10n.relOn : l10n.relOff,
-                Icons.notifications_outlined, a.requestNotificationPermission),
-            status(l10n.relPrecise, p.exactAlarms, p.exactAlarms ? l10n.relOn : l10n.relOff, Icons.timer_outlined,
+                AppIcons.notifications, a.requestNotificationPermission),
+            status(l10n.relPrecise, p.exactAlarms, p.exactAlarms ? l10n.relOn : l10n.relOff, AppIcons.precise,
                 a.openExactAlarmSettings),
             status(l10n.relBattery, p.batteryUnrestricted, p.batteryUnrestricted ? l10n.relOff : l10n.relBatteryOn,
-                Icons.battery_saver_outlined, a.openBatteryOptimizationSettings),
+                AppIcons.battery, a.openBatteryOptimizationSettings),
           ],
         ),
         const Padding(padding: EdgeInsets.all(Space.l), child: TestReminderPanel()),
@@ -490,7 +491,7 @@ class _ReliabilityPageState extends ConsumerState<ReliabilityPage> with WidgetsB
           indent: 56,
           children: [
             FormRow(
-              icon: Icons.monitor_heart_outlined,
+              icon: AppIcons.diagnostics,
               color: c.textSecondary,
               label: l10n.drawerDiagnostics,
               onTap: () => context.push('/diagnostics'),
@@ -528,7 +529,7 @@ class AboutPage extends ConsumerWidget {
           indent: 56,
           children: [
             FormRow(
-              icon: Icons.upload_file_rounded,
+              icon: AppIcons.exportFile,
               color: c.accent,
               label: l10n.backupExport,
               onTap: () async {
@@ -540,7 +541,7 @@ class AboutPage extends ConsumerWidget {
               },
             ),
             FormRow(
-              icon: Icons.download_rounded,
+              icon: AppIcons.importFile,
               color: c.success,
               label: l10n.backupImport,
               onTap: () => _import(context, ref),
@@ -552,7 +553,7 @@ class AboutPage extends ConsumerWidget {
           indent: 56,
           children: [
             FormRow(
-              icon: Icons.privacy_tip_outlined,
+              icon: AppIcons.privacy,
               color: c.meeting,
               label: l10n.aboutPrivacy,
               onTap: () => showDialog<void>(
@@ -565,18 +566,18 @@ class AboutPage extends ConsumerWidget {
               ),
             ),
             FormRow(
-              icon: Icons.chat_bubble_outline_rounded,
+              icon: AppIcons.feedback,
               color: c.event,
               label: l10n.aboutFeedback,
               onTap: () => _sendFeedback(context, ref),
             ),
             FormRow(
-              icon: Icons.description_outlined,
+              icon: AppIcons.licenses,
               color: c.textSecondary,
               label: l10n.aboutLicenses,
               onTap: () => showLicensePage(context: context, applicationName: l10n.appName, applicationVersion: appVersion),
             ),
-            FormRow(icon: Icons.info_outline_rounded, color: c.textSecondary, label: l10n.aboutVersion(appVersion)),
+            FormRow(icon: AppIcons.info, color: c.textSecondary, label: l10n.aboutVersion(appVersion)),
           ],
         ),
       ],
