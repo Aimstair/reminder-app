@@ -413,5 +413,11 @@
   "stateSnoozedUntil": "Snoozed until {time}",
   "@stateSnoozedUntil": { "description": "copy.md §6 detail status card", "placeholders": { "time": { "type": "String" } } },
   "captureSharedInNotes": "Shared text and links saved in notes",
-  "@captureSharedInNotes": { "description": "copy.md §4 — under the input when shared text went to notes (CAP-12)" }
+  "@captureSharedInNotes": { "description": "copy.md §4 — under the input when shared text went to notes (CAP-12)" },
+  "feedbackSubject": "Reminder App feedback ({version})",
+  "@feedbackSubject": { "description": "copy.md §8 S-58", "placeholders": {"version": {"type": "String"}} },
+  "feedbackBody": "Tell us what happened or what you'd like to see:\n\n\n\n—\nApp {version} · {device}",
+  "@feedbackBody": { "description": "copy.md §8 S-58 — no reminder content", "placeholders": {"version": {"type": "String"}, "device": {"type": "String"}} },
+  "feedbackNoMailApp": "No email app found. Write to us at {email}.",
+  "@feedbackNoMailApp": { "description": "copy.md §8 S-58", "placeholders": {"email": {"type": "String"}} }
 }

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:reminder_core/reminder_core.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/providers.dart';
 import '../../app/version.dart';
@@ -567,13 +568,34 @@ class AboutPage extends ConsumerWidget {
               icon: Icons.chat_bubble_outline_rounded,
               color: c.event,
               label: l10n.aboutFeedback,
-              onTap: () => messenger.showSnackBar(SnackBar(content: Text(l10n.comingSoon))),
+              onTap: () => _sendFeedback(context, ref),
             ),
             FormRow(icon: Icons.info_outline_rounded, color: c.textSecondary, label: l10n.aboutVersion(appVersion)),
           ],
         ),
       ],
     );
+  }
+
+  /// S-58: email with app version and device model only — never reminder content.
+  Future<void> _sendFeedback(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    var device = '';
+    try {
+      device = await ref.read(servicesProvider).platform?.deviceInfo() ?? '';
+    } catch (_) {}
+    // Encode by hand: queryParameters would turn spaces into "+", which mail apps show literally.
+    final uri = Uri.parse(
+      'mailto:$feedbackEmail'
+      '?subject=${Uri.encodeComponent(l10n.feedbackSubject(appVersion))}'
+      '&body=${Uri.encodeComponent(l10n.feedbackBody(appVersion, device))}',
+    );
+    var opened = false;
+    try {
+      opened = await launchUrl(uri);
+    } catch (_) {}
+    if (!opened) messenger.showSnackBar(SnackBar(content: Text(l10n.feedbackNoMailApp(feedbackEmail))));
   }
 
   Future<void> _import(BuildContext context, WidgetRef ref) async {

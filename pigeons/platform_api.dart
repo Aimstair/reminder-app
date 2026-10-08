@@ -90,6 +90,9 @@ abstract class PlatformHostApi {
 
   /// PRM-4: Build.MANUFACTURER for the battery tip.
   String deviceBrand();
+
+  /// S-58 feedback email footer: "samsung SM-A736B · Android 15 (API 35)". Device info only.
+  String deviceInfo();
 }
 
 @FlutterApi()

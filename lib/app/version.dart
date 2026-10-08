@@ -2,3 +2,6 @@
 library;
 
 const appVersion = '1.0.0';
+
+/// Send feedback (S-58) goes here.
+const feedbackEmail = 'aimteralabs@gmail.com';

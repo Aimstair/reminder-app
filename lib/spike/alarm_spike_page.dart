@@ -143,6 +143,13 @@ class _AlarmSpikePageState extends State<AlarmSpikePage> with WidgetsBindingObse
                 child: const Text('Clear all'),
               ),
             ]),
+            const SizedBox(height: 12),
+            _section('Crash reporting'),
+            // Checks Sentry end to end: the report must arrive with the quoted text stripped.
+            OutlinedButton(
+              onPressed: () => throw StateError('Test error from diagnostics — fake reminder "Mom\'s birthday Oct 12"'),
+              child: const Text('Send test error'),
+            ),
             const SizedBox(height: 16),
             _section('Registered (${_registered.length})'),
             for (final r in _registered)

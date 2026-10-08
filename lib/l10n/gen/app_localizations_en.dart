@@ -1229,4 +1229,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get captureSharedInNotes => 'Shared text and links saved in notes';
+
+  @override
+  String feedbackSubject(String version) {
+    return 'Reminder App feedback ($version)';
+  }
+
+  @override
+  String feedbackBody(String version, String device) {
+    return 'Tell us what happened or what you\'d like to see:\n\n\n\n—\nApp $version · $device';
+  }
+
+  @override
+  String feedbackNoMailApp(String email) {
+    return 'No email app found. Write to us at $email.';
+  }
 }

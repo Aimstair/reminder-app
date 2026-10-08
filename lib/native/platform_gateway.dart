@@ -91,4 +91,5 @@ class PlatformGateway implements PlatformFlutterApi {
   Future<String?> openBackup() => _api.openBackup();
   Future<void> updateWidget(String json) => _api.updateWidget(json);
   Future<String> deviceBrand() => _api.deviceBrand();
+  Future<String> deviceInfo() => _api.deviceInfo();
 }

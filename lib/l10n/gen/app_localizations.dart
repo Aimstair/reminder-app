@@ -2181,6 +2181,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Shared text and links saved in notes'**
   String get captureSharedInNotes;
+
+  /// copy.md §8 S-58
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder App feedback ({version})'**
+  String feedbackSubject(String version);
+
+  /// copy.md §8 S-58 — no reminder content
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us what happened or what you\'d like to see:\n\n\n\n—\nApp {version} · {device}'**
+  String feedbackBody(String version, String device);
+
+  /// copy.md §8 S-58
+  ///
+  /// In en, this message translates to:
+  /// **'No email app found. Write to us at {email}.'**
+  String feedbackNoMailApp(String email);
 }
 
 class _AppLocalizationsDelegate

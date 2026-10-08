@@ -383,6 +383,8 @@ interface PlatformHostApi {
   fun updateWidget(json: String)
   /** PRM-4: Build.MANUFACTURER for the battery tip. */
   fun deviceBrand(): String
+  /** S-58 feedback email footer: "samsung SM-A736B · Android 15 (API 35)". Device info only. */
+  fun deviceInfo(): String
 
   companion object {
     /** The codec used by PlatformHostApi. */
@@ -550,6 +552,21 @@ interface PlatformHostApi {
           channel.setMessageHandler { _, reply ->
             val wrapped: List<Any?> = try {
               listOf(api.deviceBrand())
+            } catch (exception: Throwable) {
+              PlatformApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.reminder_app.PlatformHostApi.deviceInfo$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            val wrapped: List<Any?> = try {
+              listOf(api.deviceInfo())
             } catch (exception: Throwable) {
               PlatformApiPigeonUtils.wrapError(exception)
             }

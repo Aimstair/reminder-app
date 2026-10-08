@@ -86,6 +86,11 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- url_launcher: Send feedback opens the mail app (S-58) -->
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="mailto" />
+        </intent>
         <!-- speech_to_text: voice capture needs to see the recognition service -->
         <intent>
             <action android:name="android.speech.RecognitionService" />

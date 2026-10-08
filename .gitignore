@@ -39,3 +39,6 @@ spikes/rn-animation/.claude/
 
 # IDE module files
 *.iml
+
+# Release build settings (Sentry DSN) — see config/release.example.json
+config/release.json

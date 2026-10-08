@@ -103,7 +103,8 @@ Versions checked on pub.dev on 2026-10-06; **re-verify at setup** and pin exact 
 | Native bridge | `pigeon` (dev) | 29.0.6 | Typed Dart ↔ Kotlin API generated from `pigeons/` |
 | Notifications & alarms | **Own Kotlin** | — | `flutter_local_notifications` (22.3.1) not used for reminders — our native module owns the firing path (§5) |
 | i18n | Flutter `gen-l10n` + `intl` | 0.20.3 | ARB files; keys from `copy.md` |
-| Crash reporting | `sentry_flutter` | 9.30.1 | No reminder content in reports |
+| Crash reporting | `sentry_flutter` | 9.30.1 | No reminder content in reports; DSN from git-ignored `config/release.json` |
+| Open mail app | `url_launcher` | 6.3.3 | Send feedback (S-58) → email to aimteralabs@gmail.com; app/OS version only, no reminder content |
 | Analytics | `posthog_flutter` (or similar) | 5.50.15 | Counts and timings only (D4) |
 | Tests | `flutter_test`, `test`, `mocktail` (1.0.5), `integration_test`, Maestro | — | Property tests: seeded random generators; `glados` optional (last release 2023 — verify) |
 
