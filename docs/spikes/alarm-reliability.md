@@ -41,6 +41,12 @@ Real reminders created through the app (share target → capture → Save), not 
 | R9 Exact alarms revoked (`appops --uid … deny`) | **Default** | ✅ re-registered inexact (+10 min window), banner G3 shown; fired 7 min 47 s late. Re-grant → native receiver re-registered exact without opening the app |
 | R13 50 alarms at the same minute | Default | ⚠️ 50/50 alarms fired and 50/50 `notify()` calls at 09:40:00; Android showed **48** — its ~50-active-notifications-per-app cap was reached (other app notifications were still in the shade). Grouped under one summary (`SCH-10`) ✅ |
 | R10 Notifications off (`pm revoke POST_NOTIFICATIONS`) | Default | ✅ no crash; banner G2; digest "1 alert wasn't shown" |
+| R11 Done → Undo and Snooze from the lock screen, app closed | Unrestricted | ✅ actions handled natively (Done 10:05:26, Undo 10:05:27, Snooze 10:05:32 → re-alert 11:05:32); after opening the app R11c not done, R11d snooze alarm kept. Phone's lock screen was set to "icons only" at first — cards only appear with Details/Cards |
+| R5 Reboot, app not opened (unlocked after boot) | Unrestricted | ✅ fired 10:15:00.005 |
+| R8 Device zone Manila → Tokyo by hand, travel prompt → "Keep Manila" | Unrestricted | ✅ before opening: all instants unchanged; after opening: datetime "Homework" kept its instant, date-only item and digest moved to 09:00 / 08:00 Tokyo (`TIM-15`), prompt shown once (`TIM-8`) |
+| R15 Test reminder with phone locked | Unrestricted | ✅ "Reminders are working" |
+
+Battery: R9–R13 ran with the default setting; the phone was back on Unrestricted (allow-listed) by R11.
 
 Notes:
 - With battery **Unrestricted**, Android allows exact alarms even without `SCHEDULE_EXACT_ALARM` (`exactAllowReason=allow-listed`), so R9 must run with the default battery setting.
