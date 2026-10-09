@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reminder_app/l10n/gen/app_localizations.dart';
 import 'package:reminder_app/ui/icons.dart';
 import 'package:reminder_app/ui/theme.dart';
 import 'package:reminder_app/ui/widgets.dart';
-import 'package:reminder_core/reminder_core.dart';
 
 Widget _app(Widget child) => MaterialApp(
   theme: buildTheme(Brightness.light),
@@ -61,28 +61,62 @@ void main() {
     expect(tester.getRect(find.text('Nagging')).right, closeTo(screen - 16, 0.5));
   });
 
-  testWidgets('SUB-1 subtype chips: every option plus Other, full names, picking reports it', (tester) async {
-    SubKind? picked = SubKind.birthday;
+  const subtypes = [
+    (value: 'birthday', label: 'Birthday', dot: null),
+    (value: 'anniversary', label: 'Anniversary', dot: null),
+    (value: 'holiday', label: 'Holiday', dot: null),
+    (value: 'memorial', label: 'Memorial', dot: null),
+    (value: 'other', label: 'Other', dot: null),
+  ];
+
+  testWidgets('SUB-1 subtypes use the segmented control; too many to fit → full names and a sideways scroll', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    String? picked;
     await tester.pumpWidget(
       _app(
         Padding(
           padding: const EdgeInsets.all(16),
-          child: SubKindChips(kind: Kind.occasion, selected: SubKind.birthday, onChanged: (s) => picked = s),
+          child: SegmentedPills<String>(
+            scrollable: true,
+            items: subtypes,
+            selected: 'memorial',
+            onChanged: (v) => picked = v,
+          ),
         ),
       ),
     );
-    for (final name in ["Birthday", "Anniversary", "Holiday", "Memorial", "Other"]) {
-      expect(find.text(name), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.byType(SingleChildScrollView), findsOneWidget, reason: 'five names do not fit in 328dp');
+    // Every label is shown whole: its text is narrower than its segment.
+    for (final l in subtypes) {
+      expect(tester.renderObject<RenderParagraph>(find.text(l.label)).didExceedMaxLines, isFalse, reason: l.label);
     }
-    expect(tester.takeException(), isNull, reason: "chips wrap instead of truncating");
-    await tester.tap(find.text("Other"));
-    expect(picked, isNull);
-    await tester.tap(find.text("Holiday"));
-    expect(picked, SubKind.holiday);
+    // The selected segment was scrolled into view.
+    final memorial = tester.getRect(find.text('Memorial'));
+    expect(memorial.left, greaterThanOrEqualTo(16));
+    expect(memorial.right, lessThanOrEqualTo(344));
+    await tester.tap(find.text('Memorial'));
+    expect(picked, 'memorial');
   });
 
-  testWidgets('SUB-1 no chips for types without subtypes', (tester) async {
-    await tester.pumpWidget(_app(SubKindChips(kind: Kind.task, selected: null, onChanged: (_) {})));
-    expect(find.text("Other"), findsNothing);
+  testWidgets('SUB-1 a scrollable control that fits stays a plain control', (tester) async {
+    await tester.pumpWidget(
+      _app(
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: SegmentedPills<String>(
+            scrollable: true,
+            items: subtypes.sublist(2),
+            selected: 'holiday',
+            onChanged: (_) {},
+          ),
+        ),
+      ),
+    );
+    expect(find.byType(SingleChildScrollView), findsNothing);
   });
 }

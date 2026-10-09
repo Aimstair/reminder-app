@@ -2,6 +2,8 @@
 /// sheet frame, undo snackbar.
 library;
 
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:reminder_core/reminder_core.dart';
@@ -333,21 +335,54 @@ enum BannerTone { info, warning }
 
 /// iOS-style segmented control (mockup 03): gray track, a white thumb that slides to the selected
 /// item, optional colored dot per item. Fixed 36dp height; labels truncate.
+///
+/// [scrollable] (subtypes, SUB-1): segments are never squeezed — each is as wide as the longest label, and
+/// when they don't all fit the bar scrolls sideways, keeping the selected one in view.
 class SegmentedPills<T> extends StatelessWidget {
-  const SegmentedPills({super.key, required this.items, required this.selected, required this.onChanged});
+  const SegmentedPills({
+    super.key,
+    required this.items,
+    required this.selected,
+    required this.onChanged,
+    this.scrollable = false,
+  });
   final List<({T value, String label, Color? dot})> items;
   final T selected;
   final ValueChanged<T> onChanged;
+  final bool scrollable;
 
   @override
   Widget build(BuildContext context) {
+    // Five or more segments (Task … Bill): smaller text and no dot — the selected label takes the dot's color
+    // instead — and a word that still doesn't fit shrinks rather than being cut ("Occasi…").
+    if (!scrollable) return _track(context, crowded: items.length > 4);
+    final index = items.indexWhere((i) => i.value == selected);
+    return LayoutBuilder(
+      builder: (context, box) {
+        final style = Theme.of(context).textTheme.titleSmall!.copyWith(fontSize: 14, fontWeight: FontWeight.w600);
+        var widest = 0.0;
+        for (final i in items) {
+          final tp = TextPainter(
+            text: TextSpan(text: i.label, style: style),
+            textDirection: Directionality.of(context),
+            textScaler: MediaQuery.textScalerOf(context),
+            maxLines: 1,
+          )..layout();
+          widest = max(widest, tp.width);
+        }
+        final cell = widest + 2 * Space.m + (items.any((i) => i.dot != null) ? 13 : 0);
+        final track = _track(context, crowded: false);
+        if (cell * items.length + 4 <= box.maxWidth) return track;
+        return _ScrollingTrack(width: cell * items.length + 4, cell: cell, selected: index, child: track);
+      },
+    );
+  }
+
+  Widget _track(BuildContext context, {required bool crowded}) {
     final c = AppColors.of(context);
     final text = Theme.of(context).textTheme;
     final dark = Theme.of(context).brightness == Brightness.dark;
     final index = items.indexWhere((i) => i.value == selected);
-    // Five or more segments (Task … Bill): smaller text and no dot — the selected label takes the dot's color
-    // instead — and a word that still doesn't fit shrinks rather than being cut ("Occasi…").
-    final crowded = items.length > 4;
     return Container(
       height: 36,
       padding: const EdgeInsets.all(2),
@@ -711,63 +746,60 @@ class SheetGrabber extends StatelessWidget {
   );
 }
 
-/// SUB-1 subtype picker under Type: icon chips that wrap (never truncate), the chosen one filled in the
-/// type color. The last chip is "Other" (no subtype). Shows nothing for types without subtypes.
-class SubKindChips extends StatelessWidget {
-  const SubKindChips({super.key, required this.kind, required this.selected, required this.onChanged});
-  final Kind kind;
-  final SubKind? selected;
-  final ValueChanged<SubKind?> onChanged;
+/// A [SegmentedPills] track wider than the screen: scrolls sideways and brings the selected segment into
+/// view when it opens and whenever the selection changes.
+class _ScrollingTrack extends StatefulWidget {
+  const _ScrollingTrack({required this.width, required this.cell, required this.selected, required this.child});
+  final double width;
+  final double cell;
+  final int selected;
+  final Widget child;
 
   @override
-  Widget build(BuildContext context) {
-    final options = SubKind.of(kind);
-    if (options.isEmpty) return const SizedBox(width: double.infinity);
-    final c = AppColors.of(context);
-    final f = Fmt.of(context);
-    final text = Theme.of(context).textTheme;
-    final color = c.kind(kind);
-    final fast = reduceMotion(context) ? Duration.zero : Motion.micro;
-    return SizedBox(
-      width: double.infinity,
-      child: Wrap(
-        spacing: Space.s,
-        runSpacing: Space.s,
-        children: [
-          for (final s in <SubKind?>[...options, null])
-            Semantics(
-              button: true,
-              selected: s == selected,
-              child: Pressable(
-                onTap: () => onChanged(s),
-                child: AnimatedContainer(
-                  duration: fast,
-                  curve: Curves.easeOut,
-                  height: 34,
-                  padding: const EdgeInsets.symmetric(horizontal: Space.m),
-                  decoration: BoxDecoration(
-                    color: s == selected ? color : color.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(17),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(subKindIcon(s, kind), size: 16, color: s == selected ? Colors.white : color),
-                      const SizedBox(width: 6),
-                      Text(
-                        f.subKind(s),
-                        style: text.labelLarge?.copyWith(
-                          color: s == selected ? Colors.white : c.textPrimary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
+  State<_ScrollingTrack> createState() => _ScrollingTrackState();
+}
+
+class _ScrollingTrackState extends State<_ScrollingTrack> {
+  final _scroll = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _reveal(animate: false));
   }
+
+  @override
+  void didUpdateWidget(_ScrollingTrack old) {
+    super.didUpdateWidget(old);
+    if (old.selected != widget.selected) WidgetsBinding.instance.addPostFrameCallback((_) => _reveal(animate: true));
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  /// Centers the selected segment as far as the ends allow.
+  void _reveal({required bool animate}) {
+    if (!mounted || !_scroll.hasClients || widget.selected < 0) return;
+    final view = _scroll.position.viewportDimension;
+    final target = (2 + widget.cell * widget.selected + widget.cell / 2 - view / 2).clamp(
+      0.0,
+      _scroll.position.maxScrollExtent,
+    );
+    if (animate && !reduceMotion(context)) {
+      _scroll.animateTo(target, duration: Motion.standard, curve: Motion.spring);
+    } else {
+      _scroll.jumpTo(target);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => SingleChildScrollView(
+    controller: _scroll,
+    scrollDirection: Axis.horizontal,
+    physics: const BouncingScrollPhysics(),
+    child: SizedBox(width: widget.width, child: widget.child),
+  );
 }

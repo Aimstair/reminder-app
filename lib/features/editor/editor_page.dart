@@ -310,9 +310,13 @@ class _EditorPageState extends ConsumerState<EditorPage> {
                   ? const SizedBox(width: double.infinity)
                   : Padding(
                       padding: const EdgeInsets.fromLTRB(Space.l, Space.m, Space.l, 0),
-                      child: SubKindChips(
+                      child: SegmentedPills<SubKind?>(
                         key: ValueKey(_kind),
-                        kind: _kind,
+                        scrollable: true,
+                        items: [
+                          for (final s in <SubKind?>[...SubKind.of(_kind), null])
+                            (value: s, label: f.subKind(s), dot: null),
+                        ],
                         selected: _sub?.kind == _kind ? _sub : null,
                         onChanged: (s) => setState(() => _sub = s),
                       ),

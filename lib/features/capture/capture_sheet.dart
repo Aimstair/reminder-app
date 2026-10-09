@@ -703,9 +703,13 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                       // SUB-1: Birthday · Anniversary · …; picking one locks it (CAP-11).
                       : Padding(
                           padding: const EdgeInsets.only(top: Space.m),
-                          child: SubKindChips(
+                          child: SegmentedPills<SubKind?>(
                             key: ValueKey(p.kind),
-                            kind: p.kind,
+                            scrollable: true,
+                            items: [
+                              for (final s in <SubKind?>[...SubKind.of(p.kind), null])
+                                (value: s, label: f.subKind(s), dot: null),
+                            ],
                             selected: p.subKind,
                             onChanged: (s) => setState(() {
                               _lockSub = s;
