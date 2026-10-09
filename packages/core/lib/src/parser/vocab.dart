@@ -175,6 +175,11 @@ const currencyWords = <String, String?>{
   'pesos': 'peso',
   'yen': 'JPY',
   'rupees': 'INR',
+  'rupee': 'INR',
+  'peso': 'peso',
+  'pounds': 'GBP',
+  'pound': 'GBP',
+  'quid': 'GBP',
 };
 const dollarCurrencies = {'USD', 'CAD', 'AUD', 'NZD', 'SGD', 'HKD', 'MXN'};
 const pesoCurrencies = {'PHP', 'MXN', 'ARS', 'CLP', 'COP'};
@@ -329,3 +334,22 @@ const socialWords = [
   'bbq',
   'barbecue',
 ];
+
+/// PRS-41 spelled-out days of the month: "first" … "thirty-first" ("twenty first" too).
+final ordinalWords = () {
+  const units = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth'];
+  const teens = [
+    'tenth', 'eleventh', 'twelfth', 'thirteenth', 'fourteenth', //
+    'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth',
+  ];
+  return <String, int>{
+    for (var i = 0; i < units.length; i++) units[i]: i + 1,
+    for (var i = 0; i < teens.length; i++) teens[i]: i + 10,
+    'twentieth': 20,
+    for (var i = 0; i < units.length; i++) ...{'twenty-${units[i]}': 21 + i, 'twenty ${units[i]}': 21 + i},
+    'thirtieth': 30,
+    'thirty-first': 31,
+    'thirty first': 31,
+  };
+}();
+final ordinalPattern = (ordinalWords.keys.toList()..sort((a, b) => b.length.compareTo(a.length))).join('|');

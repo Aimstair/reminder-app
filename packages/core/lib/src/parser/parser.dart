@@ -237,18 +237,21 @@ class _Run {
     final symbols = currencySymbols.keys.map(RegExp.escape).join('|');
     final codes = currencyCodes.join('|');
     final words = currencyWords.keys.join('|');
+    // "k" = thousand ("$2k", "1.5k dollars"), only when no letter follows ("2kg" is not money).
+    const k = r'(?<k>k(?![a-z]))?';
+    final n = '(?<n>$number)';
     final patterns = [
-      RegExp('($symbols)\\s?$number'),
-      RegExp('\\b($codes)\\s?$number\\b'),
-      RegExp('\\b$number\\s?($codes|$words)\\b'),
+      RegExp('(?<u>$symbols)\\s?$n$k(?!\\d)'), // $100 · € 450
+      RegExp('\\b(?<u>$codes)\\s?$n$k\\b(?: (?:$words)\\b)?'), // USD 100 · usd100 · "USD 100 dollars"
+      RegExp('(?<![\\w.,])$n$k\\s?(?<u>$symbols)'), // 100$ · 450 € · 20£
+      RegExp('\\b$n$k\\s?(?<u>$codes|$words)\\b(?: (?:$words)\\b)?'), // 100 usd · 85 dollars · 100 USD dollars
     ];
-    for (final (i, re) in patterns.indexed) {
+    for (final re in patterns) {
       final m = re.firstMatch(lower);
       if (m == null || !_free(m.start, m.end)) continue;
-      final unit = i == 2 ? m.group(2)! : m.group(1)!;
-      final digits = i == 2 ? m.group(1)! : m.group(2)!;
-      final money = Money.parse(digits, _currencyFor(unit));
+      var money = Money.parse(m.namedGroup('n')!, _currencyFor(m.namedGroup('u')!));
       if (money == null) continue;
+      if (m.namedGroup('k') != null) money = Money(money.minor * 1000, money.currency);
       final before = [...used];
       _use(m.start, m.end);
       amountSpan = [
@@ -364,7 +367,31 @@ class _Run {
         ..byDay = [1, 2, 3, 4, 5];
     }
 
-    final everyN = _take(RegExp(r'\bevery (\d+|other) (day|week|month|year)s?\b'));
+    // PRS-42 "mondays and thursdays", "on fridays" → weekly on those days
+    const fullDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    final plural = '(?:${fullDays.join('|')})s';
+    final plurals = _take(RegExp('\\b(?:on )?($plural(?:\\s*(?:,|and|&)\\s*$plural)*)\\b'));
+    if (plurals.isNotEmpty && rec == null) {
+      rec = _Recurrence()
+        ..freq = 'WEEKLY'
+        ..byDay = (RegExp(
+          fullDays.join('|'),
+        ).allMatches(plurals.first.group(1)!).map((d) => fullDays.indexOf(d.group(0)!) + 1).toSet().toList()..sort());
+    }
+
+    // PRS-42 "biweekly" / "fortnightly" = every 2 weeks; "twice a year" = every 6 months
+    if (_take(RegExp(r'\b(?:bi-?weekly|fortnightly|every fortnight)\b')).isNotEmpty) {
+      rec ??= (_Recurrence()
+        ..freq = 'WEEKLY'
+        ..interval = 2);
+    }
+    if (_take(RegExp(r'\b(?:twice a year|semi-?annually|bi-?annually)\b')).isNotEmpty) {
+      rec ??= (_Recurrence()
+        ..freq = 'MONTHLY'
+        ..interval = 6);
+    }
+
+    final everyN = _take(RegExp(r'\bevery (\d+|other|two|three|four|five|six) (day|week|month|year)s?\b'));
     if (everyN.isNotEmpty) {
       final m = everyN.first;
       rec = _Recurrence()
@@ -415,11 +442,17 @@ class _Run {
 
   void _relativeTime() {
     // PRS-12: "in 30 minutes", "in 2 hours" (number + unit without "in" is not a time)
-    final m = _take(RegExp(r'\bin (\d+|a|an|one|two|three|half an?) (minutes?|mins?|hours?|hrs?)\b'), absorb: false);
+    // PRS-42: also "in 1.5 hours", "in an hour and a half"
+    final m = _take(
+      RegExp(r'\bin (\d+(?:\.\d+)?|a|an|one|two|three|half an?) (minutes?|mins?|hours?|hrs?)( and a half)?\b'),
+      absorb: false,
+    );
     if (m.isEmpty) return;
-    final n = m.first.group(1)!.startsWith('half') ? 0 : _num(m.first.group(1)!);
+    final g = m.first.group(1)!;
+    final n = g.startsWith('half') ? 0.5 : (double.tryParse(g) ?? _num(g).toDouble());
     final u = m.first.group(2)!;
-    relative = u.startsWith('m') ? Duration(minutes: n) : (n == 0 ? const Duration(minutes: 30) : Duration(hours: n));
+    final extra = m.first.group(3) != null ? 0.5 : 0.0;
+    relative = u.startsWith('m') ? Duration(minutes: n.round()) : Duration(minutes: ((n + extra) * 60).round());
   }
 
   /// CAP-5: bare hours 1–6 → PM, 7–11 → AM, 12 → noon.
@@ -474,12 +507,59 @@ class _Run {
 
   void _times() {
     if (time == null) {
+      // PRS-42 "half past 3", "quarter past 5pm", "quarter to 5", "10 past 9"
+      final e = _take(
+        RegExp(r'\b(half|quarter|5|10|20|25) (past|after|to|till) (\d{1,2})(?:\s?(am|pm|a\.m\.|p\.m\.))?(?![a-z\d:])'),
+      );
+      if (e.isNotEmpty) {
+        final m = e.first;
+        final mins = switch (m.group(1)!) {
+          'half' => 30,
+          'quarter' => 15,
+          final d => int.parse(d),
+        };
+        final h0 = int.parse(m.group(3)!);
+        final h = m.group(4) != null ? _to24(h0, m.group(4)!) : _bareHour(h0);
+        final total = m.group(2) == 'to' || m.group(2) == 'till' ? h * 60 - mins : h * 60 + mins;
+        time = _Time((total + 24 * 60) % (24 * 60), ambiguous: m.group(4) == null);
+        if (m.group(4) == null) flags.add(ParseFlag.ambiguousTime);
+      }
+    }
+    if (time == null) {
       // PRS-9 explicit am/pm
       final e = _take(RegExp(r'\b(\d{1,2})(?:[:.](\d{2}))?\s?(am|pm|a\.m\.|p\.m\.)(?![a-z])'));
       if (e.isNotEmpty) {
         final m = e.first;
         time = _Time(_to24(int.parse(m.group(1)!), m.group(3)!) * 60 + (int.tryParse(m.group(2) ?? '') ?? 0));
         _zoneAfter(m.end);
+      }
+    }
+    if (time == null) {
+      // PRS-42 "3 o'clock", "at 3 oclock" (CAP-5 for the half of the day)
+      final e = _take(RegExp(r"\b(\d{1,2}) ?o'? ?clock\b"));
+      if (e.isNotEmpty) {
+        final h = int.parse(e.first.group(1)!);
+        time = _Time(_bareHour(h) * 60, ambiguous: true);
+        flags.add(ParseFlag.ambiguousTime);
+      }
+    }
+    if (time == null) {
+      // PRS-42 "9p" / "9a", "0930" (four digits with a leading zero, or after "at": "at 1430")
+      final e = _take(RegExp(r'\b(\d{1,2})([ap])\b'));
+      if (e.isNotEmpty) {
+        time = _Time(_to24(int.parse(e.first.group(1)!), e.first.group(2)!) * 60);
+      } else {
+        final mil = _take(RegExp(r'\b(?:(0\d)|at ([01]\d|2[0-3]))([0-5]\d)\b(?!\s*(?:am|pm))'));
+        if (mil.isNotEmpty) {
+          final m = mil.first;
+          time = _Time(int.parse(m.group(1) ?? m.group(2)!) * 60 + int.parse(m.group(3)!));
+        }
+      }
+    }
+    if (time == null) {
+      // PRS-42 end of the working day: "eod", "by end of day", "cob", "close of business" → 17:00
+      if (_take(RegExp(r'\b(?:eod|cob|end of (?:the )?(?:business )?day|close of business)\b')).isNotEmpty) {
+        time = _Time(17 * 60);
       }
     }
     if (time == null) {
@@ -504,7 +584,7 @@ class _Run {
     }
     if (time == null && _take(RegExp(r'\bnoon\b')).isNotEmpty) time = _Time(12 * 60);
     if (time == null && _take(RegExp(r'\bmidnight\b')).isNotEmpty) time = _Time(24 * 60);
-    if (time == null && _take(RegExp(r'\btonight\b'), absorb: false).isNotEmpty) {
+    if (time == null && _take(RegExp(r'\b(?:tonight|tonite|2nite)\b'), absorb: false).isNotEmpty) {
       time = _Time(20 * 60);
       date ??= _DateSpec(_DateKind.today, day: today);
     }
@@ -548,7 +628,29 @@ class _Run {
     for (final _ in _take(RegExp(r'\bday after tomorrow\b'))) {
       _setDate(_DateSpec(_DateKind.relative, day: today.add(const Duration(days: 2))));
     }
-    for (final _ in _take(RegExp(r'\btomorrow\b'))) {
+    // PRS-42 "a week from today / tomorrow / Friday" → that day + 7
+    for (final m in _take(RegExp('\\b(a|one|two|\\d+) weeks? from (today|tomorrow|now|$weekdayPattern)\\b'))) {
+      final base = switch (m.group(2)!) {
+        'today' || 'now' => today,
+        'tomorrow' => today.add(const Duration(days: 1)),
+        final w => _nextWeekday(weekdayNames[w]!, includeToday: false),
+      };
+      _setDate(_DateSpec(_DateKind.relative, day: base.add(Duration(days: 7 * _num(m.group(1)!)))));
+    }
+    // PRS-42 "in a fortnight" = in 2 weeks
+    for (final _ in _take(RegExp(r'\bin a fortnight\b'), absorb: false)) {
+      _setDate(_DateSpec(_DateKind.relative, day: today.add(const Duration(days: 14))));
+    }
+    // PRS-42 "next month" / "next year" → its first day, flagged so the user can check
+    for (final m in _take(RegExp(r'(?<!of (?:the )?)\bnext (month|year)\b'))) {
+      flags.add(ParseFlag.ambiguousDate);
+      final d = m.group(1) == 'month'
+          ? _addMonths(DateTime.utc(today.year, today.month), 1)
+          : DateTime.utc(today.year + 1, 1, 1);
+      _setDate(_DateSpec(_DateKind.relative, day: d));
+    }
+    // PRS-42 common spellings: tmrw, tmr, tmw, 2moro, 2morrow, tomorow, tomoz
+    for (final _ in _take(RegExp(r'\b(?:tomorrow|tmrw|tmr|tmw|2moro|2morrow|tomorow|tommorow|tomoz)\b'))) {
       _setDate(_DateSpec(_DateKind.relative, day: today.add(const Duration(days: 1))));
     }
     for (final _ in _take(RegExp(r'\btoday\b'))) {
@@ -570,8 +672,10 @@ class _Run {
       _setDate(_DateSpec(_DateKind.relative, day: d));
     }
     // PRS-6
-    for (final m in _take(RegExp(r'\bend of (?:the )?(week|month)\b'))) {
-      final d = m.group(1) == 'week' ? _nextWeekday(5, includeToday: true) : _lastOfMonth(today);
+    // PRS-42 also "eow" / "eom"
+    for (final m in _take(RegExp(r'\b(?:end of (?:the )?(week|month)|(eow|eom))\b'))) {
+      final week = m.group(1) == 'week' || m.group(2) == 'eow';
+      final d = week ? _nextWeekday(5, includeToday: true) : _lastOfMonth(today);
       _setDate(_DateSpec(_DateKind.relative, day: d));
     }
     for (final _ in _take(RegExp(r'\b(?:this )?weekend\b'))) {
@@ -590,13 +694,52 @@ class _Run {
         ),
       );
     }
-    // month + day (+ year)
-    for (final m in _take(RegExp('\\b($monthPattern)\\.? (\\d{1,2})(?:st|nd|rd|th)?\\b(?:,? (\\d{4})\\b)?'))) {
-      _setDate(_monthDay(monthNames[m.group(1)!]!, int.parse(m.group(2)!), m.group(3)));
+    // PRS-41 year first with slashes or dots: 2026/10/15
+    for (final m in _take(RegExp(r'\b(\d{4})[/.](\d{1,2})[/.](\d{1,2})\b'))) {
+      final y = int.parse(m.group(1)!), mo = int.parse(m.group(2)!), d = int.parse(m.group(3)!);
+      if (mo < 1 || mo > 12 || d < 1 || d > 31) continue;
+      _setDate(_DateSpec(_DateKind.absolute, day: _clampDay(y, mo, d), yearGiven: true));
     }
-    // day + month (+ year)
-    for (final m in _take(RegExp('\\b(\\d{1,2})(?:st|nd|rd|th)? ($monthPattern)\\b(?:,? (\\d{4})\\b)?'))) {
-      _setDate(_monthDay(monthNames[m.group(2)!]!, int.parse(m.group(1)!), m.group(3)));
+    // PRS-41 "last day of October / of the month / of next month"
+    for (final m in _take(RegExp('\\blast day of (?:the )?(this month|next month|month|$monthPattern)\\b'))) {
+      final what = m.group(1)!;
+      if (what == 'next month') {
+        _setDate(
+          _DateSpec(_DateKind.relative, day: _lastOfMonth(_addMonths(DateTime.utc(today.year, today.month), 1))),
+        );
+      } else if (what.endsWith('month')) {
+        _setDate(_DateSpec(_DateKind.relative, day: _lastOfMonth(today)));
+      } else {
+        final mo = monthNames[what]!;
+        _setDate(_monthDay(mo, DateTime.utc(today.year, mo + 1, 0).day, null));
+      }
+    }
+    // PRS-41 "15th of this month / of next month"
+    for (final m in _take(RegExp('\\b(?:the )?($_dayToken)(?: day)? of (this|next) month\\b'))) {
+      final n = _dayNum(m.group(1)!);
+      if (n == null) continue;
+      final base = m.group(2) == 'next' ? _addMonths(DateTime.utc(today.year, today.month), 1) : today;
+      _setDate(_DateSpec(_DateKind.relative, day: _clampDay(base.year, base.month, n)));
+    }
+    // PRS-41 "15th day of Oct", "the 15th of October", "the fifteenth of October", "day 15 of October"
+    for (final m in _take(
+      RegExp('\\b(?:the |day )?($_dayToken)(?: day)? of (?:the month of )?($monthPattern)\\b(?:,? (\\d{4})\\b)?'),
+    )) {
+      final n = _dayNum(m.group(1)!);
+      if (n == null) continue;
+      _setDate(_monthDay(monthNames[m.group(2)!]!, n, m.group(3)));
+    }
+    // month + day (+ year): "Oct 15", "Oct. 15th", "Oct the 15th", "October fifteenth", "Oct-15", "Oct 15 2027"
+    for (final m in _take(RegExp('\\b($monthPattern)(?:\\.? the |\\.? |-)($_dayToken)\\b(?:,? (\\d{4})\\b)?'))) {
+      final n = _dayNum(m.group(2)!);
+      if (n == null) continue;
+      _setDate(_monthDay(monthNames[m.group(1)!]!, n, m.group(3)));
+    }
+    // day + month (+ year): "15 Oct", "15th October", "15-Oct", "15. October", "fifteenth of" is above
+    for (final m in _take(RegExp('\\b($_dayToken)(?:\\.? |-)($monthPattern)\\b(?:,? (\\d{4})\\b)?'))) {
+      final n = _dayNum(m.group(1)!);
+      if (n == null) continue;
+      _setDate(_monthDay(monthNames[m.group(2)!]!, n, m.group(3)));
     }
     // PRS-3 month + year
     for (final m in _take(RegExp('\\b($monthPattern) (\\d{4})\\b'))) {
@@ -612,15 +755,27 @@ class _Run {
     // numeric m/d or d/m by locale
     for (final m in _take(RegExp(r'\b(\d{1,2})/(\d{1,2})(?:/(\d{2,4}))?\b'))) {
       final a = int.parse(m.group(1)!), b = int.parse(m.group(2)!);
-      final month = _isUS ? a : b, day = _isUS ? b : a;
-      if (month < 1 || month > 12) continue;
+      var month = _isUS ? a : b, day = _isUS ? b : a;
+      // PRS-42: "15/10" in en-US can only be day/month (and "10/15" in en-GB month/day) — read it that way.
+      if (month > 12 && day <= 12) (month, day) = (day, month);
+      if (month < 1 || month > 12 || day < 1 || day > 31) continue;
       var y = m.group(3);
       if (y != null && y.length == 2) y = '20$y';
       _setDate(_monthDay(month, day, y));
     }
-    // PRS-8 "the 15th"
-    for (final m in _take(RegExp(r'\bthe (\d{1,2})(?:st|nd|rd|th)\b'))) {
+    // PRS-8 "the 15th", "on 15th", "by 3rd", "due 1st"; a bare "15th" only as the last thing typed
+    final nth = _take(RegExp(r'\b(?:the|on|by|due) (\d{1,2})(?:st|nd|rd|th)\b'));
+    // …or when everything after it is already understood ("dentist 15th", "dentist 15th at 3pm")
+    for (final m in RegExp(r'\b(\d{1,2})(?:st|nd|rd|th)\b').allMatches(lower)) {
+      final rest = [for (var i = m.end; i < lower.length; i++) used[i] || !RegExp(r'[a-z0-9]').hasMatch(lower[i])];
+      if (_free(m.start, m.end) && rest.every((ok) => ok)) {
+        _use(m.start, m.end);
+        nth.add(m);
+      }
+    }
+    for (final m in nth) {
       final n = int.parse(m.group(1)!);
+      if (n < 1 || n > 31) continue;
       var d = _clampDay(today.year, today.month, n);
       if (d.isBefore(today)) {
         final nm = _addMonths(DateTime.utc(today.year, today.month, 1), 1);
@@ -629,12 +784,21 @@ class _Run {
       _setDate(_DateSpec(_DateKind.nth, day: d, nth: n));
     }
     // PRS-7 weekdays
-    for (final m in _take(RegExp('\\b(?:(this|next) )?($weekdayPattern)\\b'))) {
+    // "this coming Friday" / "coming Friday" = "Friday" (PRS-42)
+    for (final m in _take(RegExp('\\b(?:(this|next|(?:this )?coming) )?($weekdayPattern)\\b'))) {
       _setDate(_DateSpec(_DateKind.weekday, weekday: weekdayNames[m.group(2)!]!, next: m.group(1) == 'next'));
     }
   }
 
   bool get _isUS => ctx.locale.toLowerCase() == 'en-us';
+
+  /// PRS-41: a day of the month as typed — "15", "15th" or "fifteenth".
+  static final _dayToken = '\\d{1,2}(?:st|nd|rd|th)?|$ordinalPattern';
+
+  static int? _dayNum(String s) {
+    final n = int.tryParse(s.replaceAll(RegExp(r'(st|nd|rd|th)$'), '')) ?? ordinalWords[s];
+    return n == null || n < 1 || n > 31 ? null : n;
+  }
 
   _DateSpec _monthDay(int month, int day, String? year) {
     if (year != null) {

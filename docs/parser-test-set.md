@@ -73,7 +73,21 @@ A row **passes** when every field shown in the row matches. Title comparison ign
 - **PRS-5** Relative dates: *today, tomorrow, day after tomorrow, in N days/weeks/months, in a week/month*.
 - **PRS-6** *next week* → Monday of next week · *this weekend / weekend* → coming Saturday · *end of week* → coming Friday · *end of month* → last day of this month.
 - **PRS-7** Weekdays (full and short: *Mon, Tue, Tues, Wed, Thu, Thurs, Fri, Sat, Sun*) follow `CAP-4`. *this Friday* = same as *Friday*. *next Friday* = Friday of **next** calendar week, flag `ambiguous_date`.
-- **PRS-8** *the 15th / on the 1st* → the next such day of the month.
+- **PRS-8** *the 15th / on the 1st* → the next such day of the month. Also *on 15th, by 3rd, due 1st* (no "the"), and a bare ordinal at the very end of the input ("dentist 15th").
+- **PRS-42** More everyday phrasing:
+  - spellings *tmrw, tmr, tmw, 2moro, 2morrow, tomorow* (= tomorrow) · *tonite* · *this coming Friday* (= Friday)
+  - *a week from today / tomorrow / Friday* · *in a fortnight* · *next month* (→ its 1st) and *next year* (→ Jan 1), both flagged `ambiguous_date`
+  - *half past 3 · quarter to 5 · quarter past 5pm · 10 past 9* · *3 o'clock* (CAP-5 for am/pm) · *9p / 9a* · *0930* (leading zero) or *at 1430*
+  - *eod, cob, end of day, close of business* → 17:00 · *eow* = end of week · *eom* = end of month
+  - *in 1.5 hours*, *in an hour and a half*
+  - repeats: *mondays and thursdays / on fridays* (weekly on those days) · *biweekly, fortnightly* (every 2 weeks) · *twice a year* (every 6 months) · *every two weeks*
+  - numeric dates that only work one way ("15/10" in en-US) are read that way
+- **PRS-41** More ways to say a day of a month (all → that date, rolling to next year per `PRS-2`):
+  - *15th day of Oct · the 15th of October · 15 of October · day 15 of October · the fifteenth of October*
+  - *Oct the 15th · October fifteenth · 15-Oct · Oct-15 · 15. October · Oct. 15*
+  - spelled-out days *first … thirty-first* (also *twenty-first* / *twenty first*) — only next to a month or in "the … of"; "the first draft" stays a title
+  - *15th of this month / 15th of next month* · *first day of November* · *last day of October / of the month / of next month*
+  - *2026/10/15* (year first, like ISO)
 
 ### Times
 - **PRS-9** Formats: *6pm, 6 pm, 6:30pm, 6.30pm, 18:00, 6:00am*. An explicit am/pm or 24h time is never ambiguous.
@@ -117,7 +131,7 @@ A row **passes** when every field shown in the row matches. Title comparison ign
 - **PRS-30** Occasions get `FREQ=YEARLY` automatically (contextual default).
 - **PRS-39** **Holidays** — *Christmas, Christmas Eve, New Year('s), Lunar/Chinese New Year, Thanksgiving, Easter, Halloween, Hanukkah, Diwali, Eid, Ramadan, Valentine's Day, Mother's/Father's Day, Independence Day, Memorial Day, Labor Day, Fourth of July, St Patrick's Day, public/bank holiday* — are an **Occasion** (checked right after rule 1 of PRS-29), unless a *party, dinner, drinks, lunch, brunch, shopping, gift(s), presents, market, concert, show, sale* word is in the input (then the normal rules apply: "Christmas party" is an Event) or it starts with an action verb ("buy Christmas gifts" is a Task).
 - **PRS-40** **Subtype** (`SUB-2` in behavior-spec.md) is guessed from the title within the chosen type: Occasion → memorial / birthday / anniversary / holiday; Meeting → phone / in person / video; Event → appointment / travel / social. No match → no subtype.
-- **PRS-37** **Amounts:** a currency symbol or code with a number — *$1,200 · $15.49 · €450 · £9.99 · ₱500 · USD 320 · 85 usd · 85 dollars · 500 pesos · 20 euros* — becomes the bill's amount and is removed from the title. "$" means the default currency when that currency uses "$" (USD, CAD, AUD, NZD, SGD, HKD, MXN), otherwise USD. On a non-Bill the amount stays in the title ("Buy shoes $80").
+- **PRS-37** **Amounts:** a currency symbol or code with a number, before or after it — *$1,200 · $15.49 · 100$ · 15.49 $ · €450 · 450€ · £9.99 · 20£ · ₱500 · 500₱ · USD 320 · 85 usd · USD100 · 85 dollars · 500 pesos · 20 euros · 20 pounds · 300 rupees*, with *k* for thousands (*$2k · 1.5k dollars*) — becomes the bill's amount and is removed from the title. "$" means the default currency when that currency uses "$" (USD, CAD, AUD, NZD, SGD, HKD, MXN), otherwise USD. On a non-Bill the amount stays in the title ("Buy shoes $80").
 - **PRS-38** **Bill defaults:** payments get `nag 2h` (`BIL-3`); a subscription without a repeat gets `FREQ=MONTHLY` (with the day of month when a date was given); a free trial without a date ends **in 7 days** and sets `ambiguous_date`.
 - **PRS-31** Work context keywords: *client, team, report, invoice, deck, slides, contract, timesheet, board, sprint, manager, office, roadmap, candidate, webinar, workshop, budget*. Meetings default to Work regardless.
 - **PRS-32** Explicit prefixes *work:* / *personal:* set the context and are removed from the title.
@@ -155,6 +169,27 @@ Types: **T** Task · **M** Meeting · **E** Event · **O** Occasion. Context: **
 | A13 | on December 24 wrap presents | Wrap presents | Dec 24 (date) | T | P | | Date first |
 | A14 | 2026-11-15 car inspection | Car inspection | Nov 15 (date) | T | P | | ISO date |
 | A15 | October 31st halloween party 8pm | Halloween party | Oct 31 20:00–21:00 | E | P | | |
+| A16 | renew license 15th day of oct | Renew license | Oct 15 (date) | T | P | | PRS-41 |
+| A17 | renew license the 15th of October | Renew license | Oct 15 (date) | T | P | | |
+| A18 | renew license oct the 15th | Renew license | Oct 15 (date) | T | P | | |
+| A19 | renew license 15-oct | Renew license | Oct 15 (date) | T | P | | |
+| A20 | renew license on the fifteenth of october | Renew license | Oct 15 (date) | T | P | | |
+| A21 | renew license october fifteenth | Renew license | Oct 15 (date) | T | P | | |
+| A22 | renew license 15th of next month | Renew license | Nov 15 (date) | T | P | | |
+| A23 | renew license 20th of this month | Renew license | Oct 20 (date) | T | P | | |
+| A24 | renew license first day of november | Renew license | Nov 1 (date) | T | P | | |
+| A25 | renew license last day of october | Renew license | Oct 31 (date) | T | P | | |
+| A26 | renew license last day of the month | Renew license | Oct 31 (date) | T | P | | |
+| A27 | renew license 2026/10/15 | Renew license | Oct 15 (date) | T | P | | |
+| A28 | renew license on 15th | Renew license | Oct 15 (date) | T | P | | PRS-8 |
+| A29 | dentist 3pm on the 15th of oct | Dentist | Oct 15 15:00–16:00 | E | P | sub: appointment | |
+| A30 | renew license 15. October | Renew license | Oct 15 (date) | T | P | | |
+| A31 | renew license day 15 of october | Renew license | Oct 15 (date) | T | P | | |
+| A32 | renew license by 3rd | Renew license | Nov 3 (date) | T | P | | PRS-8: the 3rd has passed this month |
+| A33 | dentist 15th | Dentist | Oct 15 (date) | E | P | | Bare ordinal at the end |
+| A34 | renew license twenty-first of november | Renew license | Nov 21 (date) | T | P | | |
+| A35 | finish the first draft Friday | Finish the first draft | Oct 9 (date) | T | P | | Spelled-out ordinal without a month stays in the title |
+| A36 | renew license Oct 15 2027 | Renew license | 2027-10-15 (date) | T | P | | |
 
 ### B. Relative dates & times
 | # | Input | Title | When | Type | Ctx | Repeat / alerts | Flags · notes |
@@ -173,6 +208,17 @@ Types: **T** Task · **M** Meeting · **E** Event · **O** Occasion. Context: **
 | B12 | dentist checkup in 6 months | Dentist checkup | 2027-04-05 (date) | E | P | | |
 | B13 | review contract in a week | Review contract | Oct 12 (date) | T | W | | |
 | B14 | book hotel day after tomorrow | Book hotel | Oct 7 (date) | T | P | | |
+| B15 | call mom tmrw | Call mom | Oct 6 (date) | T | P | | PRS-42 spellings |
+| B16 | call mom 2moro | Call mom | Oct 6 (date) | T | P | | |
+| B17 | call mom tonite | Call mom | Oct 5 20:00 | T | P | | |
+| B18 | call mom in 1.5 hours | Call mom | Oct 5 15:30 | T | P | | |
+| B19 | call mom a week from today | Call mom | Oct 12 (date) | T | P | | |
+| B20 | call mom in a fortnight | Call mom | Oct 19 (date) | T | P | | |
+| B21 | call mom next month | Call mom | Nov 1 (date) | T | P | | `ambiguous_date` |
+| B22 | call mom this coming friday | Call mom | Oct 9 (date) | T | P | | |
+| B23 | submit report by eod | Submit report | Oct 5 17:00 | T | W | | End of day = 17:00 |
+| B24 | submit report cob tomorrow | Submit report | Oct 6 17:00 | T | W | | |
+| B25 | submit report by eow | Submit report | Oct 9 (date) | T | W | | |
 
 ### C. Weekdays
 | # | Input | Title | When | Type | Ctx | Repeat / alerts | Flags · notes |
@@ -200,6 +246,14 @@ Types: **T** Task · **M** Meeting · **E** Event · **O** Occasion. Context: **
 | D9 | call Ana 6 pm Friday | Call Ana | Oct 9 18:00 | T | P | | |
 | D10 | workout 6:00am tomorrow | Workout | Oct 6 06:00 | T | P | | Explicit am beats CAP-5 |
 | D11 | yoga 5.30pm | Yoga | Oct 5 17:30 | T | P | | Dot separator |
+| D12 | call mom half past 3 | Call mom | Oct 5 15:30 | T | P | | `ambiguous_time` PRS-42 |
+| D13 | call mom quarter to 5 | Call mom | Oct 5 16:45 | T | P | | `ambiguous_time` |
+| D14 | call mom quarter past 5pm | Call mom | Oct 5 17:15 | T | P | | |
+| D15 | call mom 3 o'clock | Call mom | Oct 5 15:00 | T | P | | `ambiguous_time` |
+| D16 | stretch 0930 | Stretch | Oct 6 09:30 | T | P | | Leading zero = 24-hour |
+| D17 | call mom 9p | Call mom | Oct 5 21:00 | T | P | | |
+| D18 | dentist 15th at 3pm | Dentist | Oct 15 15:00–16:00 | E | P | sub: appointment | PRS-8 |
+| D19 | pay bill 15/10 | Pay bill | Oct 15 (date) | B | P | nag 2h | en-US: 15 can only be the day |
 
 ### E. Undated & empty input
 | # | Input | Title | When | Type | Ctx | Repeat / alerts | Flags · notes |
@@ -231,6 +285,9 @@ Types: **T** Task · **M** Meeting · **E** Event · **O** Occasion. Context: **
 | F15 | review goals weekly on Sunday 7pm | Review goals | Oct 11 19:00 | T | P | `FREQ=WEEKLY;BYDAY=SU` | |
 | F16 | standup every weekday at 9:30am until Dec 31 | Standup | Oct 6 09:30–10:00 | M | W | `FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;UNTIL=20261231` | |
 | F17 | physio every Wednesday for 6 weeks | Physio | Oct 7 (date) | E | P | `FREQ=WEEKLY;BYDAY=WE;COUNT=6` | |
+| F18 | gym mondays and thursdays 7am | Gym | Oct 8 07:00 | T | P | `FREQ=WEEKLY;BYDAY=MO,TH` | PRS-42 plural weekdays |
+| F19 | clean gutters twice a year | Clean gutters | Oct 6 (date) | T | P | `FREQ=MONTHLY;INTERVAL=6` | |
+| F20 | water plants biweekly | Water plants | Oct 6 (date) | T | P | `FREQ=WEEKLY;INTERVAL=2` | |
 
 ### G. Repeat after completion
 | # | Input | Title | When (first) | Type | Ctx | Repeat / alerts | Flags · notes |
@@ -356,6 +413,17 @@ Types: **T** Task · **M** Meeting · **E** Event · **O** Occasion. Context: **
 | O8 | pay tuition €450 Nov 30 | Pay tuition | Nov 30 (date) | B | P | nag 2h · amount EUR 450.00 | |
 | O9 | email the landlord about rent tomorrow | Email the landlord about rent | Oct 6 (date) | T | P | | Verb beats "rent" |
 | O10 | gym membership renews Nov 5 USD 49 | Gym membership renews | Nov 5 (date) | B | P | `FREQ=MONTHLY;BYMONTHDAY=5` · bill: subscription · amount USD 49.00 | |
+| O11 | pay electricity 100$ Friday | Pay electricity | Oct 9 (date) | B | P | nag 2h · amount USD 100.00 | Symbol after the number |
+| O12 | netflix 15.49$ on the 12th | Netflix | Oct 12 (date) | B | P | nag 2h · amount USD 15.49 | |
+| O13 | pay rent 450 € Friday | Pay rent | Oct 9 (date) | B | P | nag 2h · amount EUR 450.00 | |
+| O14 | pay landlord 20£ tomorrow | Pay landlord | Oct 6 (date) | B | P | nag 2h · amount GBP 20.00 | |
+| O15 | pay rent $2k on the 1st | Pay rent | Nov 1 (date) | B | P | nag 2h · amount USD 2000.00 | k = thousand |
+| O16 | car insurance 1.5k dollars Nov 20 | Car insurance | Nov 20 (date) | B | P | nag 2h · amount USD 1500.00 | |
+| O17 | pay tuition 300 pounds Friday | Pay tuition | Oct 9 (date) | B | P | nag 2h · amount GBP 300.00 | |
+| O18 | water bill 500₱ Friday | Water bill | Oct 9 (date) | B | P | nag 2h · amount PHP 500.00 | |
+| O19 | pay rent 1,200.50 $ on the 1st | Pay rent | Nov 1 (date) | B | P | nag 2h · amount USD 1200.50 | |
+| O20 | pay rent usd100 on the 15th day of oct | Pay rent | Oct 15 (date) | B | P | nag 2h · amount USD 100.00 | Both new forms together |
+| O21 | pay rent 100 USD dollars Friday | Pay rent | Oct 9 (date) | B | P | nag 2h · amount USD 100.00 | Doubled currency word is absorbed |
 
 ### S. Stretch (not counted toward pass rate)
 | # | Input | Expected |
