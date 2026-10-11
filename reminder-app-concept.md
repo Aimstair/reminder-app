@@ -118,6 +118,12 @@ Every reminder has its **timing** (when the thing is) and a separate **alert pla
 - **Simple search** across all reminders
 - Full rules: `docs/screens.md` §1 (`VW-*`)
 
+### Place Reminders *(moved into v1.0 on 2026-10-11)*
+- Ring when you **arrive at** or **leave** a place (or both) — "buy milk at Trader Joe's", "keys, wallet, phone?" when leaving home
+- Active any day, on one date, or on a repeat; optional hours (outside them a trigger is ignored); first time or every time
+- Own **Places** screen: map with every place's pin (icon + color) and radius, and the only place to create them
+- Geofencing runs in our Kotlin module; location never leaves the phone. Full rules: `docs/behavior-spec.md` §9c (`LOC-*`)
+
 ### Device Calendar Import (read-only)
 - Read events via Android's **on-device calendar provider** (`CalendarContract`, `READ_CALENDAR` permission)
 - Covers Google, Outlook/Exchange, Samsung, and any account synced to the phone — **works signed out, no Google OAuth verification needed**
@@ -237,7 +243,6 @@ The **Occurrence** table is what makes "done this year, back next year" and per-
 | Feature | Reason |
 |---|---|
 | Messenger/WhatsApp/Slack notifications | Each platform requires separate API approval and business verification; high setup cost, low payoff over push + email |
-| Location-based reminder triggers | Permissions and battery overhead for marginal value at launch |
 | Shared/collaborative reminders | A full sync/accounts/permissions project on its own — v2 candidate if users ask |
 | Rich attachments (photos, links, subtasks) | Scope creep from "reminder" toward "project manager" |
 | Multiple alert sounds/themes | Cosmetic polish, post-launch only |

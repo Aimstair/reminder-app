@@ -10,14 +10,14 @@ Related: [`behavior-spec.md`](behavior-spec.md) · [`parser-test-set.md`](parser
 
 | Level | What | Tool | Runs |
 |---|---|---|---|
-| **Unit — core** | Every rule in `behavior-spec.md`: time, recurrence, state machine, alerts, planner, digest, calendar matching, contacts mapping, templates | `dart test` in `packages/core` (no device) | Every change |
+| **Unit — core** | Every rule in `behavior-spec.md`: time, recurrence, state machine, alerts, planner, digest, calendar matching, contacts mapping, templates, place windows and firing rules + geofence set (`LOC-*`) | `dart test` in `packages/core` (no device) | Every change |
 | **Property-based** | Recurrence + time zones + DST over thousands of random dates/zones | Seeded random generators in `dart test` (`glados` optional — verify maintenance) | Every change |
 | **Parser acceptance** | One test per row in `parser-test-set.md` (A1…N6), fixed "now" | `dart test` | Every change |
 | **Data** | Migrations, repositories, soft delete, backup round-trip (`DAT-5`) | `flutter test` + Drift in-memory database | Every change |
 | **Native unit** | Alarm diffing, payload → notification, action receiver logic | JUnit + Robolectric (Kotlin) | Every native change |
 | **Widget** | Key widgets render in light/dark, large fonts, safe areas; golden (screenshot) tests for key screens | `flutter test` (widget + golden tests), `mocktail` | Every change |
 | **Integration** | Dart ↔ Kotlin bridge on a device: sync alarms, read journal, permissions | `integration_test` | Every native/bridge change |
-| **End-to-end** | User flows FL-1…FL-18 on a release build | Maestro (uses Flutter semantics labels) | Before each beta build |
+| **End-to-end** | User flows FL-1…FL-19 (FL-19 with mock locations on the emulator) on a release build | Maestro (uses Flutter semantics labels) | Before each beta build |
 | **Device reliability** | Alarm delivery under real conditions (§3) | Manual script + `fire_log` | Before each beta and release |
 | **Smoothness** | Dropped frames per scenario (bake-off method, §4) | `spikes/tools/measure.sh`-style adb script + SurfaceFlinger TimeStats | Before each beta |
 
@@ -78,6 +78,21 @@ Run through property tests and fixed cases:
 
 ---
 
+### Place reminders (real devices, release build, `LOC-*`)
+Walk or drive in and out of a test place (200 m radius). Pass = notification within **3 minutes** of crossing the edge.
+
+| # | Scenario | Pass |
+|---|---|---|
+| L1 | Arrive, app in background | Fires once, "Arrived at …" |
+| L2 | Leave, screen off 10+ min (Doze) | Fires on leaving |
+| L3 | Arrive outside the hours, stay until the hours start | **No** notification (`LOC-7`) |
+| L4 | Every time: leave and come back twice within an hour | Second arrival suppressed |
+| L5 | Reboot, then arrive | Fires (geofences re-registered, `LOC-15`) |
+| L6 | Location off then on, then arrive | Fires; banner shown while off |
+| L7 | Only "while using" granted | Saved, *Waiting for location access*, no fire, Reliability row |
+| L8 | Save an Arrive reminder while inside the circle | Doesn't fire until you leave and come back |
+| L9 | Battery: one day with 10 places | No noticeable extra drain in Android battery stats (< 2%) |
+
 ## 4. Performance & UX budgets
 
 | Metric | Budget | How measured |
@@ -113,9 +128,10 @@ Run through property tests and fixed cases:
 - [ ] All unit, parser, and e2e tests green; rule-ID coverage script empty
 - [ ] Reliability script R1–R15 passed on the full device matrix
 - [ ] Performance budgets met
-- [ ] **Permissions declared & justified:** `POST_NOTIFICATIONS`, `SCHEDULE_EXACT_ALARM` (and Play's exact-alarm declaration — check whether the app qualifies for `USE_EXACT_ALARM`), `RECEIVE_BOOT_COMPLETED`, `READ_CALENDAR`, `READ_CONTACTS` (prominent in-app disclosure before the request, `PRM-8`)
+- [ ] **Permissions declared & justified:** `POST_NOTIFICATIONS`, `SCHEDULE_EXACT_ALARM` (and Play's exact-alarm declaration — check whether the app qualifies for `USE_EXACT_ALARM`), `RECEIVE_BOOT_COMPLETED`, `READ_CALENDAR`, `READ_CONTACTS` (prominent in-app disclosure before the request, `PRM-8`), `ACCESS_FINE_LOCATION` + `ACCESS_BACKGROUND_LOCATION` (prominent disclosure S-09; **Play Console background-location declaration + demo video** — allow extra review time)
 - [ ] **Data safety form**: data stays on device in v1.0; crash/analytics data described; no contact or calendar data collected off-device
-- [ ] Privacy policy published (covers calendar + contacts access)
+- [ ] Privacy policy published (covers calendar, contacts and location access; Google Maps / Geocoder requests)
+- [ ] Maps API key restricted to the release package + SHA-1, not in git
 - [ ] Final app name, icon, store listing, screenshots (D2) — lead with occasions + bills
 - [ ] Translation keys complete (no hard-coded strings)
 - [ ] Light/dark, 200% font, TalkBack, Reduce Motion checks done

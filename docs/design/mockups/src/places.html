@@ -1,0 +1,272 @@
+﻿<!doctype html>
+<!--
+  Places mockups (11–15) — LOC-*, S-19, S-24, S-25, S-30, DS17.
+  Built with the app's tokens (design-direction.md §3), Inter + Phosphor from assets/fonts,
+  and the patterns of the approved mockups 02–04 (DS11). Render:
+  msedge --headless --window-size=390,844 --force-device-scale-factor=2 --screenshot=out.png "file:///.../places.html?s=list"
+  screens: list · picker · form · detail · list-dark
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+@font-face { font-family: Inter; font-weight: 400; src: url(../../../../assets/fonts/Inter-Regular.ttf); }
+@font-face { font-family: Inter; font-weight: 500; src: url(../../../../assets/fonts/Inter-Medium.ttf); }
+@font-face { font-family: Inter; font-weight: 600; src: url(../../../../assets/fonts/Inter-SemiBold.ttf); }
+@font-face { font-family: Inter; font-weight: 700; src: url(../../../../assets/fonts/Inter-Bold.ttf); }
+@font-face { font-family: Ph; src: url(../../../../assets/fonts/Phosphor-Regular.ttf); }
+@font-face { font-family: PhF; src: url(../../../../assets/fonts/Phosphor-Fill.ttf); }
+
+:root {
+  --bg: #F2F2F7; --surface: #FFFFFF; --text: #000; --text2: rgba(60,60,67,.6);
+  --sep: rgba(60,60,67,.18); --accent: #007AFF; --fill: rgba(118,118,128,.12);
+  --seg-on: #FFFFFF; --shadow: 0 2px 10px rgba(0,0,0,.12);
+  --blue:#007AFF; --indigo:#5856D6; --teal:#30B0C7; --green:#34C759; --orange:#FF9500;
+  --pink:#FF2D55; --red:#FF3B30; --grey:#8E8E93; --gold:#F5A300;
+}
+.dark {
+  --bg: #000; --surface: #1C1C1E; --text: #FFF; --text2: rgba(235,235,245,.6);
+  --sep: rgba(84,84,88,.6); --accent: #0A84FF; --fill: rgba(118,118,128,.24);
+  --seg-on: #636366; --shadow: 0 2px 10px rgba(0,0,0,.5);
+  --blue:#0A84FF; --indigo:#5E5CE6; --teal:#40C8E0; --green:#30D158; --orange:#FF9F0A;
+  --pink:#FF375F; --red:#FF453A; --grey:#98989D;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 390px; height: 844px; overflow: hidden; }
+body { font-family: Inter; color: var(--text); background: var(--bg); position: relative;
+       -webkit-font-smoothing: antialiased; letter-spacing: -0.2px; }
+.i { font-family: Ph; font-style: normal; line-height: 1; display: inline-block; }
+.f { font-family: PhF; font-style: normal; line-height: 1; display: inline-block; }
+.abs { position: absolute; }
+
+/* map */
+.map { position: absolute; left: 0; right: 0; top: 0; overflow: hidden; }
+.map svg { position: absolute; left: 0; top: 0; }
+.ring { position: absolute; border-radius: 50%; transform: translate(-50%,-50%); }
+.pin { position: absolute; width: 36px; height: 36px; border-radius: 50%; transform: translate(-50%,-50%);
+       display: flex; align-items: center; justify-content: center; color: #fff; font-size: 19px;
+       border: 2.5px solid #fff; box-shadow: 0 3px 8px rgba(0,0,0,.25); }
+.pin.big { width: 46px; height: 46px; font-size: 24px; }
+.pin .count { position: absolute; top: -8px; right: -9px; min-width: 19px; height: 19px; border-radius: 10px;
+       background: #fff; font: 700 11px Inter; display: flex; align-items: center; justify-content: center; padding: 0 5px; }
+.pin .live { position: absolute; bottom: -3px; right: -3px; width: 12px; height: 12px; border-radius: 50%;
+       background: var(--green); border: 2px solid #fff; }
+.me { position: absolute; width: 18px; height: 18px; border-radius: 50%; background: #0A84FF; border: 3px solid #fff;
+      box-shadow: 0 0 0 10px rgba(10,132,255,.18), 0 1px 4px rgba(0,0,0,.3); transform: translate(-50%,-50%); }
+.fab-sm { position: absolute; width: 44px; height: 44px; border-radius: 22px; background: var(--surface);
+      box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--accent); }
+
+/* chrome */
+.circle-btn { width: 44px; height: 44px; border-radius: 22px; background: var(--surface); box-shadow: var(--shadow);
+      display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--text); }
+.title-pill { height: 44px; border-radius: 22px; background: var(--surface); box-shadow: var(--shadow); padding: 0 20px;
+      display: flex; align-items: center; gap: 8px; font: 600 17px Inter; }
+.chips { display: flex; gap: 8px; }
+.chip { height: 36px; border-radius: 18px; background: var(--surface); padding: 0 14px; display: flex; align-items: center; gap: 7px;
+      font: 600 15px Inter; box-shadow: 0 1px 4px rgba(0,0,0,.08); white-space: nowrap; }
+.chip.on { background: var(--text); color: var(--bg); }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--bg); border-radius: 24px 24px 0 0;
+      box-shadow: 0 -4px 20px rgba(0,0,0,.10); }
+.grab { width: 36px; height: 5px; border-radius: 3px; background: rgba(120,120,128,.35); margin: 7px auto 0; }
+.caption { font: 600 13px Inter; color: var(--text2); text-transform: uppercase; letter-spacing: .3px; padding: 0 32px; margin: 16px 0 7px; }
+.group { background: var(--surface); border-radius: 12px; margin: 0 16px; overflow: hidden; }
+.row { display: flex; align-items: center; min-height: 54px; padding: 0 16px; gap: 12px; position: relative; }
+.row + .row::before { content: ""; position: absolute; top: 0; right: 0; left: 60px; border-top: .5px solid var(--sep); }
+.row.noicon + .row::before, .row.nosep::before { left: 16px; }
+.tile { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 19px; flex: none; }
+.tile.soft { width: 44px; height: 44px; border-radius: 12px; font-size: 22px; }
+.grow { flex: 1; min-width: 0; }
+.t17 { font: 400 17px/22px Inter; }
+.t17b { font: 600 17px/22px Inter; }
+.t15 { font: 400 15px/20px Inter; color: var(--text2); }
+.t13 { font: 400 13px/18px Inter; color: var(--text2); }
+.ell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.val { font: 400 17px Inter; color: var(--text2); display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.val .i { font-size: 15px; opacity: .55; }
+.switch { width: 51px; height: 31px; border-radius: 16px; background: var(--fill); position: relative; flex: none; }
+.switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.2); }
+.switch.on { background: var(--green); }
+.switch.on::after { left: 22px; }
+.seg { display: flex; background: var(--fill); border-radius: 10px; padding: 2px; height: 36px; }
+.seg div { flex: 1; display: flex; align-items: center; justify-content: center; font: 500 15px Inter; border-radius: 8px; white-space: nowrap; }
+.seg .on { background: var(--seg-on); font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,.12); }
+.trig { display: inline-flex; align-items: center; gap: 3px; height: 22px; padding: 0 7px; border-radius: 6px; font: 600 13px Inter; }
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; flex: none; }
+.fab { position: absolute; right: 25px; bottom: 32px; width: 60px; height: 60px; border-radius: 30px; background: var(--accent);
+      color: #fff; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 8px 20px rgba(0,122,255,.35); }
+.btn { height: 54px; border-radius: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; font: 600 19px Inter; }
+.dim { position: absolute; inset: 0; background: rgba(0,0,0,.4); }
+</style>
+</head>
+<body>
+<script>
+const P = { // place colors (design-direction.md, LOC-1)
+  blue: 'var(--blue)', indigo: 'var(--indigo)', teal: 'var(--teal)', green: 'var(--green)',
+  orange: 'var(--orange)', pink: 'var(--pink)', red: 'var(--red)', grey: 'var(--grey)' };
+const RAW = { blue:'0,122,255', indigo:'88,86,214', teal:'48,176,199', green:'52,199,89', orange:'255,149,0', pink:'255,45,85', red:'255,59,48', grey:'142,142,147' };
+const I = { house:'e2c2', briefcase:'e0ee', cart:'e41e', barbell:'e0b6', grad:'e62c', fork:'e262', aid:'e56e', car:'e112',
+  plane:'e5d6', church:'ecea', heart:'e2a8', pin:'e316', search:'e30c', back:'e138', next:'e13a', plus:'e3d4', x:'e4f6',
+  dots:'e1fe', gps:'e1d6', nav:'eade', arrive:'e428', leave:'e42a', cal:'e10a', clock:'e19a', repeat:'e3f6', mic:'e326',
+  note:'e34c', bell:'e0ce', check:'e182', pause:'e39e', down:'e136', link:'e2e2', ticket:'e490', hourglass:'e2b4', shield:'e40c' };
+const ic = (n, cls = 'i', extra = '') => `<span class="${cls}" style="${extra}">&#x${I[n]};</span>`;
+const q = new URLSearchParams(location.search); const S = q.get('s') || 'list';
+const dark = S.endsWith('-dark'); if (dark) document.documentElement.className = 'dark';
+const screen = S.replace('-dark', '');
+
+function mapSvg(w, h, ox = 0, oy = 0) {
+  const c = dark
+    ? { land:'#17181B', block:'#1E2024', park:'#14261A', water:'#0D2236', road:'#2E3036', major:'#3A3D44', casing:'#17181B', label:'#6E7177' }
+    : { land:'#EEF0F3', block:'#E5E8EC', park:'#DCEFD8', water:'#CFE3F6', road:'#FFFFFF', major:'#FFFFFF', casing:'#D9DDE3', label:'#9AA0A8' };
+  let s = `<svg width="${w}" height="${h}" viewBox="${ox} ${oy} ${w} ${h}" xmlns="http://www.w3.org/2000/svg"><rect x="-400" y="-400" width="1400" height="1600" fill="${c.land}"/>`;
+  // blocks
+  for (let x = -40; x < 620; x += 74) for (let y = -40; y < 900; y += 62) {
+    if ((x * 7 + y * 3) % 5 === 0) continue;
+    s += `<rect x="${x + 8}" y="${y + 8}" width="58" height="46" rx="4" fill="${c.block}"/>`;
+  }
+  s += `<path d="M-40 520 C 80 470, 140 600, 250 560 S 420 470, 620 520 L 620 600 C 430 560, 330 650, 240 640 S 70 560, -40 610 Z" fill="${c.water}"/>`;
+  s += `<rect x="252" y="96" width="120" height="98" rx="10" fill="${c.park}"/><rect x="-20" y="300" width="96" height="84" rx="10" fill="${c.park}"/>`;
+  // minor roads
+  for (let x = -40; x < 620; x += 74) s += `<rect x="${x}" y="-400" width="8" height="1600" fill="${c.road}"/>`;
+  for (let y = -40; y < 900; y += 62) s += `<rect x="-400" y="${y}" width="1400" height="8" fill="${c.road}"/>`;
+  // major roads with casing
+  const major = (d) => `<path d="${d}" stroke="${c.casing}" stroke-width="17" fill="none"/><path d="${d}" stroke="${c.major}" stroke-width="13" fill="none"/>`;
+  s += major('M-40 238 C 120 226, 260 260, 640 214');
+  s += major('M168 -40 C 176 200, 150 420, 196 900');
+  s += `<text x="300" y="232" font-family="Inter" font-size="10" font-weight="600" fill="${c.label}" transform="rotate(-6 300 232)">Main St</text>`;
+  s += `<text x="160" y="140" font-family="Inter" font-size="10" font-weight="600" fill="${c.label}" transform="rotate(88 160 140)">Oak Ave</text>`;
+  return s + '</svg>';
+}
+function ring(x, y, r, color, faded) {
+  const a = faded ? .06 : .13, e = faded ? .3 : .6;
+  return `<div class="ring" style="left:${x}px;top:${y}px;width:${2*r}px;height:${2*r}px;background:rgba(${RAW[color]},${a});border:1.5px solid rgba(${RAW[color]},${e})"></div>`;
+}
+function pin(x, y, color, icon, { count, live, big, faded } = {}) {
+  return `<div class="pin${big ? ' big' : ''}" style="left:${x}px;top:${y}px;background:${P[color]}${faded ? ';opacity:.5' : ''}">${ic(icon, 'f')}`
+    + (count ? `<div class="count" style="color:${P[color]}">${count}</div>` : '') + (live ? '<div class="live"></div>' : '') + '</div>';
+}
+const trig = (kind) => {
+  const m = { a: ['arrive', 'Arrive'], l: ['leave', 'Leave'], al: ['arrive', 'Arrive or leave'] }[kind];
+  return `<span class="trig" style="background:var(--fill);color:var(--text2)">${ic(m[0], 'i', 'font-size:13px')}${m[1]}</span>`;
+};
+
+/* ---------- 11 / 15  Places (S-19) ---------- */
+function list() {
+  const mh = 452;
+  let h = `<div class="map" style="height:${mh + 30}px">${mapSvg(390, mh + 30)}`
+    + ring(108, 300, 46, 'teal') + ring(286, 142, 40, 'indigo') + ring(262, 352, 56, 'green') + ring(52, 162, 34, 'orange', true)
+    + pin(108, 300, 'teal', 'house', { count: 2, live: true }) + pin(286, 142, 'indigo', 'briefcase')
+    + pin(262, 352, 'green', 'cart', { live: true }) + pin(52, 162, 'orange', 'barbell', { faded: true })
+    + `<div class="me" style="left:178px;top:262px"></div>`
+    + `<div class="fab-sm" style="right:16px;top:${mh - 62}px">${ic('nav')}</div></div>`;
+  h += `<div class="abs" style="left:16px;top:14px">${'<div class="circle-btn">' + ic('back') + '</div>'}</div>`
+     + `<div class="abs" style="left:0;right:0;top:14px;display:flex;justify-content:center"><div class="title-pill">${ic('pin', 'i', 'font-size:20px;color:var(--teal)')}Places</div></div>`
+     + `<div class="abs" style="right:16px;top:14px"><div class="circle-btn">${ic('search')}</div></div>`
+     + `<div class="abs chips" style="left:16px;top:70px"><div class="chip on">All&nbsp;<span style="opacity:.6">5</span></div>`
+     + `<div class="chip"><span class="dot" style="background:var(--green)"></span>Active now</div><div class="chip">${ic('pause', 'i', 'font-size:15px;color:var(--text2)')}Paused</div></div>`;
+  const placeHead = (color, icon, name, meta) => `<div class="row" style="min-height:62px"><div class="tile soft" style="background:rgba(${RAW[color]},.16);color:${P[color]}">${ic(icon, 'f')}</div>`
+    + `<div class="grow"><div class="t17b ell">${name}</div><div class="t13 ell">${meta}</div></div><span class="i" style="font-size:22px;color:var(--text2)">&#x${I.dots};</span></div>`;
+  const rem = (title, kind, sub, live, paused) => `<div class="row" style="min-height:60px;padding-left:72px${paused ? ';opacity:.45' : ''}"><div class="grow">`
+    + `<div class="t17 ell">${title}</div><div style="display:flex;align-items:center;gap:7px;margin-top:3px">${trig(kind)}<span class="t13 ell">${sub}</span></div></div>`
+    + (live ? '<span class="live-dot"></span>' : paused ? '<span class="t13">Paused</span>' : '') + '</div>';
+  h += `<div class="sheet" style="top:${mh}px"><div class="grab"></div>`
+    + `<div style="display:flex;align-items:baseline;gap:8px;padding:12px 20px 10px"><span style="font:700 22px Inter">Nearby</span><span class="t15">4 places · 5 reminders</span></div>`
+    + `<div class="group">` + placeHead('teal', 'house', 'Home', '200 m · 0.2 mi away')
+    + rem('Take out the bins', 'a', 'Every Tue · 6 – 10 PM', true) + rem('Keys, wallet, phone?', 'l', 'Any day · Any time', true) + '</div>'
+    + `<div class="group" style="margin-top:12px">` + placeHead('green', 'cart', "Trader Joe's", '300 m · 0.6 mi away')
+    + rem('Buy milk', 'a', 'Weekdays · 9 AM – 5 PM', true) + '</div>'
+    + `<div class="group" style="margin-top:12px">` + placeHead('indigo', 'briefcase', 'Work', '200 m · 1.4 mi away') + '</div>'
+    + `</div><div class="fab">${ic('plus')}</div>`;
+  return h;
+}
+
+/* ---------- 12  Place picker (S-24) ---------- */
+function picker() {
+  const mh = 262;
+  let h = `<div class="map" style="height:${mh + 30}px">${mapSvg(390, mh + 30, 40, 170)}`
+    + ring(195, 182, 62, 'green') + pin(195, 182, 'green', 'cart', { big: true })
+    + `<div class="me" style="left:96px;top:136px"></div>`
+    + `<div class="fab-sm" style="right:16px;top:${mh - 60}px">${ic('nav')}</div></div>`;
+  h += `<div class="abs" style="left:16px;right:16px;top:14px;display:flex;gap:10px"><div class="circle-btn" style="flex:none">${ic('back')}</div>`
+    + `<div style="flex:1;height:44px;border-radius:12px;background:var(--surface);box-shadow:var(--shadow);display:flex;align-items:center;gap:8px;padding:0 12px">`
+    + `${ic('search', 'i', 'font-size:18px;color:var(--text2)')}<span class="t17">trader joe's</span><span style="flex:1"></span>${ic('x', 'i', 'font-size:16px;color:var(--text2)')}</div></div>`
+    + `<div class="abs chips" style="left:16px;top:68px">`
+    + [['teal', 'house', 'Home'], ['indigo', 'briefcase', 'Work'], ['orange', 'barbell', 'Gym']].map(([c, i, n]) => `<div class="chip">${ic(i, 'f', `font-size:16px;color:${P[c]}`)}${n}</div>`).join('')
+    + `<div class="chip">${ic('gps', 'i', 'font-size:16px;color:var(--accent)')}My location</div></div>`;
+  const icons = ['house', 'briefcase', 'cart', 'barbell', 'grad', 'fork', 'aid', 'car', 'plane', 'church', 'heart', 'pin'];
+  const colors = ['blue', 'indigo', 'teal', 'green', 'orange', 'pink', 'red', 'grey'];
+  h += `<div class="sheet" style="top:${mh}px"><div class="grab"></div>`
+    + `<div style="display:flex;gap:12px;align-items:center;padding:12px 20px 4px"><div class="tile soft" style="background:rgba(52,199,89,.16);color:var(--green)">${ic('cart', 'f')}</div>`
+    + `<div class="grow"><div style="font:700 20px Inter">Trader Joe's</div><div class="t15 ell">1234 Main St, Springfield</div></div></div>`
+    + `<div class="caption" style="margin-top:8px">Name</div><div class="group"><div class="row noicon" style="min-height:48px"><span class="t17">Trader Joe's</span></div></div>`
+    + `<div class="caption">Icon</div><div class="group" style="padding:10px 10px 6px;display:grid;grid-template-columns:repeat(6,1fr);gap:6px">`
+    + icons.map(n => `<div style="height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;${n === 'cart' ? 'background:rgba(52,199,89,.16);color:var(--green);box-shadow:inset 0 0 0 2px var(--green)' : 'color:var(--text2)'}">${ic(n, n === 'cart' ? 'f' : 'i')}</div>`).join('')
+    + `</div><div class="caption">Color</div><div class="group" style="padding:12px 14px;display:flex;justify-content:space-between">`
+    + colors.map(c => `<div style="width:30px;height:30px;border-radius:50%;background:${P[c]};${c === 'green' ? 'box-shadow:0 0 0 2.5px var(--surface),0 0 0 4.5px var(--green)' : ''}"></div>`).join('')
+    + `</div><div class="caption">Within</div><div class="group"><div class="row noicon" style="min-height:52px;gap:14px"><span class="t13">100 m</span>`
+    + `<div style="flex:1;height:4px;border-radius:2px;background:var(--fill);position:relative"><div style="position:absolute;left:0;top:0;bottom:0;width:22%;border-radius:2px;background:var(--accent)"></div>`
+    + `<div style="position:absolute;left:22%;top:50%;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);transform:translate(-50%,-50%)"></div></div>`
+    + `<span class="t13">2 km</span><span class="t17b" style="width:58px;text-align:right">300 m</span></div></div>`
+    + `<div class="btn" style="margin:18px 16px 0;background:var(--accent);color:#fff">Use this place</div></div>`;
+  return h;
+}
+
+/* ---------- 13  Place reminder form (S-25) ---------- */
+function form() {
+  let h = list() + '<div class="dim"></div>';
+  h += `<div class="sheet" style="top:36px;background:var(--bg)"><div class="grab"></div>`
+    + `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px 0"><span style="font:400 17px Inter;color:var(--accent);width:80px">Cancel</span>`
+    + `<span style="font:600 17px Inter">New Place Reminder</span><span class="btn" style="height:34px;width:80px;border-radius:17px;background:var(--accent);color:#fff;font-size:17px">Save</span></div>`
+    + `<div class="group" style="margin-top:14px;padding:14px 16px;display:flex;align-items:center;gap:12px"><span class="grow" style="font:500 20px Inter">Buy milk</span>`
+    + `<div style="width:38px;height:38px;border-radius:19px;background:var(--fill);display:flex;align-items:center;justify-content:center;font-size:19px;color:var(--accent)">${ic('mic')}</div></div>`
+    + `<div class="caption">Place</div><div class="group"><div class="row" style="min-height:60px"><div class="tile" style="background:var(--green)">${ic('cart', 'f')}</div>`
+    + `<div class="grow"><div class="t17">Trader Joe's</div><div class="t13 ell">300 m · 1234 Main St, Springfield</div></div><span class="i" style="color:var(--text2);opacity:.6">&#x${I.next};</span></div></div>`
+    + `<div class="caption">Remind me when I</div><div class="group">`
+    + `<div class="row"><div class="tile" style="background:var(--teal)">${ic('arrive')}</div><span class="t17 grow">Arrive</span><div class="switch on"></div></div>`
+    + `<div class="row"><div class="tile" style="background:var(--orange)">${ic('leave')}</div><span class="t17 grow">Leave</span><div class="switch"></div></div></div>`
+    + `<div class="caption">When</div><div class="group">`
+    + `<div class="row noicon" style="min-height:56px"><div class="seg grow"><div>Any day</div><div>On a date</div><div class="on">Repeats</div></div></div>`
+    + `<div class="row"><div class="tile" style="background:var(--grey)">${ic('repeat')}</div><span class="t17 grow">Repeat</span><span class="val">Weekdays${ic('next')}</span></div>`
+    + `<div class="row"><div class="tile" style="background:var(--blue)">${ic('clock')}</div><span class="t17 grow">Hours</span><span class="val">9:00 AM – 5:00 PM${ic('next')}</span></div>`
+    + `<div class="row"><div class="tile" style="background:var(--indigo)">${ic('bell')}</div><span class="t17 grow" style="white-space:nowrap">Remind me</span><div class="seg" style="width:172px;height:32px;font-size:14px"><div class="on">First time</div><div>Every time</div></div></div></div>`
+    + `<div class="t13" style="padding:8px 32px 0;display:flex;gap:6px;align-items:center">${ic('pin', 'i', 'font-size:14px')}Rings when you arrive at Trader Joe's, weekdays, 9 AM – 5 PM.</div>`
+    + `<div style="margin:18px 16px 0" class="seg"><div class="on">Personal</div><div>Work</div></div>`
+    + `</div>`;
+  return h;
+}
+
+/* ---------- 14  Place reminder detail (S-30) ---------- */
+function detail() {
+  const tint = dark ? 'rgba(48,209,88,.20)' : 'rgba(52,199,89,.15)';
+  let h = `<div class="abs" style="left:0;right:0;top:0;height:372px;background:${tint};overflow:hidden">`
+    + `<div class="abs" style="right:-62px;top:62px;width:220px;height:220px;border-radius:50%;overflow:hidden;box-shadow:0 0 0 6px rgba(255,255,255,.6)">`
+    + `<div style="position:absolute;left:-80px;top:-60px">${mapSvg(390, 360, 60, 150)}</div>`
+    + ring(110, 110, 62, 'green') + pin(110, 110, 'green', 'cart', { big: true }) + `</div></div>`;
+  h += `<div class="abs" style="left:16px;top:22px;display:flex;align-items:center;gap:4px;color:var(--green);font:500 19px Inter">${ic('back', 'i', 'font-size:22px')}Places</div>`
+    + `<div class="abs" style="right:20px;top:24px;font:500 19px Inter;color:var(--green);background:var(--surface);border-radius:14px;padding:4px 12px">Edit</div>`
+    + `<div class="abs" style="left:20px;top:118px;display:flex;gap:8px">`
+    + `<span style="font:700 13px Inter;letter-spacing:.4px;color:var(--green);background:var(--surface);padding:6px 10px;border-radius:8px">PLACE</span>`
+    + `<span style="font:700 13px Inter;letter-spacing:.4px;color:var(--text2);background:var(--surface);padding:6px 10px;border-radius:8px">PERSONAL</span></div>`
+    + `<div class="abs" style="left:20px;top:158px;font:700 34px/41px Inter;letter-spacing:-.6px">Buy milk</div>`
+    + `<div class="abs" style="left:20px;top:206px;font:400 17px/22px Inter;color:var(--text2);width:200px">Arrive at Trader Joe's<br>Weekdays · 9 AM – 5 PM</div>`;
+  const stat = (big, small, color) => `<div style="flex:1;min-width:0;height:96px;border-radius:16px;background:var(--surface);padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.05)">`
+    + `<div style="font:700 24px Inter;color:${color};display:flex;align-items:center;gap:8px;white-space:nowrap">${big}</div><div class="t15" style="margin-top:6px">${small}</div></div>`;
+  h += `<div class="abs" style="left:16px;right:16px;top:290px;display:flex;gap:10px">`
+    + stat('<span class="live-dot" style="width:12px;height:12px"></span>Active', 'watching', 'var(--green)')
+    + stat('300 m', 'radius', 'var(--text)') + stat('0.6 mi', 'from you', 'var(--text)') + `</div>`;
+  h += `<div class="abs" style="left:0;right:0;top:404px"><div class="group">`
+    + `<div class="row"><div class="tile" style="background:var(--green)">${ic('cart', 'f')}</div><div class="grow"><div class="t17">Trader Joe's</div><div class="t13 ell">1234 Main St, Springfield</div></div><span class="i" style="color:var(--text2);opacity:.6">&#x${I.next};</span></div>`
+    + `<div class="row"><div class="tile" style="background:var(--teal)">${ic('arrive')}</div><span class="t17 grow">When I arrive</span><span class="val">First time</span></div>`
+    + `<div class="row"><div class="tile" style="background:var(--blue)">${ic('clock')}</div><span class="t17 grow">Active</span><span class="val">Weekdays · 9 AM – 5 PM</span></div>`
+    + `<div class="row"><div class="tile" style="background:var(--grey)">${ic('pause')}</div><span class="t17 grow">Paused</span><div class="switch"></div></div></div>`
+    + `<div class="group" style="margin-top:14px;padding:16px;display:flex;gap:14px"><span class="i" style="font-size:22px;color:var(--text2)">&#x${I.note};</span><span class="t17">Oat milk if they're out.</span></div></div>`;
+  h += `<div class="abs" style="left:16px;right:16px;bottom:94px"><div class="btn" style="background:var(--green);color:#fff">${ic('check', 'i', 'font-size:22px')}Done</div></div>`
+    + `<div class="abs" style="left:16px;right:16px;bottom:26px;display:flex;gap:10px"><div class="btn" style="flex:1;background:var(--surface);color:var(--accent)">Skip</div><div class="btn" style="flex:1;background:var(--surface);color:var(--red)">Delete</div></div>`;
+  return h;
+}
+
+document.body.innerHTML = { list, picker, form, detail }[screen]();
+</script>
+</body>
+</html>

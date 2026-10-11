@@ -87,7 +87,12 @@ Title is always the reminder title. Body = **stage label · when**. Buttons per 
 | `notif.digest` (`DIG-3`) | Your day | {n} overdue · {n} missed · {n} coming up *(empty parts omitted)* | Open |
 | `notif.travel` (`TIM-8`) | You're in {city} | Switch your default time zone? | Switch · Keep {old city} |
 
-**Button labels:** Done · Snooze 1h · Snooze 5m · Tomorrow · I'm prepared · Open · Undo · Switch · Keep {city}
+**Place reminders (`LOC-9`):** `notif.place.arrived` "Arrived at {place}" · `notif.place.left` "Left {place}" · late: "{normal body} · {time}" with "(late)" — buttons **In 1 hour** · **Next time** · **Done**.
+> **Buy milk**
+> Arrived at Trader Joe's
+> [In 1 hour] [Next time] [Done]
+
+**Button labels:** Done · Snooze 1h · Snooze 5m · Tomorrow · I'm prepared · Open · Undo · Switch · Keep {city} · In 1 hour · Next time
 
 ---
 
@@ -164,7 +169,7 @@ Files show their name and size ("240 KB", "1.2 MB"). Tapping a link opens the br
 **Group headers:** Overdue · Today · Tomorrow · This week · Later · {Month Year}
 **Day view:** All day · Overdue ({n})
 **Month view:** +{n} more
-**Drawer:** Schedule · Day · Month · Types · Context · Calendars · Completed · Settings · Help & feedback
+**Drawer:** Schedule · Day · Month · Places · Types · Context · Calendars · Completed · Settings · Help & feedback
 
 Calendars section is collapsed by default; when some are filtered out it shows "{count} hidden". Same-named calendars show their account underneath.
 **Top bar:** Today · Search
@@ -198,6 +203,33 @@ Calendars section is collapsed by default; when some are filtered out it shows "
 - Old overdue (`OVD-3`): "Overdue for a month. Still relevant?" — **Keep** / **Skip**
 
 ---
+
+## 5b. Places (S-19, S-24, S-25, S-09 — `LOC-*`)
+
+**Entry points:** drawer item *Places* (count of waiting reminders) · view menu *Places*.
+
+**Places screen (S-19):** title *Places* · filter chips *All · Active now · Paused* · place header "{radius} · {distance} away" · trigger chips *Arrive* · *Leave* · *Arrive or leave* · subline "{active} · {hours}" — active: *Any day* · *{date}* · {repeat summary}; hours: *Any time* · "{from} – {to}" · status *Active now* (green dot) · *Paused* · *Waiting for location access* · place menu *Edit place* · *Delete place* · count "{n} reminders".
+Empty state (bell + pin): **No places yet** · Pin a place and get reminded when you arrive or leave. · **Add a place**
+Banners: `PRM-10` *Place reminders need location set to "Allow all the time".* — **Fix** · *Turn on Precise location so arrivals are noticed.* — **Fix** · *Location is off — place reminders are paused.* — **Turn on** · `LOC-14` *Only the 100 nearest places are being watched.*
+Delete dialog: **Delete {place}?** · "Its {n} reminders will be deleted too." · **Delete** / **Cancel** · snackbar "Deleted {place} — Undo".
+
+**Place picker (S-24):** search placeholder *Search a place or address* · no results *No places found for "{query}"* · captions *Name* · *Icon* · *Color* · *Within* · default names *Pinned place* · buttons **Use this place** / **Save place** · chip *My location*.
+Icon names (TalkBack): Home · Work · Store · Gym · School · Food · Health · Parking · Travel · Worship · Heart · Pin. Color names: Blue · Indigo · Teal · Green · Orange · Pink · Red · Grey.
+
+**Place reminder form (S-25):** bar *New Place Reminder* / *Edit Place Reminder* · placeholder rotates *Buy milk* · *Take out the bins* · *Keys, wallet, phone?* (from an event: *What do you need there?*) · group captions *Place* · *Remind me when I* · *When* · rows **Arrive** · **Leave** · **Active** (*Any day · On a date · Repeats*) · **Date** · **Repeat** · **Ends** · **Hours** (*Any time* · *Between*) · **Remind me** (*First time · Every time*, hint under Every time: "At most once an hour") · **Paused** · link row "For: {event} · {when}" · empty place row *Choose a place*.
+Summary line: "Rings when you {arrive at / leave / arrive at or leave} {place}{, active}{, hours}." — e.g. "Rings when you arrive at Trader Joe's, weekdays, 9 AM – 5 PM."
+Validation: both switches off → "Turn on Arrive, Leave, or both." · no place → *Choose a place*.
+Saved snackbar: "Saved · rings at {place}" — **Undo**
+
+**Background location (S-09):** Title **Ring when you get there** · Sub: To notice when you arrive or leave, the app needs your location even when it's closed. Choose **Allow all the time** on the next screen. · Footnote: Your location stays on this phone. It's never stored or shared. · Buttons **Open settings** / **Not now**
+
+**Capture suggestion (`LOC-16`):** card "📍 Make this a place reminder at {place}?" · button **Make it a place reminder** · dismiss ✕.
+
+**Event shortcut (`LOC-11`):** row **Remind me when I get there**.
+
+**Schedule (VW-17):** subline "Arrived at {place} · {time}" / "Left {place} · {time}".
+
+**Reliability (S-57):** Location — *Always* / *Only while using the app* / *Off* · Precise location — On / Off — each with **Fix**.
 
 ## 6. Details, actions & dialogs
 
@@ -289,6 +321,8 @@ Settings: "Private by design. Everything stays on this phone." · Your schedule:
 | No app for a file (ATT-4) | No app on this phone can open this file. |
 | File too big (ATT-3) | Files can be up to 50 MB. |
 | File copy failed (ATT-3) | Couldn't add this file. Please try again. |
+| Place search offline (S-24) | Can't search without a connection. Drag the map to place the pin. |
+| Event location not found (LOC-11) | Couldn't find "{location}". Search or drag the map. |
 | Generic | Something went wrong. Please try again. |
 
 Error messages never blame the user, never show codes, and always say what to do next.

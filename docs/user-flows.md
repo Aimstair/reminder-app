@@ -24,6 +24,7 @@ Step-by-step flows for every core path in v1.0. Each flow has an ID (`FL-6`) use
 | FL-16 | Time zone change & travel | F |
 | FL-17 | Backup export & import | F |
 | FL-18 | Empty, error & permission states | G |
+| FL-19 | Place reminders | H |
 
 ---
 
@@ -241,6 +242,26 @@ Entry points: swipe left on a list item · **[Reschedule]** on detail · from di
 | G8 | **Filter shows nothing** | "No [Work] reminders" | **[Clear filters]** |
 | G9 | **Save with past time** (`time_in_past`) | Highlighted time chip + hint "This time has passed" — saving is still allowed | — |
 | G10 | **Battery optimization detected** on a known aggressive phone, after a late alert (`PRM-4`) | Tip card: "Your phone may be delaying reminders." | **[Show me how]** / **[Dismiss]** |
+| G11 | **Place reminders can't fire** — no "Allow all the time", approximate location, or location off (`PRM-10`) | Banner on Places (S-19); rows say *Waiting for location access*; Reliability row | **[Fix]** → app location settings / location settings |
+
+---
+
+## H. Places
+
+### FL-19 Place reminders
+1. Drawer → **Places** (or view menu → Places) → **S-19**: map of saved places with their circles + list. First visit with no places → empty state *No places yet* + **[+]**.
+2. **[+]** → **place picker (S-24)**. First time: *System dialog* precise location "while using the app" (`PRM-9`); denied → picker still works by search and dragging the map.
+3. Search "trader joe's" → pick a result → map centers, name filled → choose icon 🛒 and color → drag **Within** to 300 m → **[Use this place]**.
+   ⤷ Or tap a saved place chip (Home) — no setup needed. ⤷ Or long-press the map on S-19 to start here at that point.
+4. **Form (S-25):** type "Buy milk" · Arrive ✓ · Active **Any day** · Hours *Any time* · Remind me **First time** → **[Save]**.
+5. First place reminder ever → **S-09** explainer → **[Open settings]** → user picks *Allow all the time* → back → reminder active (green dot). ⤷ **[Not now]** → saved, *Waiting for location access* (G11).
+6. Days later the user walks into Trader Joe's → notification **Buy milk** · *Arrived at Trader Joe's* · **[In 1 hour]** **[Next time]** **[Done]** (`LOC-9`).
+   ⤷ **Done** → resolved, archived (`DAT-3`). ⤷ **Next time** → waits for the next arrival. ⤷ Ignored → shows under **Today** on Schedule, Overdue tomorrow (`LOC-8`, `VW-17`).
+7. **Weekly, with hours:** pin Home → "Take out bins" · Arrive ✓ · **Repeats** every Tuesday · Hours 6 PM – 10 PM. Arriving home Tue 5:30 PM → nothing (outside hours, no catch-up, `LOC-7`); arriving again 7 PM → fires. A Tuesday with no arrival in the window → that occurrence passes silently.
+8. **Both:** "Keys, wallet, phone?" at Home with Arrive ✗, Leave ✓ — or Arrive and Leave both on → fires on either; *Every time* → each time, at most once an hour (`LOC-6`).
+9. **From an event:** concert detail → **📍 Remind me when I get there** → S-25 with *On a date* Sat Oct 18, Hours 6–11 PM, place from the event's location (confirm in S-24) → type "Bring the tickets" → Save (`LOC-11`).
+10. **From capture:** typing "take out bins when I get home" → suggestion card *Make this a place reminder at Home?* → tap → S-25 prefilled (`LOC-16`).
+11. **Manage:** tap a pin → sheet jumps to that place · tap a row → detail (Pause, Edit, Delete) · place ⋯ → Edit place (S-24) / Delete place and its reminders (`LOC-2`).
 
 ---
 
@@ -259,4 +280,5 @@ Entry points: swipe left on a list item · **[Reschedule]** on detail · from di
 | Home maintenance (repeat after completion) | FL-14 |
 | Recurring work admin, invoicing | FL-2, parser F4, F7 |
 | Travel across time zones | FL-16 |
+| Errands at a place, "when I get home / leave work", things to bring to an event | FL-19 |
 | Medication several times a day | *v1.2* |

@@ -91,6 +91,14 @@ Sizing: **S** = small, **M** = medium, **L** = large. No calendar dates — each
 | "Remind me" overlay on synced events (no alerts by default) | S |
 | In-app daily digest card (overdue + missed) | S |
 
+### Places (`LOC-*`, added 2026-10-11)
+| Feature | Size |
+|---|---|
+| **Place reminders** — arrive / leave / both, active any day · on a date · repeating, optional hours, first time or every time; own Kotlin geofencing (Play Services) | L |
+| **Places screen** — Google Maps with every place's pin (icon + color) and radius circle, list sheet, active-now dots; place picker with search (Android Geocoder), icon, color, radius | L |
+| Location permission flow (while using → "Allow all the time"), degraded states, Reliability rows; Play Console background-location declaration + demo video | M |
+| "Remind me when I get there" on meetings/events · quick-capture place phrases (`PRS-43`) | S |
+
 ### Art & motion
 | Feature | Size |
 |---|---|
@@ -213,7 +221,7 @@ Accounts, cloud sync, email, LLM parsing, templates, iOS, web.
 - **Testing:** every phase adds automated tests for its core logic; every alarm/notification change is tested on the real device matrix
 - **Feedback:** in-app feedback link from v1.0; review requests at v1.1 onward
 - **Analytics (privacy-respecting):** capture time, alert delivery, snooze/done rates, retention — no reminder content collected
-- **Cut list stays cut** unless users ask repeatedly: location triggers, messenger channels, subtasks. *(Attachments — links and files — moved into v1.0 on 2026-10-08 at the user's request: `ATT-*` in behavior-spec.md.)*
+- **Cut list stays cut** unless users ask repeatedly: messenger channels, subtasks. *(Attachments — links and files — moved into v1.0 on 2026-10-08 at the user's request: `ATT-*` in behavior-spec.md. Location triggers moved into v1.0 on 2026-10-11 at the user's request: `LOC-*`.)*
 
 ## Key Dependencies
 

@@ -19,7 +19,8 @@ Related: [`reminder-app-concept.md`](../reminder-app-concept.md) (concepts, data
 | **Fire time** | Anchor + offset = when a stage's notification should appear |
 | **Day time** | User's default time for date-only items. Default **09:00** (`PRF-3`) |
 | **Resolved** | Occurrence in a terminal state: `done`, `skipped`, or `passed` |
-| **Completable** | Types that can be marked done: **Task** always; **Occasion** per occurrence |
+| **Completable** | Types that can be marked done: **Task** always; **Occasion** per occurrence; **Bill**; **place reminders** (`LOC-3`) |
+| **Place** | A saved location with a radius that place reminders ring at (`LOC-1`) |
 
 ---
 
@@ -164,6 +165,7 @@ Related: [`reminder-app-concept.md`](../reminder-app-concept.md) (concepts, data
 | Occasion — prep stage (offset < 0) | **Tomorrow** · **I'm prepared** · **Done** |
 | Occasion — day-of stage | **Snooze 1h** · **Done** |
 | Meeting / Event | **Snooze 5m** · **Open** |
+| Place reminder (`LOC-9`) | **In 1 hour** · **Next time** · **Done** |
 | Digest | **Open** |
 
 - **NTF-3** Tapping the notification body opens that occurrence's detail screen.
@@ -255,6 +257,49 @@ Detailed parser rules and examples live in `parser-test-set.md`. These are the d
 - **CON-7** **No duplicates with the calendar:** while contacts import is on, the device "Birthdays"/contacts calendar is excluded from calendar import (`CAL-4` rule 1 no longer applies to it).
 - **CON-8** Revoking the permission stops re-scans; existing occasion reminders stay.
 
+## 9c. Place reminders (`LOC`)
+
+Reminders that ring when you **arrive at** or **leave** a place instead of at a time. They live on their own **Places** screen (S-19) and are created only there — the capture sheet's type control doesn't offer them (a parsed place phrase hands off to the Places form, `LOC-16`).
+
+### Places
+- **LOC-1** A **place** is a saved location: name, icon, color, latitude/longitude, address (as found by search, may be empty), and **radius**. Every place the user picks is saved so other reminders can reuse it; one place can have any number of reminders.
+  - **Radius:** 100 m – 2 km on a slider, default **200 m** (feet/miles where the locale uses them: 330 ft – 1.2 mi). Below 100 m Android can't detect arrivals reliably.
+  - **Icon** (12): Home · Work · Store · Gym · School · Food · Health · Parking · Travel · Worship · Heart · Pin (default). **Color** (8): blue · indigo · teal (default) · green · orange · pink · red · grey — from the design tokens, so they follow light/dark.
+  - New places are named from search ("Trader Joe's") or the address; a dropped pin with no address is named "Pinned place". Names don't have to be unique.
+- **LOC-2** **Editing a place** (move, rename, icon, color, radius) applies to all its reminders. **Deleting a place** asks first when it has reminders ("Delete Home and its 2 reminders?") and soft-deletes it with them (`DAT-1`, Undo).
+
+### Place reminders
+- **LOC-3** A **place reminder** has: title, place, **Arrive** and/or **Leave** (at least one on; default Arrive), **Active**, **Hours**, **Remind me**, context, notes/links/files (`ATT-*`). It has no time, alert plan, or nag. It is completable.
+- **LOC-4** **Active** — which days it can fire:
+  - **Any day** (default) — no date. Fires the next time the trigger happens in its hours; one occurrence, created when it fires.
+  - **On a date** — one date only (`date` timing, no zone, `TIM-4`).
+  - **Repeats** — a start date plus the normal repeat options (daily, weekdays, weekly on days, monthly, custom — `REC-1`…`REC-5`, `fixed` only) with an optional end (`REC-9`). Each active day is one occurrence.
+- **LOC-5** **Hours** — **Any time** (default) or **Between** {from} and {to}, local time on the device (like `date` reminders, `TIM-4`). A range that ends at or before it starts runs past midnight and belongs to the day it starts ("10 PM – 2 AM" on Tue covers Tue 22:00 → Wed 02:00).
+- **LOC-6** **Remind me** — **First time** (default): fires once per occurrence. **Every time**: fires on every matching arrive/leave of that occurrence, at most **once an hour** per reminder (absorbs GPS jitter at the edge of the circle).
+- **LOC-7** **Firing:** a trigger fires a reminder only when **all** hold: it is Arrive/Leave as set · today is an active day (`LOC-4`) · now is inside its hours (`LOC-5`) · its occurrence is unresolved · it hasn't fired already (First time) or not within the last hour (Every time) · it isn't paused (`LOC-12`).
+  - **Outside the hours is ignored** — no catch-up: arriving at 8:45 for a 9:00–5:00 reminder does nothing, even if you're still there at 9:00. It fires on the next arrival inside the hours. (User decision 2026-10-11.)
+  - **Already there when saved:** creating or editing an Arrive reminder while inside its circle doesn't fire it; you have to arrive. A Leave reminder saved while inside fires when you leave.
+- **LOC-8** **Occurrences & states** (reuses `OCC-*`):
+  - Firing marks the occurrence **fired**. A fired occurrence behaves like a Task's (`OCC-1`): it stays unresolved until **Done** or **Skip**, shows under **Today** on Schedule, and becomes **Overdue** the next day (`OVD-1`, due = end of the day it fired). Done on an *Every time* occurrence stops further firing for it.
+  - An occurrence of **On a date / Repeats** whose day ends **without firing** becomes `passed` silently — not overdue, not missed, not in the digest.
+  - **Any day** never passes: it waits until it fires, then until Done. Done resolves the reminder (archived per `DAT-3`).
+- **LOC-9** **Notification** (channel `reminders`): title = reminder title; body "Arrived at {place}" / "Left {place}". Buttons **In 1 hour** · **Next time** · **Done**:
+  - **In 1 hour** — re-fires the same notification in 1 hour as a normal alarm (`NTF-4`), regardless of hours.
+  - **Next time** — the occurrence goes back to waiting: it fires again on the next matching trigger (`LOC-7`), even in *First time* mode.
+  - **Done** — as `NTF-9` (5 s Undo).
+  - Late rule: if Android delivers the trigger more than **30 min** after it happened (phone asleep, location off), show it with "(late)"; beyond the late-alert cutoff (`PRF-6`) it is recorded as missed (`DIG-2`) and not shown.
+- **LOC-10** **Where they appear:** the Places screen (S-19) lists every place reminder. Schedule shows only **fired, unresolved** ones (Today / Overdue). Day/Month views and the widget don't show place reminders (they have no time). Search and Completed include them. Context filters (Personal/Work) apply to them; type filters don't.
+- **LOC-11** **"Remind me when I get there"** (Meeting and Event detail, own or calendar, S-30/S-31): opens the Places form (S-25) pre-filled — title empty with placeholder *What do you need there?* · **On a date** = the event's date · Hours = 1 hour before the start → the end (date-only events: Any time) · Arrive on · place = the event's location when it has one (looked up with search; the user confirms it in the picker), otherwise the picker opens empty. The new reminder shows "For: {event title} · {when}" linking back to the event. It does **not** follow the event if it moves *(linked prep reminders are v1.2)*.
+- **LOC-12** **Pause:** any place reminder can be paused from its detail page or the Places list (it keeps its settings, never fires, shows faded). Resume restores it.
+
+### Geofences (Dart plans, Kotlin executes)
+- **LOC-13** Dart computes the **geofence set**: one geofence per place that has at least one unpaused, unresolved reminder active **today or within the next 14 days** (Any day always counts), with transitions = union of its reminders' Arrive/Leave. The payload carries each reminder's active dates in the 14-day window, hours, Remind me mode, last fire time and notification text. Kotlin registers the set (Play Services geofencing, no initial trigger, `LOC-7`) and on a trigger checks `LOC-7` itself and posts the notification — no Flutter on the firing path.
+- **LOC-14** **Limit:** Android allows 100 geofences per app. Over 100 places, register the 100 **closest to the last known location**; the Places screen shows "Only the 100 nearest places are being watched." The set is rebuilt on the same events as `SCH-5`, plus when location access or location services change.
+- **LOC-15** Android drops geofences after a reboot, app update, Play Services data clear, or when location is turned off; Kotlin re-registers them from `native.db` on each (like `BootReceiver`, §5 architecture).
+
+### Capture
+- **LOC-16** When the parser finds a place phrase (`PRS-43`), the capture sheet shows a suggestion card **"📍 Make this a place reminder at {place}?"**. Tapping it opens the Places form (S-25) with the title (place phrase removed), the place (a saved place if the name matches, otherwise the picker opens searching that name), Arrive/Leave, and **On a date** if the text had a date. Ignoring the card saves a normal reminder with the phrase kept in the title.
+
 ## 10. Permissions & degraded modes (`PRM`)
 
 - **PRM-1** **Notifications denied:** reminders still save and appear in the list. A persistent banner explains alerts are off with a button to fix it. Undelivered alerts count as missed (`DIG-2`).
@@ -269,6 +314,9 @@ Detailed parser rules and examples live in `parser-test-set.md`. These are the d
   3. When the user returns to the app: ✅ "Reminders are working" (delay ≤ 60 s) · ⚠️ "Arrived {n} s late" with the matching fix (exact alarm, battery) · ❌ not received after 2 minutes → troubleshooting steps (notifications, exact alarm, battery optimization, Do Not Disturb).
   4. Test reminders are never saved as reminders and never appear in lists or the digest.
 - **PRM-8** Contacts permission is requested only when the user opts in to birthday import (`CON-1`), with an explanation first.
+- **PRM-9** **Location** is requested only from the Places screen: precise "while using the app" the first time the user opens the place picker (to show where they are; the picker still works without it — search and dropped pins). Saving the **first** place reminder then shows the background explainer (S-09) → **"Allow all the time"** in the system settings (Android 11+ can't grant it from a dialog).
+- **PRM-10** **No background location:** place reminders still save but can't fire. The Places screen shows a banner ("Place reminders need location access set to "Allow all the time".") and each reminder shows *Waiting for location access*. Settings → Reliability lists it with **[Fix]**. Same for **approximate location only** ("Turn on Precise location so arrivals are noticed") and **location services off** ("Location is off — place reminders are paused.").
+- **PRM-11** Location is used only on the phone to watch the saved places; it is never stored as a history or sent anywhere. Place search and map tiles send the search text and the map area to Google (no reminder content) — stated in the privacy policy.
 
 ## 11. Data lifecycle (`DAT`)
 
@@ -340,6 +388,7 @@ Every user-adjustable default the rules above depend on. **Onboarding** settings
 
 | Date | Rule(s) | Decision |
 |---|---|---|
+| 2026-10-11 | `LOC-1`–`LOC-16`, `PRM-9`–`PRM-11`, `PRS-43`, S-09, S-19, S-24, S-25, `VW-17` | User request: **place reminders** move from the cut list into v1.0. Their own **Places** screen (map with every place's pin and radius + list), not a sixth type — created only there. A reminder can ring on **arrive, leave, or both**; **Active**: any day / on a date / repeats; optional **hours**; **first time or every time**. Outside the hours a trigger is **ignored** (no catch-up at the start of the window). Places are saved with an **icon and color**. Shortcut **"Remind me when I get there"** on meetings and events. Quick capture suggests a place reminder for "when I get home" phrases. Map: Google Maps SDK (free on Android); search: Android's built-in geocoder (free) — Places autocomplete can replace it later. |
 | 2026-10-09 | `PRS-8`, `PRS-37`, `PRS-41`, `PRS-42` (parser-test-set.md) | Device testing: capture missed "100$" and "15th day of oct". Amounts now read with the symbol before or after, "k" for thousands and more currency words; many more ways to write a date, a time and a repeat (spelled-out days, "the 15th of October", "half past 3", "eod", "tmrw", "mondays and thursdays"…). 37 new acceptance rows. |
 | 2026-10-09 | `SUB-1`–`SUB-3`, `PRS-39`, `PRS-40`, `VW-15`, `VW-16`, DS16 | User request: **subtypes** for Occasion (birthday, anniversary, holiday, memorial), Meeting (video, in person, phone) and Event (appointment, travel, social); holidays are occasions. Schedule home cards (`VW-15`) now show the **next meeting within 7 days** (was: any timed item within 12 hours, so a meeting tomorrow never showed) and the next occasion within 30 days, each designed per subtype. Ticking a row plays a short completion animation before it leaves (`VW-16`). Month summary chips show an icon instead of the type's name, which was cut off. |
 | 2026-10-09 | `BIL-1`–`BIL-7`, `ALR-4`, `TPL-1`/`TPL-3`, `PRS-29`, `PRS-37`, `PRS-38`, `CAP-13`, S-61 | User decision: a fifth type **Bill** (payment / subscription / free trial) with an **optional amount**; subscriptions and free trials live inside Bill; a free trial asks "Keep it / I cancelled" before it ends. Capture gets a separate **Ends** row (`CAP-13`). Widget defaults to **4×2** with the tall Add button from mockup 05. |

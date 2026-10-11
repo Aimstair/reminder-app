@@ -50,6 +50,7 @@ The home screen can show reminders in several **views**, switched from the top b
   - **Occasion card** — the next unresolved Occasion within **30 days**: "In 6 days" / "Today", title, prep progress (one segment per alert stage), **I'm prepared** (`OCC-3`). Each subtype has its own color and illustration: Birthday → pink, gift · Anniversary → red, hearts · Holiday → gold, a holiday picture (tree for Christmas, champagne for New Year, star otherwise) · Memorial → calm teal, lotus · Other → pink, confetti.
   - A card is hidden when the quick filter excludes its type.
 - **VW-16** **Ticking a row** on Schedule fills the checkbox with a small burst, strikes the title through, then the row folds away (≈ 0.7 s; instant with Reduce Motion) before Done is recorded and Undo is offered.
+- **VW-17** **Place reminders** (`LOC-10`) appear on Schedule only after they fire: under **Today** (then **Overdue**) with an icon tile in the place's icon and color and the subline "Arrived at {place} · {time}" / "Left {place} · {time}". Waiting ones live on the Places screen (S-19) only. Day, Month and the widget never show them.
 
 ---
 
@@ -57,12 +58,14 @@ The home screen can show reminders in several **views**, switched from the top b
 
 ```
                          ┌─────────────── Drawer (S-11) ───────────────┐
-                         │ Views · Filters · Calendars · Completed ·    │
-                         │ Settings · Help                              │
+                         │ Views · Places · Filters · Calendars ·       │
+                         │ Completed · Settings · Help                  │
                          └──────────────────────────────────────────────┘
                                          ▲ ☰
  Onboarding (S-01…S-07) ──► HOME (S-10) ─┼─ Schedule (S-12) / Day (S-13) / Month (S-14)
                                          │   [3 Day / Week / Year — v1.2]
+                                         ├─ Places (S-19) ─┬─ Place picker (S-24)
+                                         │                 └─ Place reminder form (S-25) ─ S-09 (first save)
                                          │
           ┌──────────────┬───────────────┼──────────────┬─────────────────┐
           ▼              ▼               ▼              ▼                 ▼
@@ -94,13 +97,14 @@ The home screen can show reminders in several **views**, switched from the top b
 | S-05 | **Notification explainer** | Why notifications matter; shown on first save with alerts (`PRM-6`) | **[Continue]** → system dialog |
 | S-06 | **Precise timing explainer** | Why exact alarms matter (`PRM-2`) | **[Open settings]** → system setting · **[Not now]** |
 | S-07 | **Reliability tip** | Phone-specific battery steps (`PRM-4`) | **[Show me]** / **[Later]** |
+| S-09 | **Background location explainer** | Shown after saving the first place reminder (`PRM-9`): page hero (pin badge, DS15), why "Allow all the time" is needed, a picture of the setting to choose, "Your location stays on this phone" | **[Open settings]** → app location settings · **[Not now]** (reminders saved, waiting — `PRM-10`) |
 
 ### Home & views
 
 | ID | Screen | Contents | Actions → |
 |---|---|---|---|
 | S-10 | **Home shell** | **Top bar:** ☰ drawer · title (month/date — tap to open mini month picker, like Google Calendar) · 🔍 search · **[Today]** · view switcher. **Below:** banners (G2–G4, G10) · active filter chips · current view · **[+]** floating button | ☰ → S-11 · 🔍 → S-40 · **[+]** → S-20 · item → S-30/S-31 |
-| S-11 | **Drawer** | **Views:** Schedule, Day, Month *(3 Day, Week, Year v1.2)* · **Types:** Meeting, Task, Event, Occasion (checkbox + color) · **Context:** Personal, Work · **Calendars:** each imported calendar (checkbox) · **Completed** · **Settings** · **Help & feedback** | Select view / toggle filters / → S-42, S-50 |
+| S-11 | **Drawer** | **Views:** Schedule, Day, Month *(3 Day, Week, Year v1.2)* · **Places** (→ S-19, with a count of waiting reminders) · **Types:** Meeting, Task, Event, Occasion (checkbox + color) · **Context:** Personal, Work · **Calendars:** each imported calendar (checkbox) · **Completed** · **Settings** · **Help & feedback** | Select view / toggle filters / → S-42, S-50 |
 | S-12 | **Schedule view** | Greeting + daily progress ring ("2/6 done") · week strip with type-colored dots · filter chips (All · Personal · Work · **Bills** · Occasions · Events · Meetings; Bills shows a **Due this month** card, `BIL-6`) · home cards (`VW-15`): **Up next** meeting (countdown, subtype tile, Join) and **occasion spotlight** (per-subtype color and illustration, prep progress, I'm prepared) · ticking a row animates (`VW-16`) · digest card (S-41) · groups Overdue / Today / Tomorrow / This week / Later / months with count badges · reminder rows with icon tiles (`VW-12`) | Swipe right = Done · swipe left = Reschedule (S-33) · tap → detail |
 | S-13 | **Day view** | Date header · all-day strip (incl. "Overdue (n)" for today) · hourly grid with current-time line (`VW-3`, `VW-5`, `VW-11`) | Swipe = prev/next day · tap slot → S-20 prefilled · tap item → detail |
 | S-14 | **Month view** | Month title + ‹ › · summary chips · grid with type dots + one short label (`VW-10`) · selected day's items listed below | Swipe or ‹ › = prev/next month · tap day → select + list (`VW-8`) · date heading → S-13 · long-press → S-20 prefilled |
@@ -109,11 +113,20 @@ The home screen can show reminders in several **views**, switched from the top b
 | S-17 | **Year view** — v1.2 | 12 mini months; dots on days with items; occasion days highlighted | Tap day → S-13 · tap month → S-14 |
 | S-18 | **Mini month picker** | Small month calendar dropping down from the title | Tap date → jumps current view to that date |
 
+### Places (`LOC-*`)
+
+| ID | Screen | Contents | Actions → |
+|---|---|---|---|
+| S-19 | **Places** (mockup 11) | Pushed page from the drawer or the view-switcher menu ("Places" under the views). **Top bar:** ‹ back · title *Places* · 🔍 (search places and reminders). **Map** (top ~55%, Google Maps with a calm light/dark style): one pin per place — a round badge in the place's color with its icon, a count when it has more than one reminder, and a green dot when a reminder can fire right now (`LOC-7`) — and its **radius circle** (place color, 12% fill, solid edge; faded when all its reminders are paused); blue "you" dot; ◎ recenter button. Filter chips over the map: *All · Active now · Paused*. Banners (`PRM-10`, `LOC-14`) above the sheet. **Bottom sheet** (drag up to full list, down to a peek): one inset group per place, nearest first — header row: icon tile, name, "{radius} · {distance}", ⋯ (Edit place, Delete); reminder rows: title, trigger chip (*↘ Arrive* · *↗ Leave* · *↘↗ Both*), "{active} · {hours}" subline, green dot when active now, faded with *Paused* when paused. Empty state (bell + pin): *No places yet*. **[+]** floating button (same as S-10) | Pin → camera moves to it, sheet scrolls to that place · row → S-30 · long-press map → S-24 at that point · **[+]** → S-24 → S-25 · ⋯ → S-24 (edit) / delete (`LOC-2`) |
+| S-24 | **Place picker** (mockup 12) | **Top:** ‹ back · search field *Search a place or address* (live results list under it, Geocoder) · saved-place chips (icon + name, horizontally scrolling). **Map** with a fixed center pin; dragging the map moves the place; the radius circle is drawn live. ◎ my location. **Bottom card:** address line · **Name** field · **Icon** row (12 icon tiles, `LOC-1`) · **Color** row (8 dots) · **Within** slider 100 m – 2 km with the value · primary button **Use this place** (or **Save place** when editing) | Search result / chip → map moves there and fills name · **Use this place** → back to S-25 |
+| S-25 | **Place reminder form** (mockup 13) | Same iOS form as S-20/S-22 (DS11): **Cancel · New Place Reminder · Save** bar · input card (title + 🎤) · **PLACE** group: the place row (icon tile in place color, name, "{radius} · {address}", chevron → S-24) · **REMIND ME WHEN I** group: **Arrive** switch · **Leave** switch (at least one on, `LOC-3`) · **WHEN** group: **Active** segmented *Any day · On a date · Repeats* with the matching rows (Date → S-21a; Repeat → S-21f without "after completion"; Ends) · **Hours** row (*Any time* / "9:00 AM – 5:00 PM" → hours sheet: *Any time · Between* + From/To wheels) · **Remind me** segmented *First time · Every time* · one-line summary under the group ("Rings when you arrive at Trader Joe's, weekdays 9 AM – 5 PM") · **Personal / Work** segmented control · **Notes, links & files** group. When opened from an event (`LOC-11`): a "For: {event} · {when}" row at the top. Edit mode: title *Edit Place Reminder* and a **Pause** switch | Save → back to S-19 (first save → S-09) · place row → S-24 |
+
+
 ### Capture
 
 | ID | Screen | Contents | Actions → |
 |---|---|---|---|
-| S-20 | **Capture sheet** | iOS-form layout: **Cancel · New Reminder · Save** bar · input card (text + 🎤 voice + removable template tag) · **template row when input is empty** (`TPL-1`) · grouped **Details** rows parsed from the text — Date, Time, Ends (`CAP-13`), Time zone, Repeat, Alerts (colored icon, value, chevron; flagged values in warning style) · **Nag until done** switch · one-line "first alert" summary · **Type** (Task · Meeting · Event · Occasion · Bill) and **Personal/Work** segmented controls; for a Bill also **Payment · Subscription · Free trial** and an **Amount** row (`BIL-1`, `BIL-2`) · **Notes, links & files** group (Add note · Add link · Add file, `ATT-*`). A type badge left of the input shows the parsed type; the details slide in as the sheet grows (DS15). While typing, rows update live; the keyboard collapses to review | Row → S-21 picker · Save / Enter → closes + snackbar |
+| S-20 | **Capture sheet** | iOS-form layout: **Cancel · New Reminder · Save** bar · input card (text + 🎤 voice + removable template tag) · **template row when input is empty** (`TPL-1`) · grouped **Details** rows parsed from the text — Date, Time, Ends (`CAP-13`), Time zone, Repeat, Alerts (colored icon, value, chevron; flagged values in warning style) · **Nag until done** switch · one-line "first alert" summary · **Type** (Task · Meeting · Event · Occasion · Bill) and **Personal/Work** segmented controls; for a Bill also **Payment · Subscription · Free trial** and an **Amount** row (`BIL-1`, `BIL-2`) · **Notes, links & files** group (Add note · Add link · Add file, `ATT-*`). A type badge left of the input shows the parsed type; the details slide in as the sheet grows (DS15). While typing, rows update live; the keyboard collapses to review. When the text has a place phrase, a **place suggestion card** sits under the input (`LOC-16`) | Row → S-21 picker · Save / Enter → closes + snackbar · suggestion card → S-25 prefilled |
 | S-21 | **Chip pickers** (small sheets) | a Date · b Time (+ end time) · c Time zone · d Type · e Context · f Repeat (incl. "after completion") · g Alerts (stages, start-by, nag) | Done → back to S-20 (field locked, `CAP-11`) |
 | S-22 | **Full editor** | Type badge, then all fields (bills: kind and amount): title, date/time/end, zone, type, context, repeat, alerts, nag until done, notes, links & files (`ATT-*`) | **[Save]** · ⤷ recurring → S-34 |
 | S-23 | **Overlay capture host** | S-20 shown over the home screen / current app (widget, tile, share) | Save/close → back to where the user was |
@@ -122,8 +135,8 @@ The home screen can show reminders in several **views**, switched from the top b
 
 | ID | Screen | Contents | Actions → |
 |---|---|---|---|
-| S-30 | **Reminder detail** | Bills: amount card, **Paid** / **Got it** · **I cancelled it**; free trial: "Your trial ends …" with **Keep it** (monthly / yearly) and **I cancelled** (`BIL-5`). Title, type/context chips, when (+ original zone if different), repeat summary, alert plan, notes (links tappable, `ATT-5`), links & files (tap to open, `ATT-4`), occurrence state, merge banner if duplicate (`CAL-9`) | **[Done]** / **[I'm prepared]** · **[Reschedule]** → S-33 · **[Skip]** · **[Edit]** → S-22 · **[Delete]** |
-| S-31 | **Calendar event detail** | Title, time, calendar name/color, attendee count, type chip (changeable, `CAL-5`), alerts if set | **[Remind me]** → S-32 · type chip → S-21d |
+| S-30 | **Reminder detail** | Bills: amount card, **Paid** / **Got it** · **I cancelled it**; free trial: "Your trial ends …" with **Keep it** (monthly / yearly) and **I cancelled** (`BIL-5`). Title, type/context chips, when (+ original zone if different), repeat summary, alert plan, notes (links tappable, `ATT-5`), links & files (tap to open, `ATT-4`), occurrence state, merge banner if duplicate (`CAL-9`). Meetings and Events: a **📍 Remind me when I get there** row (`LOC-11`). **Place reminders** (mockup 14): colored banner header in the place's color with a map snapshot (pin + circle) instead of an illustration; chips *PLACE* · context; title; "Arrive at {place}" / "Leave …" / "Arrive at or leave …"; stat cards *Waiting / Fired {time} / Done* · *{active}* · *{hours}*; **Paused** switch; "For: {event}" row when linked | **[Done]** / **[I'm prepared]** · **[Reschedule]** → S-33 · **[Skip]** · **[Edit]** → S-22 (place reminders → S-25) · **[Delete]** |
+| S-31 | **Calendar event detail** | Title, time, calendar name/color, attendee count, type chip (changeable, `CAL-5`), alerts if set, location if set, **📍 Remind me when I get there** (`LOC-11`) | **[Remind me]** → S-32 · type chip → S-21d · 📍 → S-25 prefilled |
 | S-32 | **Remind me picker** | Presets: 10 min, 1 hour, 1 day before, Custom; multi-select | **[Save]** → ⤷ series → S-34 |
 | S-33 | **Reschedule sheet** | Later today · This evening · Tomorrow · Next week · Pick date & time | Tap → saved, sheet closes |
 | S-34 | **Scope dialog** | "This one" / "This and future" (edit) or "This one" / "All" (delete, series alerts) | Choice → apply |
@@ -147,7 +160,7 @@ The home screen can show reminders in several **views**, switched from the top b
 | S-54 | **Notifications & digest** | Digest time, digest notification, late-alert cutoff (`PRF-6–8`) |
 | S-55 | **Calendars & contacts** | Connect/disconnect calendars, pick calendars · contact birthdays on/off, review list, auto-add new birthdays (`PRF-13`) · permission status |
 | S-56 | **Views & appearance** | Start in (last used / Schedule / Day / Month), show completed, theme (system / light / dark), completion sounds (`PRF-12`) |
-| S-57 | **Reliability** | Status of notifications, exact alarms, battery optimization — each with **[Fix]** · **[Send test reminder]** with last result (`PRM-7`) |
+| S-57 | **Reliability** | Status of notifications, exact alarms, battery optimization, and — once a place reminder exists — **location** (all the time · precise · location services, `PRM-10`) — each with **[Fix]** · **[Send test reminder]** with last result (`PRM-7`) |
 | S-58 | **Backup & about** | Export / import (FL-17), privacy policy, feedback, **Replay intro** (FL-1 again; data and settings kept, ends back here), licences, version |
 
 ### Outside the app
@@ -178,6 +191,8 @@ Design these once; they appear across many screens.
 | Bottom sheet frame | S-20, S-21, S-32, S-33 |
 | Empty state (illustration + text + action) | S-12, S-13, S-40, S-42 |
 | Type icon + color set (4 types) | everywhere |
+| Place pin (icon badge in place color, count, active dot) + radius circle | S-19, S-24, S-30 |
+| Place icon tile (place icon + color) | S-19, S-25, S-12 (fired place reminders) |
 
 ---
 
@@ -198,3 +213,4 @@ Design these once; they appear across many screens.
 | FL-16 Time zones | S-52 |
 | FL-17 Backup | S-58 |
 | FL-18 States | S-10 banners, S-12–S-14 empty states, S-40, S-57 |
+| FL-19 Place reminders | S-19, S-24, S-25, S-09, S-60, S-30, S-31, S-20 (suggestion card) |

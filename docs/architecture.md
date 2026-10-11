@@ -62,9 +62,10 @@ C:\dev\reminder-app\
       lib/src/parser/           Natural-language parser (PRS-*, CAP-*) — written in Dart, test-first
       lib/src/calendar/         Auto-tagging, overlays, duplicate matching (CAL-*)
       lib/src/contacts/         Birthday import mapping (CON-*)
+      lib/src/places/           Place reminder windows, firing rules, geofence set (LOC-*)
       test/                     Unit + parser acceptance tests (run with `dart test`)
   pigeons/                      Pigeon API definitions (source of the generated bridge)
-  android/app/src/main/kotlin/  alarms/, notifications/, calendar/, widget/, tile/, share/
+  android/app/src/main/kotlin/  alarms/, notifications/, calendar/, widget/, tile/, share/, places/
   assets/                       fonts (Inter), rive/, sounds/, images
   integration_test/             Flutter integration tests
   maestro/                      End-to-end flows (FL-*)
@@ -106,6 +107,9 @@ Versions checked on pub.dev on 2026-10-06; **re-verify at setup** and pin exact 
 | Crash reporting | `sentry_flutter` | 9.30.1 | No reminder content in reports; DSN from git-ignored `config/release.json` |
 | Icons | **Phosphor font, vendored** (MIT) | — | Regular + Fill TTFs in `assets/fonts`, constants in `lib/ui/icons.dart`. Not the `phosphor_flutter` package: unmaintained since 2024 and doesn't build on current Flutter (`IconData` is final) |
 | Open mail app | `url_launcher` | 6.3.3 | Send feedback (S-58) → email to aimteralabs@gmail.com; app/OS version only, no reminder content |
+| Maps | `google_maps_flutter` | 2.x — **verify at setup** | Places screen (S-19), picker (S-24), detail snapshot. Maps SDK for Android is free with no usage cap (needs a Google Cloud project with billing on, API key restricted to the app's package + SHA-1, kept out of git like the Sentry DSN). Light/dark JSON map styles. LOC decision 2026-10-11 |
+| Location & geofencing | **Own Kotlin** with `com.google.android.gms:play-services-location` (Gradle) | 21.x — verify | `GeofencingClient` (LOC-13), current location for the picker, via Pigeon. Not `geolocator`/`geofence_service`: Dart must not be on the firing path |
+| Place search | **Android `Geocoder`** (own Kotlin, via Pigeon) | — | Free, no key. Address + name search, reverse lookup for dropped pins. Google Places autocomplete is the upgrade path if search quality isn't enough (paid after 5,000 picks/month) |
 | Analytics | `posthog_flutter` (or similar) | 5.50.15 | Counts and timings only (D4) |
 | Tests | `flutter_test`, `test`, `mocktail` (1.0.5), `integration_test`, Maestro | — | Property tests: seeded random generators; `glados` optional (last release 2023 — verify) |
 
@@ -119,9 +123,10 @@ Derived from `reminder-app-concept.md` and `behavior-spec.md`. Every app table h
 
 | Table | Key columns |
 |---|---|
-| `reminders` | title, notes, attachments (JSON list: kind link/file, uri, name, mime, size — `ATT-1`; schema v2), amount_minor + currency + bill_kind (`BIL-1`/`BIL-2`; schema v3, which also turns Bill due / Free trial template reminders into bills, `BIL-7`), raw_input, kind (task / meeting / event / occasion / bill), context, timing_type, start_local, end_local, tz (null for date), tz_set_manually, rrule, repeat_mode, alert_plan (JSON), nag_interval, completable, source (JSON: manual / device_calendar / contact), template_id, status |
+| `reminders` | title, notes, attachments (JSON list: kind link/file, uri, name, mime, size — `ATT-1`; schema v2), amount_minor + currency + bill_kind (`BIL-1`/`BIL-2`; schema v3, which also turns Bill due / Free trial template reminders into bills, `BIL-7`), raw_input, kind (task / meeting / event / occasion / bill), context, timing_type, start_local, end_local, tz (null for date), tz_set_manually, rrule, repeat_mode, alert_plan (JSON), nag_interval, completable, source (JSON: manual / device_calendar / contact), template_id, status · place reminders (`LOC-3`; schema v5): kind `place`, place_id, on_arrive, on_leave, active_mode (any / date / repeat — date and repeat reuse start_local + rrule), hours_from, hours_to, remind_mode (first / every), paused, linked_event (JSON: reminder id or calendar event id, `LOC-11`) |
 | `occurrences` | reminder_id, occurrence_key (original start), state, override_start/end, override_alert_plan, snoozed_until, resolved_at, alerts_sent (JSON of stage keys) |
 | `calendar_overlays` | calendar_id, event_id, series_id, alert_plan, kind_override, context_override, scope (event/series), orphaned_at |
+| `places` | name, icon, color, lat, lng, address, radius_m (`LOC-1`; schema v5) |
 | `prefs` | key, value (JSON) — all `PRF-*` settings |
 | `metrics_queue` | event name, numeric props, timestamp — never content |
 
@@ -132,6 +137,8 @@ Derived from `reminder-app-concept.md` and `behavior-spec.md`. Every app table h
 | `alarms` | key (`occurrence_id:stage:nag_seq`), fire_at_utc, exact (bool), payload (JSON: title, body, channel, buttons, deep link, tomorrow_time, late_cutoff) |
 | `action_journal` | alarm key, action (done / prepared / snooze / tomorrow / undo), acted_at, applied (bool) |
 | `fire_log` | alarm key, scheduled_at, fired_at — delivery metrics (D4) and test reminder (`PRM-7`) |
+| `geofences` | place_id, lat, lng, radius_m, transitions, payload (JSON per reminder: active dates in the 14-day window, hours, remind mode, notification text) — `LOC-13` |
+| `place_fires` | reminder_id, occurrence_key, transition, fired_at — enforces First time / once an hour (`LOC-6`) and feeds `readJournal` |
 
 **Why two files:** each runtime owns exactly one database, so there's no cross-runtime locking or schema-version coupling. The native side holds only what it needs to fire alarms with the app closed.
 
@@ -155,6 +162,10 @@ Derived from `reminder-app-concept.md` and `behavior-spec.md`. Every app table h
 | `scheduleTest()` / `getTestResult()` | Test reminder (`PRM-7`) |
 | `getFireLog(since)` | Delivery metrics |
 | `readCalendars()` / `readEvents(range, calendarIds)` | Device calendar import (`CAL-*`) |
+| `syncGeofences(List<GeofenceSpec>)` | Replace the registered geofence set (diff by place id) — `LOC-13`, `LOC-14` |
+| `getLocationState()` / `requestLocation(foreground)` / `openLocationSettings(kind)` | Permission (while using / all the time / precise) and location services (`PRM-9`, `PRM-10`) |
+| `currentLocation()` · `searchPlaces(query, near)` · `reverseGeocode(lat, lng)` | Place picker (S-24) via fused location + `Geocoder` |
+| `readPlaceFires(since)` | Place triggers that fired while Flutter wasn't running → occurrences marked fired (`LOC-8`) |
 | `pickAttachment()` / `openAttachment(path, mime)` / `deleteAttachment(path)` | Files on reminders (`ATT-3`/`ATT-4`/`ATT-6`): system picker → copy to `files/attachments/<uuid>/`; open via a read-only `FileProvider` URI. Links open with `url_launcher`. |
 
 **Native responsibilities**
@@ -165,6 +176,7 @@ Derived from `reminder-app-concept.md` and `behavior-spec.md`. Every app table h
   - **Snooze / Tomorrow** → write journal, register a one-off alarm at the new time using values in the payload (`NTF-4`, `PRF-5`)
   - **Undo** → write journal, restore cancelled alarms whose time is still ahead
 - `BootReceiver`, time/time-zone change, app update → re-register from `alarms`; late ones handled per `SCH-7` (cutoff in payload).
+- **Geofences** (`places/`): `GeofenceReceiver` gets enter/exit → for each reminder in that place's payload checks `LOC-7` (active date, hours in device local time, remind mode against `place_fires`, not paused) → posts the notification (`LOC-9`) and records the fire. **In 1 hour** registers a one-off alarm through the alarm path; **Next time** clears the occurrence's fire in `place_fires`. Re-registers from `geofences` on boot, app update, and `PROVIDERS_CHANGED` (location back on) — `LOC-15`.
 - A periodic **WorkManager** job (≈ daily) starts a **background Flutter engine** (Dart entry point marked `@pragma('vm:entry-point')`) to top up the 14-day window and build the digest — not time-critical.
 
 **Why not Dart on fire?** Starting a Flutter engine from a closed app is slow and can be killed by the OS; keeping firing and buttons native protects the 99.5% delivery target (D4).

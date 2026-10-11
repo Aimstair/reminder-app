@@ -6,7 +6,7 @@ Related: [`behavior-spec.md`](behavior-spec.md) §8 (`CAP-*` rules) · [`product
 
 **v0 exit criterion:** ≥ 90% of counted cases pass. **v1.0 release:** ≥ 95%. Stretch cases (§S) are not counted.
 
-**Status (2026-10-09):** ✅ **147 / 147 pass** — implementation `packages/core/lib/src/parser/`, tests `packages/core/test/parser/` (cases generated from this file: `cd packages/core && dart run tool/gen_parser_cases.dart`). Stretch cases S1–S6 not yet supported.
+**Status (2026-10-09):** ✅ **147 / 147 pass** — implementation `packages/core/lib/src/parser/`, tests `packages/core/test/parser/` (cases generated from this file: `cd packages/core && dart run tool/gen_parser_cases.dart`). Stretch cases S1–S6 not yet supported. **2026-10-11:** 14 place rows (§P, `PRS-43`) added — not implemented yet.
 
 ---
 
@@ -20,6 +20,7 @@ All expected results assume:
 | Default time zone (`PRF-1`) | `America/New_York` |
 | Locale | `en-US` (unless a row says `[en-GB]`) |
 | Day time (`PRF-3`) | 09:00 |
+| Saved places (`LOC-1`) | Home · Work · Gym · Trader Joe's |
 
 Calendar reference (Oct 2026):
 
@@ -52,6 +53,12 @@ The parser returns this structure (the test harness compares it field by field):
   repeatMode?: "fixed" | "after_completion"
   alerts?: string[]        // only when the input states alerts, e.g. ["-14d","0"]
   nag?: string             // e.g. "2h"
+  place?: {                // PRS-43 — a place phrase was found (LOC-16)
+    name: string           // saved place name, or the words as typed ("the stadium")
+    saved: boolean         // true when it matched a saved place
+    arrive: boolean
+    leave: boolean
+  }
   flags: Flag[]            // which preview chips to highlight
 }
 
@@ -135,6 +142,14 @@ A row **passes** when every field shown in the row matches. Title comparison ign
 - **PRS-38** **Bill defaults:** payments get `nag 2h` (`BIL-3`); a subscription without a repeat gets `FREQ=MONTHLY` (with the day of month when a date was given); a free trial without a date ends **in 7 days** and sets `ambiguous_date`.
 - **PRS-31** Work context keywords: *client, team, report, invoice, deck, slides, contract, timesheet, board, sprint, manager, office, roadmap, candidate, webinar, workshop, budget*. Meetings default to Work regardless.
 - **PRS-32** Explicit prefixes *work:* / *personal:* set the context and are removed from the title.
+
+- **PRS-43** **Place phrases** (`LOC-16`) — suggest a place reminder; the phrase is removed from the title:
+  - **Arrive:** *when I get to {X} · when I get home · when I arrive at {X} / home · when I'm at {X} · once I'm at {X} · when I reach {X}*
+  - **Leave:** *when I leave {X} · when I'm leaving {X} · after I leave {X} · before I leave {X}*
+  - **Both:** an arrive and a leave phrase for the same place joined by *or* ("when I get home or leave home", "when I arrive at or leave home").
+  - {X} runs to the end of the input or to the next date/time phrase. It matches a **saved place** by name, ignoring case and a leading *the / my* ("the gym" → Gym); *home* and *work* match saved places named Home and Work. Otherwise `saved: false` and the name is kept as typed ("the stadium").
+  - A bare **at {X}** counts only when {X} is a saved place **and** the input has no date or time ("buy milk at Trader Joe's" yes; "meet Sam at 5 at work" no — that's a timed reminder).
+  - Context keywords inside {X} still apply (PRS-31: "the office" → Work). Dates in the input are still parsed (they become *On a date*).
 
 ### Title
 - **PRS-33** Remove all parsed date, time, zone, recurrence, and alert phrases, plus fillers: *remind me to, don't forget to, remember to, at, on, by, for, due* (only when attached to a parsed phrase).
@@ -425,6 +440,26 @@ Types: **T** Task · **M** Meeting · **E** Event · **O** Occasion. Context: **
 | O20 | pay rent usd100 on the 15th day of oct | Pay rent | Oct 15 (date) | B | P | nag 2h · amount USD 100.00 | Both new forms together |
 | O21 | pay rent 100 USD dollars Friday | Pay rent | Oct 9 (date) | B | P | nag 2h · amount USD 100.00 | Doubled currency word is absorbed |
 
+### P. Places (`PRS-43`)
+Column **Place**: name · ✓ saved / ✗ not saved · **A** arrive / **L** leave / **AL** both. When is checked only where shown.
+
+| # | Input | Title | When | Type | Ctx | Place | Flags · notes |
+|---|---|---|---|---|---|---|---|
+| P1 | take out bins when I get home | Take out bins | | T | P | Home ✓ A | |
+| P2 | call mom when I leave work | Call mom | | T | P | Work ✓ L | |
+| P3 | buy milk at trader joe's | Buy milk | | T | P | Trader Joe's ✓ A | bare "at" + saved name |
+| P4 | buy milk at the store | Buy milk at the store | Oct 6 (date) | T | P | — | bare "at", not saved → no place |
+| P5 | pick up dry cleaning when I get to the mall | Pick up dry cleaning | | T | P | the mall ✗ A | |
+| P6 | stretch once I'm at the gym | Stretch | | T | P | Gym ✓ A | "the" ignored |
+| P7 | bring the tickets when I arrive at the stadium saturday | Bring the tickets | Oct 10 (date) | T | P | the stadium ✗ A | date → On a date |
+| P8 | lock the door when I'm leaving home | Lock the door | | T | P | Home ✓ L | |
+| P9 | water plants when I get home or leave home | Water plants | | T | P | Home ✓ AL | |
+| P10 | meet Sam at 5 at work | Meet Sam at work | Oct 5 17:00 | T | P | — | has a time → bare "at" ignored · `ambiguous_time` |
+| P11 | after I leave the office email the report | Email the report | | T | W | the office ✗ L | office → Work |
+| P12 | remind me to buy stamps when I get to the post office | Buy stamps | | T | P | the post office ✗ A | |
+| P13 | go home tomorrow | Go home | Oct 6 (date) | T | P | — | no trigger phrase |
+| P14 | grab coffee when I reach my work | Grab coffee | | T | P | Work ✓ A | "my" ignored |
+
 ### S. Stretch (not counted toward pass rate)
 | # | Input | Expected |
 |---|---|---|
@@ -442,7 +477,7 @@ Types: **T** Task · **M** Meeting · **E** Event · **O** Occasion. Context: **
 These should produce a sensible fallback (text kept in the title, default date), never an error:
 - Languages other than English
 - Holidays by name ("Christmas", "Thanksgiving") — stretch S6
-- Location or context triggers ("when I get home", "after work")
+- Context triggers without a place ("after work", "when I'm free") — place phrases are PRS-43
 - Reminders relative to other reminders ("2 days before the trip") — v1.2 prep reminders
 - Non-time units ("every 5000 miles")
 
