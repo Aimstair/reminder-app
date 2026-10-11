@@ -136,7 +136,47 @@ abstract final class AppIcons {
   static const IconData waiting = IconData(0xe2b4, fontFamily: 'Phosphor'); // hourglassHigh
   static const IconData warning = IconData(0xe4e0, fontFamily: 'Phosphor'); // warning
   static const IconData work = IconData(0xe0ee, fontFamily: 'Phosphor'); // briefcase
+
+  // ---- places (LOC-*, DS17) ----
+  static const IconData place = IconData(0xe316, fontFamily: 'Phosphor'); // mapPin
+  static const IconData arrive = IconData(0xe428, fontFamily: 'Phosphor'); // signIn
+  static const IconData leave = IconData(0xe42a, fontFamily: 'Phosphor'); // signOut
+  static const IconData recenter = IconData(0xeade, fontFamily: 'Phosphor'); // navigationArrow
+  static const IconData myLocation = IconData(0xe1d6, fontFamily: 'Phosphor'); // crosshair
+  static const IconData pause = IconData(0xe39e, fontFamily: 'Phosphor'); // pause
+  static const IconData more = IconData(0xe1fe, fontFamily: 'Phosphor'); // dotsThree
 }
+
+/// LOC-1: a place's icon; [solid] for pins and tiles.
+IconData placeIcon(PlaceIcon i, {bool solid = false}) => solid
+    ? switch (i) {
+        PlaceIcon.home => const IconData(0xe2c2, fontFamily: 'PhosphorFill'), // house
+        PlaceIcon.work => const IconData(0xe0ee, fontFamily: 'PhosphorFill'), // briefcase
+        PlaceIcon.store => const IconData(0xe41e, fontFamily: 'PhosphorFill'), // shoppingCart
+        PlaceIcon.gym => const IconData(0xe0b6, fontFamily: 'PhosphorFill'), // barbell
+        PlaceIcon.school => const IconData(0xe62c, fontFamily: 'PhosphorFill'), // graduationCap
+        PlaceIcon.food => const IconData(0xe262, fontFamily: 'PhosphorFill'), // forkKnife
+        PlaceIcon.health => const IconData(0xe56e, fontFamily: 'PhosphorFill'), // firstAid
+        PlaceIcon.parking => const IconData(0xe112, fontFamily: 'PhosphorFill'), // car
+        PlaceIcon.travel => const IconData(0xe5d6, fontFamily: 'PhosphorFill'), // airplaneTilt
+        PlaceIcon.worship => const IconData(0xecea, fontFamily: 'PhosphorFill'), // church
+        PlaceIcon.heart => const IconData(0xe2a8, fontFamily: 'PhosphorFill'), // heart
+        PlaceIcon.pin => const IconData(0xe316, fontFamily: 'PhosphorFill'), // mapPin
+      }
+    : switch (i) {
+        PlaceIcon.home => const IconData(0xe2c2, fontFamily: 'Phosphor'),
+        PlaceIcon.work => const IconData(0xe0ee, fontFamily: 'Phosphor'),
+        PlaceIcon.store => const IconData(0xe41e, fontFamily: 'Phosphor'),
+        PlaceIcon.gym => const IconData(0xe0b6, fontFamily: 'Phosphor'),
+        PlaceIcon.school => const IconData(0xe62c, fontFamily: 'Phosphor'),
+        PlaceIcon.food => const IconData(0xe262, fontFamily: 'Phosphor'),
+        PlaceIcon.health => const IconData(0xe56e, fontFamily: 'Phosphor'),
+        PlaceIcon.parking => const IconData(0xe112, fontFamily: 'Phosphor'),
+        PlaceIcon.travel => const IconData(0xe5d6, fontFamily: 'Phosphor'),
+        PlaceIcon.worship => const IconData(0xecea, fontFamily: 'Phosphor'),
+        PlaceIcon.heart => const IconData(0xe2a8, fontFamily: 'Phosphor'),
+        PlaceIcon.pin => const IconData(0xe316, fontFamily: 'Phosphor'),
+      };
 
 /// Icon for an item's tile (DS11 rows): bill → receipt, shopping → bag, call → phone…
 IconData glyphIcon(ItemGlyph g) => switch (g) {
@@ -180,5 +220,6 @@ IconData subKindIcon(SubKind? s, Kind kind) => switch (s) {
     Kind.meeting => AppIcons.handshake,
     Kind.event => AppIcons.event,
     Kind.task || Kind.bill => AppIcons.task,
+    Kind.place => AppIcons.place,
   },
 };

@@ -3,8 +3,17 @@ import 'dart:io';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reminder_app/data/app_database.dart';
+import 'package:reminder_app/data/place_repository.dart';
 import 'package:reminder_app/data/reminder_repository.dart';
 import 'package:reminder_core/reminder_core.dart';
+
+/// Turns today's schema back into v4: no places table, no place / fired columns (LOC-*).
+Future<void> _dropV5(AppDatabase db) async {
+  await db.customStatement('DROP TABLE places');
+  await db.customStatement('ALTER TABLE reminders DROP COLUMN place');
+  await db.customStatement('ALTER TABLE occurrences DROP COLUMN fired_at');
+  await db.customStatement('ALTER TABLE occurrences DROP COLUMN fired_by');
+}
 
 void main() {
   late AppDatabase db;
@@ -100,6 +109,7 @@ void main() {
     await r.insert(zoom);
     await r.insert(party);
     await v4.customStatement('ALTER TABLE reminders DROP COLUMN sub_kind');
+    await _dropV5(v4);
     await v4.customStatement('PRAGMA user_version = 3');
     await v4.close();
 
@@ -108,6 +118,40 @@ void main() {
     expect((await repo2.byId(xmas.id))!.subKind, SubKind.holiday);
     expect((await repo2.byId(zoom.id))!.subKind, SubKind.video);
     expect((await repo2.byId(party.id))!.subKind, isNull);
+    await upgraded.close();
+    await dir.delete(recursive: true);
+  });
+
+  test('LOC-3 upgrading from v4 adds places and keeps reminders', () async {
+    final dir = await Directory.systemTemp.createTemp('loc3');
+    final file = File('${dir.path}/app.db');
+    final v5 = AppDatabase(NativeDatabase(file));
+    final m = await meeting();
+    await ReminderRepository(v5, clock: () => now).insert(m);
+    await _dropV5(v5);
+    await v5.customStatement('PRAGMA user_version = 4');
+    await v5.close();
+
+    final upgraded = AppDatabase(NativeDatabase(file));
+    final repo2 = ReminderRepository(upgraded, clock: () => now);
+    expect((await repo2.byId(m.id))!.title, m.title);
+    final places = PlaceRepository(upgraded, repo2, clock: () => now);
+    final home = await places.create(name: 'Home', latitude: 40.7, longitude: -74.0);
+    final r = Reminder(
+      meta: await repo2.newMeta(),
+      title: 'Take out the bins',
+      kind: Kind.place,
+      context: ReminderContext.personal,
+      timing: Timing(type: TimingType.date, start: DateTime.utc(2026, 10, 6)),
+      alertPlan: const [],
+      rrule: 'FREQ=WEEKLY;BYDAY=TU',
+      place: PlaceTrigger(placeId: home.id, active: PlaceActive.repeats, onLeave: true),
+    );
+    await repo2.insert(r);
+    final back = (await repo2.byId(r.id))!;
+    expect(back.place!.placeId, home.id);
+    expect(back.place!.onLeave, isTrue);
+    expect(back.place!.active, PlaceActive.repeats);
     await upgraded.close();
     await dir.delete(recursive: true);
   });

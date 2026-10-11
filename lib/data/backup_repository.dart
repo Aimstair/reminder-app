@@ -31,6 +31,7 @@ class BackupRepository {
       'reminders': [for (final r in await db.select(db.reminders).get()) r.toJson()],
       'occurrences': [for (final o in await db.select(db.occurrences).get()) o.toJson()],
       'overlays': [for (final o in await db.select(db.calendarOverlays).get()) o.toJson()],
+      'places': [for (final p in await db.select(db.places).get()) p.toJson()], // LOC-1
     };
     return jsonEncode(data);
   }
@@ -80,6 +81,14 @@ class BackupRepository {
                 ..where((t) => t.reminderId.equals(o.reminderId) & t.occurrenceKey.equals(o.occurrenceKey) & t.id.equals(o.id).not()))
               .go();
           await db.into(db.occurrences).insertOnConflictUpdate(o);
+        }
+      }
+      // Places first would also do; reminders only reference them by id (LOC-3).
+      for (final j in (p.data['places'] as List?) ?? const []) {
+        final row = PlaceRow.fromJson((j as Map).cast());
+        final existing = await (db.select(db.places)..where((t) => t.id.equals(row.id))).getSingleOrNull();
+        if (existing == null || row.updatedAt.isAfter(existing.updatedAt)) {
+          await db.into(db.places).insertOnConflictUpdate(row);
         }
       }
       for (final j in (p.data['overlays'] as List?) ?? const []) {

@@ -302,6 +302,15 @@ class $RemindersTable extends Reminders
         type: DriftSqlType.string,
         requiredDuringInsert: true,
       ).withConverter<ReminderStatus>($RemindersTable.$converterstatus);
+  static const VerificationMeta _placeMeta = const VerificationMeta('place');
+  @override
+  late final GeneratedColumn<String> place = GeneratedColumn<String>(
+    'place',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -332,6 +341,7 @@ class $RemindersTable extends Reminders
     source,
     templateId,
     status,
+    place,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -507,6 +517,12 @@ class $RemindersTable extends Reminders
         templateId.isAcceptableOrUnknown(data['template_id']!, _templateIdMeta),
       );
     }
+    if (data.containsKey('place')) {
+      context.handle(
+        _placeMeta,
+        place.isAcceptableOrUnknown(data['place']!, _placeMeta),
+      );
+    }
     return context;
   }
 
@@ -638,6 +654,10 @@ class $RemindersTable extends Reminders
           data['${effectivePrefix}status'],
         )!,
       ),
+      place: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}place'],
+      ),
     );
   }
 
@@ -689,6 +709,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
   final String source;
   final String? templateId;
   final ReminderStatus status;
+  final String? place;
   const ReminderRow({
     required this.id,
     required this.createdAt,
@@ -718,6 +739,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
     required this.source,
     this.templateId,
     required this.status,
+    this.place,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -796,6 +818,9 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
         $RemindersTable.$converterstatus.toSql(status),
       );
     }
+    if (!nullToAbsent || place != null) {
+      map['place'] = Variable<String>(place);
+    }
     return map;
   }
 
@@ -853,6 +878,9 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
           ? const Value.absent()
           : Value(templateId),
       status: Value(status),
+      place: place == null && nullToAbsent
+          ? const Value.absent()
+          : Value(place),
     );
   }
 
@@ -900,6 +928,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
       status: $RemindersTable.$converterstatus.fromJson(
         serializer.fromJson<String>(json['status']),
       ),
+      place: serializer.fromJson<String?>(json['place']),
     );
   }
   @override
@@ -944,6 +973,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
       'status': serializer.toJson<String>(
         $RemindersTable.$converterstatus.toJson(status),
       ),
+      'place': serializer.toJson<String?>(place),
     };
   }
 
@@ -976,6 +1006,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
     String? source,
     Value<String?> templateId = const Value.absent(),
     ReminderStatus? status,
+    Value<String?> place = const Value.absent(),
   }) => ReminderRow(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
@@ -1005,6 +1036,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
     source: source ?? this.source,
     templateId: templateId.present ? templateId.value : this.templateId,
     status: status ?? this.status,
+    place: place.present ? place.value : this.place,
   );
   ReminderRow copyWithCompanion(RemindersCompanion data) {
     return ReminderRow(
@@ -1054,6 +1086,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
           ? data.templateId.value
           : this.templateId,
       status: data.status.present ? data.status.value : this.status,
+      place: data.place.present ? data.place.value : this.place,
     );
   }
 
@@ -1087,7 +1120,8 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
           ..write('completable: $completable, ')
           ..write('source: $source, ')
           ..write('templateId: $templateId, ')
-          ..write('status: $status')
+          ..write('status: $status, ')
+          ..write('place: $place')
           ..write(')'))
         .toString();
   }
@@ -1122,6 +1156,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
     source,
     templateId,
     status,
+    place,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -1154,7 +1189,8 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
           other.completable == this.completable &&
           other.source == this.source &&
           other.templateId == this.templateId &&
-          other.status == this.status);
+          other.status == this.status &&
+          other.place == this.place);
 }
 
 class RemindersCompanion extends UpdateCompanion<ReminderRow> {
@@ -1186,6 +1222,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
   final Value<String> source;
   final Value<String?> templateId;
   final Value<ReminderStatus> status;
+  final Value<String?> place;
   final Value<int> rowid;
   const RemindersCompanion({
     this.id = const Value.absent(),
@@ -1216,6 +1253,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
     this.source = const Value.absent(),
     this.templateId = const Value.absent(),
     this.status = const Value.absent(),
+    this.place = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   RemindersCompanion.insert({
@@ -1247,6 +1285,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
     required String source,
     this.templateId = const Value.absent(),
     required ReminderStatus status,
+    this.place = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        createdAt = Value(createdAt),
@@ -1291,6 +1330,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
     Expression<String>? source,
     Expression<String>? templateId,
     Expression<String>? status,
+    Expression<String>? place,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1322,6 +1362,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
       if (source != null) 'source': source,
       if (templateId != null) 'template_id': templateId,
       if (status != null) 'status': status,
+      if (place != null) 'place': place,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1355,6 +1396,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
     Value<String>? source,
     Value<String?>? templateId,
     Value<ReminderStatus>? status,
+    Value<String?>? place,
     Value<int>? rowid,
   }) {
     return RemindersCompanion(
@@ -1386,6 +1428,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
       source: source ?? this.source,
       templateId: templateId ?? this.templateId,
       status: status ?? this.status,
+      place: place ?? this.place,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1487,6 +1530,9 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
         $RemindersTable.$converterstatus.toSql(status.value),
       );
     }
+    if (place.present) {
+      map['place'] = Variable<String>(place.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1524,6 +1570,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
           ..write('source: $source, ')
           ..write('templateId: $templateId, ')
           ..write('status: $status, ')
+          ..write('place: $place, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1691,6 +1738,26 @@ class $OccurrencesTable extends Occurrences
     requiredDuringInsert: false,
     defaultValue: const Constant('[]'),
   );
+  static const VerificationMeta _firedAtMeta = const VerificationMeta(
+    'firedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> firedAt = GeneratedColumn<DateTime>(
+    'fired_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<PlaceEvent?, String> firedBy =
+      GeneratedColumn<String>(
+        'fired_by',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<PlaceEvent?>($OccurrencesTable.$converterfiredByn);
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1707,6 +1774,8 @@ class $OccurrencesTable extends Occurrences
     snoozedUntil,
     resolvedAt,
     alertsSent,
+    firedAt,
+    firedBy,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1822,6 +1891,12 @@ class $OccurrencesTable extends Occurrences
         alertsSent.isAcceptableOrUnknown(data['alerts_sent']!, _alertsSentMeta),
       );
     }
+    if (data.containsKey('fired_at')) {
+      context.handle(
+        _firedAtMeta,
+        firedAt.isAcceptableOrUnknown(data['fired_at']!, _firedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -1893,6 +1968,16 @@ class $OccurrencesTable extends Occurrences
         DriftSqlType.string,
         data['${effectivePrefix}alerts_sent'],
       )!,
+      firedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fired_at'],
+      ),
+      firedBy: $OccurrencesTable.$converterfiredByn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}fired_by'],
+        ),
+      ),
     );
   }
 
@@ -1903,6 +1988,10 @@ class $OccurrencesTable extends Occurrences
 
   static JsonTypeConverter2<OccurrenceState, String, String> $converterstate =
       const EnumNameConverter<OccurrenceState>(OccurrenceState.values);
+  static JsonTypeConverter2<PlaceEvent, String, String> $converterfiredBy =
+      const EnumNameConverter<PlaceEvent>(PlaceEvent.values);
+  static JsonTypeConverter2<PlaceEvent?, String?, String?> $converterfiredByn =
+      JsonTypeConverter2.asNullable($converterfiredBy);
 }
 
 class OccurrenceRow extends DataClass implements Insertable<OccurrenceRow> {
@@ -1920,6 +2009,8 @@ class OccurrenceRow extends DataClass implements Insertable<OccurrenceRow> {
   final DateTime? snoozedUntil;
   final DateTime? resolvedAt;
   final String alertsSent;
+  final DateTime? firedAt;
+  final PlaceEvent? firedBy;
   const OccurrenceRow({
     required this.id,
     required this.createdAt,
@@ -1935,6 +2026,8 @@ class OccurrenceRow extends DataClass implements Insertable<OccurrenceRow> {
     this.snoozedUntil,
     this.resolvedAt,
     required this.alertsSent,
+    this.firedAt,
+    this.firedBy,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1969,6 +2062,14 @@ class OccurrenceRow extends DataClass implements Insertable<OccurrenceRow> {
       map['resolved_at'] = Variable<DateTime>(resolvedAt);
     }
     map['alerts_sent'] = Variable<String>(alertsSent);
+    if (!nullToAbsent || firedAt != null) {
+      map['fired_at'] = Variable<DateTime>(firedAt);
+    }
+    if (!nullToAbsent || firedBy != null) {
+      map['fired_by'] = Variable<String>(
+        $OccurrencesTable.$converterfiredByn.toSql(firedBy),
+      );
+    }
     return map;
   }
 
@@ -2000,6 +2101,12 @@ class OccurrenceRow extends DataClass implements Insertable<OccurrenceRow> {
           ? const Value.absent()
           : Value(resolvedAt),
       alertsSent: Value(alertsSent),
+      firedAt: firedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(firedAt),
+      firedBy: firedBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(firedBy),
     );
   }
 
@@ -2027,6 +2134,10 @@ class OccurrenceRow extends DataClass implements Insertable<OccurrenceRow> {
       snoozedUntil: serializer.fromJson<DateTime?>(json['snoozedUntil']),
       resolvedAt: serializer.fromJson<DateTime?>(json['resolvedAt']),
       alertsSent: serializer.fromJson<String>(json['alertsSent']),
+      firedAt: serializer.fromJson<DateTime?>(json['firedAt']),
+      firedBy: $OccurrencesTable.$converterfiredByn.fromJson(
+        serializer.fromJson<String?>(json['firedBy']),
+      ),
     );
   }
   @override
@@ -2049,6 +2160,10 @@ class OccurrenceRow extends DataClass implements Insertable<OccurrenceRow> {
       'snoozedUntil': serializer.toJson<DateTime?>(snoozedUntil),
       'resolvedAt': serializer.toJson<DateTime?>(resolvedAt),
       'alertsSent': serializer.toJson<String>(alertsSent),
+      'firedAt': serializer.toJson<DateTime?>(firedAt),
+      'firedBy': serializer.toJson<String?>(
+        $OccurrencesTable.$converterfiredByn.toJson(firedBy),
+      ),
     };
   }
 
@@ -2067,6 +2182,8 @@ class OccurrenceRow extends DataClass implements Insertable<OccurrenceRow> {
     Value<DateTime?> snoozedUntil = const Value.absent(),
     Value<DateTime?> resolvedAt = const Value.absent(),
     String? alertsSent,
+    Value<DateTime?> firedAt = const Value.absent(),
+    Value<PlaceEvent?> firedBy = const Value.absent(),
   }) => OccurrenceRow(
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
@@ -2086,6 +2203,8 @@ class OccurrenceRow extends DataClass implements Insertable<OccurrenceRow> {
     snoozedUntil: snoozedUntil.present ? snoozedUntil.value : this.snoozedUntil,
     resolvedAt: resolvedAt.present ? resolvedAt.value : this.resolvedAt,
     alertsSent: alertsSent ?? this.alertsSent,
+    firedAt: firedAt.present ? firedAt.value : this.firedAt,
+    firedBy: firedBy.present ? firedBy.value : this.firedBy,
   );
   OccurrenceRow copyWithCompanion(OccurrencesCompanion data) {
     return OccurrenceRow(
@@ -2119,6 +2238,8 @@ class OccurrenceRow extends DataClass implements Insertable<OccurrenceRow> {
       alertsSent: data.alertsSent.present
           ? data.alertsSent.value
           : this.alertsSent,
+      firedAt: data.firedAt.present ? data.firedAt.value : this.firedAt,
+      firedBy: data.firedBy.present ? data.firedBy.value : this.firedBy,
     );
   }
 
@@ -2138,7 +2259,9 @@ class OccurrenceRow extends DataClass implements Insertable<OccurrenceRow> {
           ..write('overrideAlertPlan: $overrideAlertPlan, ')
           ..write('snoozedUntil: $snoozedUntil, ')
           ..write('resolvedAt: $resolvedAt, ')
-          ..write('alertsSent: $alertsSent')
+          ..write('alertsSent: $alertsSent, ')
+          ..write('firedAt: $firedAt, ')
+          ..write('firedBy: $firedBy')
           ..write(')'))
         .toString();
   }
@@ -2159,6 +2282,8 @@ class OccurrenceRow extends DataClass implements Insertable<OccurrenceRow> {
     snoozedUntil,
     resolvedAt,
     alertsSent,
+    firedAt,
+    firedBy,
   );
   @override
   bool operator ==(Object other) =>
@@ -2177,7 +2302,9 @@ class OccurrenceRow extends DataClass implements Insertable<OccurrenceRow> {
           other.overrideAlertPlan == this.overrideAlertPlan &&
           other.snoozedUntil == this.snoozedUntil &&
           other.resolvedAt == this.resolvedAt &&
-          other.alertsSent == this.alertsSent);
+          other.alertsSent == this.alertsSent &&
+          other.firedAt == this.firedAt &&
+          other.firedBy == this.firedBy);
 }
 
 class OccurrencesCompanion extends UpdateCompanion<OccurrenceRow> {
@@ -2195,6 +2322,8 @@ class OccurrencesCompanion extends UpdateCompanion<OccurrenceRow> {
   final Value<DateTime?> snoozedUntil;
   final Value<DateTime?> resolvedAt;
   final Value<String> alertsSent;
+  final Value<DateTime?> firedAt;
+  final Value<PlaceEvent?> firedBy;
   final Value<int> rowid;
   const OccurrencesCompanion({
     this.id = const Value.absent(),
@@ -2211,6 +2340,8 @@ class OccurrencesCompanion extends UpdateCompanion<OccurrenceRow> {
     this.snoozedUntil = const Value.absent(),
     this.resolvedAt = const Value.absent(),
     this.alertsSent = const Value.absent(),
+    this.firedAt = const Value.absent(),
+    this.firedBy = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   OccurrencesCompanion.insert({
@@ -2228,6 +2359,8 @@ class OccurrencesCompanion extends UpdateCompanion<OccurrenceRow> {
     this.snoozedUntil = const Value.absent(),
     this.resolvedAt = const Value.absent(),
     this.alertsSent = const Value.absent(),
+    this.firedAt = const Value.absent(),
+    this.firedBy = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        createdAt = Value(createdAt),
@@ -2251,6 +2384,8 @@ class OccurrencesCompanion extends UpdateCompanion<OccurrenceRow> {
     Expression<DateTime>? snoozedUntil,
     Expression<DateTime>? resolvedAt,
     Expression<String>? alertsSent,
+    Expression<DateTime>? firedAt,
+    Expression<String>? firedBy,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2268,6 +2403,8 @@ class OccurrencesCompanion extends UpdateCompanion<OccurrenceRow> {
       if (snoozedUntil != null) 'snoozed_until': snoozedUntil,
       if (resolvedAt != null) 'resolved_at': resolvedAt,
       if (alertsSent != null) 'alerts_sent': alertsSent,
+      if (firedAt != null) 'fired_at': firedAt,
+      if (firedBy != null) 'fired_by': firedBy,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2287,6 +2424,8 @@ class OccurrencesCompanion extends UpdateCompanion<OccurrenceRow> {
     Value<DateTime?>? snoozedUntil,
     Value<DateTime?>? resolvedAt,
     Value<String>? alertsSent,
+    Value<DateTime?>? firedAt,
+    Value<PlaceEvent?>? firedBy,
     Value<int>? rowid,
   }) {
     return OccurrencesCompanion(
@@ -2304,6 +2443,8 @@ class OccurrencesCompanion extends UpdateCompanion<OccurrenceRow> {
       snoozedUntil: snoozedUntil ?? this.snoozedUntil,
       resolvedAt: resolvedAt ?? this.resolvedAt,
       alertsSent: alertsSent ?? this.alertsSent,
+      firedAt: firedAt ?? this.firedAt,
+      firedBy: firedBy ?? this.firedBy,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2355,6 +2496,14 @@ class OccurrencesCompanion extends UpdateCompanion<OccurrenceRow> {
     if (alertsSent.present) {
       map['alerts_sent'] = Variable<String>(alertsSent.value);
     }
+    if (firedAt.present) {
+      map['fired_at'] = Variable<DateTime>(firedAt.value);
+    }
+    if (firedBy.present) {
+      map['fired_by'] = Variable<String>(
+        $OccurrencesTable.$converterfiredByn.toSql(firedBy.value),
+      );
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2378,6 +2527,8 @@ class OccurrencesCompanion extends UpdateCompanion<OccurrenceRow> {
           ..write('snoozedUntil: $snoozedUntil, ')
           ..write('resolvedAt: $resolvedAt, ')
           ..write('alertsSent: $alertsSent, ')
+          ..write('firedAt: $firedAt, ')
+          ..write('firedBy: $firedBy, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3178,6 +3329,721 @@ class CalendarOverlaysCompanion extends UpdateCompanion<CalendarOverlayRow> {
   }
 }
 
+class $PlacesTable extends Places with TableInfo<$PlacesTable, PlaceRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PlacesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deviceIdMeta = const VerificationMeta(
+    'deviceId',
+  );
+  @override
+  late final GeneratedColumn<String> deviceId = GeneratedColumn<String>(
+    'device_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _latitudeMeta = const VerificationMeta(
+    'latitude',
+  );
+  @override
+  late final GeneratedColumn<double> latitude = GeneratedColumn<double>(
+    'latitude',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _longitudeMeta = const VerificationMeta(
+    'longitude',
+  );
+  @override
+  late final GeneratedColumn<double> longitude = GeneratedColumn<double>(
+    'longitude',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _addressMeta = const VerificationMeta(
+    'address',
+  );
+  @override
+  late final GeneratedColumn<String> address = GeneratedColumn<String>(
+    'address',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _radiusMetersMeta = const VerificationMeta(
+    'radiusMeters',
+  );
+  @override
+  late final GeneratedColumn<int> radiusMeters = GeneratedColumn<int>(
+    'radius_meters',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<PlaceIcon, String> icon =
+      GeneratedColumn<String>(
+        'icon',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<PlaceIcon>($PlacesTable.$convertericon);
+  @override
+  late final GeneratedColumnWithTypeConverter<PlaceColor, String> color =
+      GeneratedColumn<String>(
+        'color',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<PlaceColor>($PlacesTable.$convertercolor);
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    createdAt,
+    updatedAt,
+    deviceId,
+    deletedAt,
+    name,
+    latitude,
+    longitude,
+    address,
+    radiusMeters,
+    icon,
+    color,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'places';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<PlaceRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('device_id')) {
+      context.handle(
+        _deviceIdMeta,
+        deviceId.isAcceptableOrUnknown(data['device_id']!, _deviceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_deviceIdMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('latitude')) {
+      context.handle(
+        _latitudeMeta,
+        latitude.isAcceptableOrUnknown(data['latitude']!, _latitudeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_latitudeMeta);
+    }
+    if (data.containsKey('longitude')) {
+      context.handle(
+        _longitudeMeta,
+        longitude.isAcceptableOrUnknown(data['longitude']!, _longitudeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_longitudeMeta);
+    }
+    if (data.containsKey('address')) {
+      context.handle(
+        _addressMeta,
+        address.isAcceptableOrUnknown(data['address']!, _addressMeta),
+      );
+    }
+    if (data.containsKey('radius_meters')) {
+      context.handle(
+        _radiusMetersMeta,
+        radiusMeters.isAcceptableOrUnknown(
+          data['radius_meters']!,
+          _radiusMetersMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_radiusMetersMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  PlaceRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return PlaceRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      deviceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}device_id'],
+      )!,
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      latitude: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}latitude'],
+      )!,
+      longitude: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}longitude'],
+      )!,
+      address: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}address'],
+      ),
+      radiusMeters: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}radius_meters'],
+      )!,
+      icon: $PlacesTable.$convertericon.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}icon'],
+        )!,
+      ),
+      color: $PlacesTable.$convertercolor.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}color'],
+        )!,
+      ),
+    );
+  }
+
+  @override
+  $PlacesTable createAlias(String alias) {
+    return $PlacesTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<PlaceIcon, String, String> $convertericon =
+      const EnumNameConverter<PlaceIcon>(PlaceIcon.values);
+  static JsonTypeConverter2<PlaceColor, String, String> $convertercolor =
+      const EnumNameConverter<PlaceColor>(PlaceColor.values);
+}
+
+class PlaceRow extends DataClass implements Insertable<PlaceRow> {
+  final String id;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final String deviceId;
+  final DateTime? deletedAt;
+  final String name;
+  final double latitude;
+  final double longitude;
+  final String? address;
+  final int radiusMeters;
+  final PlaceIcon icon;
+  final PlaceColor color;
+  const PlaceRow({
+    required this.id,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.deviceId,
+    this.deletedAt,
+    required this.name,
+    required this.latitude,
+    required this.longitude,
+    this.address,
+    required this.radiusMeters,
+    required this.icon,
+    required this.color,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['device_id'] = Variable<String>(deviceId);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['name'] = Variable<String>(name);
+    map['latitude'] = Variable<double>(latitude);
+    map['longitude'] = Variable<double>(longitude);
+    if (!nullToAbsent || address != null) {
+      map['address'] = Variable<String>(address);
+    }
+    map['radius_meters'] = Variable<int>(radiusMeters);
+    {
+      map['icon'] = Variable<String>($PlacesTable.$convertericon.toSql(icon));
+    }
+    {
+      map['color'] = Variable<String>(
+        $PlacesTable.$convertercolor.toSql(color),
+      );
+    }
+    return map;
+  }
+
+  PlacesCompanion toCompanion(bool nullToAbsent) {
+    return PlacesCompanion(
+      id: Value(id),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      deviceId: Value(deviceId),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      name: Value(name),
+      latitude: Value(latitude),
+      longitude: Value(longitude),
+      address: address == null && nullToAbsent
+          ? const Value.absent()
+          : Value(address),
+      radiusMeters: Value(radiusMeters),
+      icon: Value(icon),
+      color: Value(color),
+    );
+  }
+
+  factory PlaceRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return PlaceRow(
+      id: serializer.fromJson<String>(json['id']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      deviceId: serializer.fromJson<String>(json['deviceId']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      name: serializer.fromJson<String>(json['name']),
+      latitude: serializer.fromJson<double>(json['latitude']),
+      longitude: serializer.fromJson<double>(json['longitude']),
+      address: serializer.fromJson<String?>(json['address']),
+      radiusMeters: serializer.fromJson<int>(json['radiusMeters']),
+      icon: $PlacesTable.$convertericon.fromJson(
+        serializer.fromJson<String>(json['icon']),
+      ),
+      color: $PlacesTable.$convertercolor.fromJson(
+        serializer.fromJson<String>(json['color']),
+      ),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'deviceId': serializer.toJson<String>(deviceId),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'name': serializer.toJson<String>(name),
+      'latitude': serializer.toJson<double>(latitude),
+      'longitude': serializer.toJson<double>(longitude),
+      'address': serializer.toJson<String?>(address),
+      'radiusMeters': serializer.toJson<int>(radiusMeters),
+      'icon': serializer.toJson<String>(
+        $PlacesTable.$convertericon.toJson(icon),
+      ),
+      'color': serializer.toJson<String>(
+        $PlacesTable.$convertercolor.toJson(color),
+      ),
+    };
+  }
+
+  PlaceRow copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? deviceId,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? name,
+    double? latitude,
+    double? longitude,
+    Value<String?> address = const Value.absent(),
+    int? radiusMeters,
+    PlaceIcon? icon,
+    PlaceColor? color,
+  }) => PlaceRow(
+    id: id ?? this.id,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    deviceId: deviceId ?? this.deviceId,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    name: name ?? this.name,
+    latitude: latitude ?? this.latitude,
+    longitude: longitude ?? this.longitude,
+    address: address.present ? address.value : this.address,
+    radiusMeters: radiusMeters ?? this.radiusMeters,
+    icon: icon ?? this.icon,
+    color: color ?? this.color,
+  );
+  PlaceRow copyWithCompanion(PlacesCompanion data) {
+    return PlaceRow(
+      id: data.id.present ? data.id.value : this.id,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deviceId: data.deviceId.present ? data.deviceId.value : this.deviceId,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      name: data.name.present ? data.name.value : this.name,
+      latitude: data.latitude.present ? data.latitude.value : this.latitude,
+      longitude: data.longitude.present ? data.longitude.value : this.longitude,
+      address: data.address.present ? data.address.value : this.address,
+      radiusMeters: data.radiusMeters.present
+          ? data.radiusMeters.value
+          : this.radiusMeters,
+      icon: data.icon.present ? data.icon.value : this.icon,
+      color: data.color.present ? data.color.value : this.color,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PlaceRow(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deviceId: $deviceId, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('name: $name, ')
+          ..write('latitude: $latitude, ')
+          ..write('longitude: $longitude, ')
+          ..write('address: $address, ')
+          ..write('radiusMeters: $radiusMeters, ')
+          ..write('icon: $icon, ')
+          ..write('color: $color')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    createdAt,
+    updatedAt,
+    deviceId,
+    deletedAt,
+    name,
+    latitude,
+    longitude,
+    address,
+    radiusMeters,
+    icon,
+    color,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PlaceRow &&
+          other.id == this.id &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.deviceId == this.deviceId &&
+          other.deletedAt == this.deletedAt &&
+          other.name == this.name &&
+          other.latitude == this.latitude &&
+          other.longitude == this.longitude &&
+          other.address == this.address &&
+          other.radiusMeters == this.radiusMeters &&
+          other.icon == this.icon &&
+          other.color == this.color);
+}
+
+class PlacesCompanion extends UpdateCompanion<PlaceRow> {
+  final Value<String> id;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<String> deviceId;
+  final Value<DateTime?> deletedAt;
+  final Value<String> name;
+  final Value<double> latitude;
+  final Value<double> longitude;
+  final Value<String?> address;
+  final Value<int> radiusMeters;
+  final Value<PlaceIcon> icon;
+  final Value<PlaceColor> color;
+  final Value<int> rowid;
+  const PlacesCompanion({
+    this.id = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deviceId = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.name = const Value.absent(),
+    this.latitude = const Value.absent(),
+    this.longitude = const Value.absent(),
+    this.address = const Value.absent(),
+    this.radiusMeters = const Value.absent(),
+    this.icon = const Value.absent(),
+    this.color = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  PlacesCompanion.insert({
+    required String id,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    required String deviceId,
+    this.deletedAt = const Value.absent(),
+    required String name,
+    required double latitude,
+    required double longitude,
+    this.address = const Value.absent(),
+    required int radiusMeters,
+    required PlaceIcon icon,
+    required PlaceColor color,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt),
+       deviceId = Value(deviceId),
+       name = Value(name),
+       latitude = Value(latitude),
+       longitude = Value(longitude),
+       radiusMeters = Value(radiusMeters),
+       icon = Value(icon),
+       color = Value(color);
+  static Insertable<PlaceRow> custom({
+    Expression<String>? id,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? deviceId,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? name,
+    Expression<double>? latitude,
+    Expression<double>? longitude,
+    Expression<String>? address,
+    Expression<int>? radiusMeters,
+    Expression<String>? icon,
+    Expression<String>? color,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deviceId != null) 'device_id': deviceId,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (name != null) 'name': name,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+      if (address != null) 'address': address,
+      if (radiusMeters != null) 'radius_meters': radiusMeters,
+      if (icon != null) 'icon': icon,
+      if (color != null) 'color': color,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  PlacesCompanion copyWith({
+    Value<String>? id,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<String>? deviceId,
+    Value<DateTime?>? deletedAt,
+    Value<String>? name,
+    Value<double>? latitude,
+    Value<double>? longitude,
+    Value<String?>? address,
+    Value<int>? radiusMeters,
+    Value<PlaceIcon>? icon,
+    Value<PlaceColor>? color,
+    Value<int>? rowid,
+  }) {
+    return PlacesCompanion(
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deviceId: deviceId ?? this.deviceId,
+      deletedAt: deletedAt ?? this.deletedAt,
+      name: name ?? this.name,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      address: address ?? this.address,
+      radiusMeters: radiusMeters ?? this.radiusMeters,
+      icon: icon ?? this.icon,
+      color: color ?? this.color,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (deviceId.present) {
+      map['device_id'] = Variable<String>(deviceId.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (latitude.present) {
+      map['latitude'] = Variable<double>(latitude.value);
+    }
+    if (longitude.present) {
+      map['longitude'] = Variable<double>(longitude.value);
+    }
+    if (address.present) {
+      map['address'] = Variable<String>(address.value);
+    }
+    if (radiusMeters.present) {
+      map['radius_meters'] = Variable<int>(radiusMeters.value);
+    }
+    if (icon.present) {
+      map['icon'] = Variable<String>(
+        $PlacesTable.$convertericon.toSql(icon.value),
+      );
+    }
+    if (color.present) {
+      map['color'] = Variable<String>(
+        $PlacesTable.$convertercolor.toSql(color.value),
+      );
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PlacesCompanion(')
+          ..write('id: $id, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deviceId: $deviceId, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('name: $name, ')
+          ..write('latitude: $latitude, ')
+          ..write('longitude: $longitude, ')
+          ..write('address: $address, ')
+          ..write('radiusMeters: $radiusMeters, ')
+          ..write('icon: $icon, ')
+          ..write('color: $color, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $PrefsTable extends Prefs with TableInfo<$PrefsTable, PrefRow> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -3734,6 +4600,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CalendarOverlaysTable calendarOverlays = $CalendarOverlaysTable(
     this,
   );
+  late final $PlacesTable places = $PlacesTable(this);
   late final $PrefsTable prefs = $PrefsTable(this);
   late final $MetricsQueueTable metricsQueue = $MetricsQueueTable(this);
   @override
@@ -3744,6 +4611,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     reminders,
     occurrences,
     calendarOverlays,
+    places,
     prefs,
     metricsQueue,
   ];
@@ -3781,6 +4649,7 @@ typedef $$RemindersTableCreateCompanionBuilder = RemindersCompanion Function({
   required String source,
   Value<String?> templateId,
   required ReminderStatus status,
+  Value<String?> place,
   Value<int> rowid,
 });
 typedef $$RemindersTableUpdateCompanionBuilder = RemindersCompanion Function({
@@ -3812,6 +4681,7 @@ typedef $$RemindersTableUpdateCompanionBuilder = RemindersCompanion Function({
   Value<String> source,
   Value<String?> templateId,
   Value<ReminderStatus> status,
+  Value<String?> place,
   Value<int> rowid,
 });
 
@@ -3992,6 +4862,11 @@ class $$RemindersTableFilterComposer
     builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
+  ColumnFilters<String> get place => $composableBuilder(
+    column: $table.place,
+    builder: (column) => ColumnFilters(column),
+  );
+
   Expression<bool> occurrencesRefs(
     Expression<bool> Function($$OccurrencesTableFilterComposer f) f,
   ) {
@@ -4166,6 +5041,11 @@ class $$RemindersTableOrderingComposer
     column: $table.status,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get place => $composableBuilder(
+    column: $table.place,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$RemindersTableAnnotationComposer
@@ -4281,6 +5161,9 @@ class $$RemindersTableAnnotationComposer
   GeneratedColumnWithTypeConverter<ReminderStatus, String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
 
+  GeneratedColumn<String> get place =>
+      $composableBuilder(column: $table.place, builder: (column) => column);
+
   Expression<T> occurrencesRefs<T extends Object>(
     Expression<T> Function($$OccurrencesTableAnnotationComposer a) f,
   ) {
@@ -4363,6 +5246,7 @@ class $$RemindersTableTableManager
                 Value<String> source = const Value.absent(),
                 Value<String?> templateId = const Value.absent(),
                 Value<ReminderStatus> status = const Value.absent(),
+                Value<String?> place = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => RemindersCompanion(
                 id: id,
@@ -4393,6 +5277,7 @@ class $$RemindersTableTableManager
                 source: source,
                 templateId: templateId,
                 status: status,
+                place: place,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -4425,6 +5310,7 @@ class $$RemindersTableTableManager
                 required String source,
                 Value<String?> templateId = const Value.absent(),
                 required ReminderStatus status,
+                Value<String?> place = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => RemindersCompanion.insert(
                 id: id,
@@ -4455,6 +5341,7 @@ class $$RemindersTableTableManager
                 source: source,
                 templateId: templateId,
                 status: status,
+                place: place,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -4529,6 +5416,8 @@ typedef $$OccurrencesTableCreateCompanionBuilder =
       Value<DateTime?> snoozedUntil,
       Value<DateTime?> resolvedAt,
       Value<String> alertsSent,
+      Value<DateTime?> firedAt,
+      Value<PlaceEvent?> firedBy,
       Value<int> rowid,
     });
 typedef $$OccurrencesTableUpdateCompanionBuilder =
@@ -4547,6 +5436,8 @@ typedef $$OccurrencesTableUpdateCompanionBuilder =
       Value<DateTime?> snoozedUntil,
       Value<DateTime?> resolvedAt,
       Value<String> alertsSent,
+      Value<DateTime?> firedAt,
+      Value<PlaceEvent?> firedBy,
       Value<int> rowid,
     });
 
@@ -4647,6 +5538,17 @@ class $$OccurrencesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<DateTime> get firedAt => $composableBuilder(
+    column: $table.firedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<PlaceEvent?, PlaceEvent, String> get firedBy =>
+      $composableBuilder(
+        column: $table.firedBy,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
   $$RemindersTableFilterComposer get reminderId {
     final $$RemindersTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -4745,6 +5647,16 @@ class $$OccurrencesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get firedAt => $composableBuilder(
+    column: $table.firedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get firedBy => $composableBuilder(
+    column: $table.firedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$RemindersTableOrderingComposer get reminderId {
     final $$RemindersTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -4831,6 +5743,12 @@ class $$OccurrencesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<DateTime> get firedAt =>
+      $composableBuilder(column: $table.firedAt, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<PlaceEvent?, String> get firedBy =>
+      $composableBuilder(column: $table.firedBy, builder: (column) => column);
+
   $$RemindersTableAnnotationComposer get reminderId {
     final $$RemindersTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -4897,6 +5815,8 @@ class $$OccurrencesTableTableManager
                 Value<DateTime?> snoozedUntil = const Value.absent(),
                 Value<DateTime?> resolvedAt = const Value.absent(),
                 Value<String> alertsSent = const Value.absent(),
+                Value<DateTime?> firedAt = const Value.absent(),
+                Value<PlaceEvent?> firedBy = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => OccurrencesCompanion(
                 id: id,
@@ -4913,6 +5833,8 @@ class $$OccurrencesTableTableManager
                 snoozedUntil: snoozedUntil,
                 resolvedAt: resolvedAt,
                 alertsSent: alertsSent,
+                firedAt: firedAt,
+                firedBy: firedBy,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -4931,6 +5853,8 @@ class $$OccurrencesTableTableManager
                 Value<DateTime?> snoozedUntil = const Value.absent(),
                 Value<DateTime?> resolvedAt = const Value.absent(),
                 Value<String> alertsSent = const Value.absent(),
+                Value<DateTime?> firedAt = const Value.absent(),
+                Value<PlaceEvent?> firedBy = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => OccurrencesCompanion.insert(
                 id: id,
@@ -4947,6 +5871,8 @@ class $$OccurrencesTableTableManager
                 snoozedUntil: snoozedUntil,
                 resolvedAt: resolvedAt,
                 alertsSent: alertsSent,
+                firedAt: firedAt,
+                firedBy: firedBy,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -5399,6 +6325,344 @@ typedef $$CalendarOverlaysTableProcessedTableManager =
       CalendarOverlayRow,
       PrefetchHooks Function()
     >;
+typedef $$PlacesTableCreateCompanionBuilder = PlacesCompanion Function({
+  required String id,
+  required DateTime createdAt,
+  required DateTime updatedAt,
+  required String deviceId,
+  Value<DateTime?> deletedAt,
+  required String name,
+  required double latitude,
+  required double longitude,
+  Value<String?> address,
+  required int radiusMeters,
+  required PlaceIcon icon,
+  required PlaceColor color,
+  Value<int> rowid,
+});
+typedef $$PlacesTableUpdateCompanionBuilder = PlacesCompanion Function({
+  Value<String> id,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<String> deviceId,
+  Value<DateTime?> deletedAt,
+  Value<String> name,
+  Value<double> latitude,
+  Value<double> longitude,
+  Value<String?> address,
+  Value<int> radiusMeters,
+  Value<PlaceIcon> icon,
+  Value<PlaceColor> color,
+  Value<int> rowid,
+});
+
+class $$PlacesTableFilterComposer
+    extends Composer<_$AppDatabase, $PlacesTable> {
+  $$PlacesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get deviceId => $composableBuilder(
+    column: $table.deviceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get latitude => $composableBuilder(
+    column: $table.latitude,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get longitude => $composableBuilder(
+    column: $table.longitude,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get address => $composableBuilder(
+    column: $table.address,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get radiusMeters => $composableBuilder(
+    column: $table.radiusMeters,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<PlaceIcon, PlaceIcon, String> get icon =>
+      $composableBuilder(
+        column: $table.icon,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<PlaceColor, PlaceColor, String> get color =>
+      $composableBuilder(
+        column: $table.color,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+}
+
+class $$PlacesTableOrderingComposer
+    extends Composer<_$AppDatabase, $PlacesTable> {
+  $$PlacesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deviceId => $composableBuilder(
+    column: $table.deviceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get latitude => $composableBuilder(
+    column: $table.latitude,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get longitude => $composableBuilder(
+    column: $table.longitude,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get address => $composableBuilder(
+    column: $table.address,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get radiusMeters => $composableBuilder(
+    column: $table.radiusMeters,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get icon => $composableBuilder(
+    column: $table.icon,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PlacesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PlacesTable> {
+  $$PlacesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get deviceId =>
+      $composableBuilder(column: $table.deviceId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<double> get latitude =>
+      $composableBuilder(column: $table.latitude, builder: (column) => column);
+
+  GeneratedColumn<double> get longitude =>
+      $composableBuilder(column: $table.longitude, builder: (column) => column);
+
+  GeneratedColumn<String> get address =>
+      $composableBuilder(column: $table.address, builder: (column) => column);
+
+  GeneratedColumn<int> get radiusMeters => $composableBuilder(
+    column: $table.radiusMeters,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<PlaceIcon, String> get icon =>
+      $composableBuilder(column: $table.icon, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<PlaceColor, String> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+}
+
+class $$PlacesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PlacesTable,
+          PlaceRow,
+          $$PlacesTableFilterComposer,
+          $$PlacesTableOrderingComposer,
+          $$PlacesTableAnnotationComposer,
+          $$PlacesTableCreateCompanionBuilder,
+          $$PlacesTableUpdateCompanionBuilder,
+          (PlaceRow, BaseReferences<_$AppDatabase, $PlacesTable, PlaceRow>),
+          PlaceRow,
+          PrefetchHooks Function()
+        > {
+  $$PlacesTableTableManager(_$AppDatabase db, $PlacesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PlacesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PlacesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PlacesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> deviceId = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<double> latitude = const Value.absent(),
+                Value<double> longitude = const Value.absent(),
+                Value<String?> address = const Value.absent(),
+                Value<int> radiusMeters = const Value.absent(),
+                Value<PlaceIcon> icon = const Value.absent(),
+                Value<PlaceColor> color = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => PlacesCompanion(
+                id: id,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deviceId: deviceId,
+                deletedAt: deletedAt,
+                name: name,
+                latitude: latitude,
+                longitude: longitude,
+                address: address,
+                radiusMeters: radiusMeters,
+                icon: icon,
+                color: color,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                required String deviceId,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String name,
+                required double latitude,
+                required double longitude,
+                Value<String?> address = const Value.absent(),
+                required int radiusMeters,
+                required PlaceIcon icon,
+                required PlaceColor color,
+                Value<int> rowid = const Value.absent(),
+              }) => PlacesCompanion.insert(
+                id: id,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                deviceId: deviceId,
+                deletedAt: deletedAt,
+                name: name,
+                latitude: latitude,
+                longitude: longitude,
+                address: address,
+                radiusMeters: radiusMeters,
+                icon: icon,
+                color: color,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$PlacesTable, PlaceRow>(table),
+                  BaseReferences<_$AppDatabase, $PlacesTable, PlaceRow>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$PlacesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PlacesTable,
+      PlaceRow,
+      $$PlacesTableFilterComposer,
+      $$PlacesTableOrderingComposer,
+      $$PlacesTableAnnotationComposer,
+      $$PlacesTableCreateCompanionBuilder,
+      $$PlacesTableUpdateCompanionBuilder,
+      (PlaceRow, BaseReferences<_$AppDatabase, $PlacesTable, PlaceRow>),
+      PlaceRow,
+      PrefetchHooks Function()
+    >;
 typedef $$PrefsTableCreateCompanionBuilder = PrefsCompanion Function({
   required String key,
   required String value,
@@ -5746,6 +7010,8 @@ class $AppDatabaseManager {
       $$OccurrencesTableTableManager(_db, _db.occurrences);
   $$CalendarOverlaysTableTableManager get calendarOverlays =>
       $$CalendarOverlaysTableTableManager(_db, _db.calendarOverlays);
+  $$PlacesTableTableManager get places =>
+      $$PlacesTableTableManager(_db, _db.places);
   $$PrefsTableTableManager get prefs =>
       $$PrefsTableTableManager(_db, _db.prefs);
   $$MetricsQueueTableTableManager get metricsQueue =>

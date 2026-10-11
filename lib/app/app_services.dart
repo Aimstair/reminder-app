@@ -13,16 +13,19 @@ import '../data/app_database.dart';
 import '../data/backup_repository.dart';
 import '../data/occurrence_repository.dart';
 import '../data/overlay_repository.dart';
+import '../data/place_repository.dart';
 import '../data/prefs_repository.dart';
 import '../data/reminder_repository.dart';
 import '../integrations/feedback.dart';
 import '../integrations/voice.dart';
 import '../l10n/gen/app_localizations.dart';
 import '../native/alarm_gateway.dart';
+import '../native/place_gateway.dart';
 import '../native/platform_gateway.dart';
 import '../notifications/alert_text.dart';
 import '../services/calendar_service.dart';
 import '../services/contacts_service.dart';
+import '../services/place_service.dart';
 import '../services/reminder_service.dart';
 import '../ui/format.dart';
 import '../ui/tokens.dart';
@@ -41,6 +44,7 @@ class AppServices {
     required this.contacts,
     required this.backup,
     required this.l10n,
+    required this.places,
   });
 
   final AppDatabase db;
@@ -55,6 +59,9 @@ class AppServices {
   final ContactsService contacts;
   final BackupRepository backup;
   final AppLocalizations l10n;
+
+  /// Places and place reminders (LOC-*).
+  final PlaceService places;
   final feedback = CompletionFeedback();
   final voice = VoiceInput();
 
@@ -67,6 +74,7 @@ class AppServices {
     PlatformGateway? platform,
     CalendarReader? calendarReader,
     ContactsReader? contactsReader,
+    PlaceGateway? placeGateway,
   }) async {
     ensureTimeZones();
     final locale = WidgetsBinding.instance.platformDispatcher.locale;
@@ -82,13 +90,30 @@ class AppServices {
     final occurrences = OccurrenceRepository(database, reminders);
     final overlays = OverlayRepository(database, reminders);
     final alarms = gateway ?? PigeonAlarmGateway();
+    late final PlaceService places;
     final service = ReminderService(
       reminders: reminders,
       occurrences: occurrences,
       gateway: alarms,
       prefs: () => prefs.current,
-      text: (p) => NotificationTextBuilder(l10n: l10n, prefs: p, locale: l10n.localeName).call,
+      text: (p) => NotificationTextBuilder(
+        l10n: l10n,
+        prefs: p,
+        locale: l10n.localeName,
+        placeName: (id) => places.byId[id]?.name,
+      ).call,
     );
+    places = PlaceService(
+      places: PlaceRepository(database, reminders),
+      reminders: reminders,
+      service: service,
+      gateway: placeGateway ?? (platform != null ? PigeonPlaceGateway() : NoopPlaceGateway()),
+      prefs: () => prefs.current,
+      text: (p) => (arrived: l10n.notifPlaceArrived(p.name), left: l10n.notifPlaceLeft(p.name)),
+    );
+    await places.start();
+    service.afterSync = places.syncGeofences; // LOC-13
+    service.extraHousekeeping = places.archiveExpired; // LOC-8
     final calendar = CalendarService(
       reader: calendarReader ?? (platform != null ? PlatformCalendarReader(platform) : _NoCalendar()),
       prefs: prefs,
@@ -117,6 +142,7 @@ class AppServices {
       contacts: contacts,
       backup: backup,
       l10n: l10n,
+      places: places,
     );
   }
 
@@ -127,6 +153,7 @@ class AppServices {
     try {
       permissions = await alarms.permissions();
     } catch (_) {}
+    await places.refreshStatus(); // PRM-10
     await calendar.refresh();
     await contacts.rescan();
     await service.onAppStart();

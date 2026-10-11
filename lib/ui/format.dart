@@ -145,6 +145,7 @@ class Fmt {
     Kind.event => l10n.typeEvent,
     Kind.occasion => l10n.typeOccasion,
     Kind.bill => l10n.typeBill,
+    Kind.place => l10n.typePlace,
   };
 
   /// BIL-1

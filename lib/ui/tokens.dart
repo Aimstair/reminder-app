@@ -29,6 +29,7 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.anniversary,
     required this.holiday,
     required this.memorial,
+    required this.grey,
   });
 
   final Color bgGrouped, surface, surfaceElevated, textPrimary, textSecondary, separator;
@@ -37,6 +38,9 @@ class AppColors extends ThemeExtension<AppColors> {
 
   /// Occasion subtype accents for the home card (DS16, VW-15).
   final Color anniversary, holiday, memorial;
+
+  /// Place color grey (LOC-1).
+  final Color grey;
 
   /// Extra accent for form icons (alerts row in mockup 03).
   final Color purple;
@@ -61,6 +65,7 @@ class AppColors extends ThemeExtension<AppColors> {
     anniversary: Color(0xFFFF3B30),
     holiday: Color(0xFFF5A300),
     memorial: Color(0xFF30B0C7),
+    grey: Color(0xFF8E8E93),
   );
 
   static const dark = AppColors(
@@ -83,6 +88,7 @@ class AppColors extends ThemeExtension<AppColors> {
     anniversary: Color(0xFFFF453A),
     holiday: Color(0xFFFFB340),
     memorial: Color(0xFF40C8E0),
+    grey: Color(0xFF98989D),
   );
 
   /// VW-15: an occasion card's color by subtype; Birthday and Other keep the Occasion pink.
@@ -102,6 +108,19 @@ class AppColors extends ThemeExtension<AppColors> {
     Kind.event => event,
     Kind.occasion => occasion,
     Kind.bill => bill,
+    Kind.place => memorial, // teal, the default place color (LOC-1)
+  };
+
+  /// LOC-1 place colors — the same palette as the types (design-direction.md, DS17).
+  Color place(PlaceColor c) => switch (c) {
+    PlaceColor.blue => task,
+    PlaceColor.indigo => meeting,
+    PlaceColor.teal => memorial,
+    PlaceColor.green => bill,
+    PlaceColor.orange => event,
+    PlaceColor.pink => occasion,
+    PlaceColor.red => danger,
+    PlaceColor.grey => grey,
   };
 
   @override
@@ -117,6 +136,7 @@ IconData kindIcon(Kind k) => switch (k) {
   Kind.event => AppIcons.event,
   Kind.occasion => AppIcons.birthday,
   Kind.bill => AppIcons.bill,
+  Kind.place => AppIcons.place,
 };
 
 /// Spacing (4-pt grid) and radii.

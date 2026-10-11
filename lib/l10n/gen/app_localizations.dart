@@ -3027,6 +3027,708 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Join'**
   String get actionJoin;
+
+  /// copy.md §5b type label (LOC-3)
+  ///
+  /// In en, this message translates to:
+  /// **'Place'**
+  String get typePlace;
+
+  /// copy.md §5b drawer / view menu entry
+  ///
+  /// In en, this message translates to:
+  /// **'Places'**
+  String get drawerPlaces;
+
+  /// copy.md §5b S-19 title
+  ///
+  /// In en, this message translates to:
+  /// **'Places'**
+  String get placesTitle;
+
+  /// copy.md §5b S-19 chip
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get placesFilterAll;
+
+  /// copy.md §5b S-19 chip
+  ///
+  /// In en, this message translates to:
+  /// **'Active now'**
+  String get placesFilterActive;
+
+  /// copy.md §5b S-19 chip
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get placesFilterPaused;
+
+  /// copy.md §5b S-19 sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby'**
+  String get placesNearby;
+
+  /// copy.md §5b S-19 sheet count
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{1 reminder} other{{n} reminders}}'**
+  String placesReminderCount(int n);
+
+  /// copy.md §5b trigger
+  ///
+  /// In en, this message translates to:
+  /// **'Arrive'**
+  String get placeTriggerArrive;
+
+  /// copy.md §5b trigger
+  ///
+  /// In en, this message translates to:
+  /// **'Leave'**
+  String get placeTriggerLeave;
+
+  /// copy.md §5b trigger
+  ///
+  /// In en, this message translates to:
+  /// **'Arrive or leave'**
+  String get placeTriggerBoth;
+
+  /// copy.md §5b Active (LOC-4)
+  ///
+  /// In en, this message translates to:
+  /// **'Any day'**
+  String get placeActiveAny;
+
+  /// copy.md §5b Active (LOC-4)
+  ///
+  /// In en, this message translates to:
+  /// **'On a date'**
+  String get placeActiveDate;
+
+  /// copy.md §5b Active (LOC-4)
+  ///
+  /// In en, this message translates to:
+  /// **'Repeats'**
+  String get placeActiveRepeats;
+
+  /// copy.md §5b Hours (LOC-5)
+  ///
+  /// In en, this message translates to:
+  /// **'Any time'**
+  String get placeHoursAny;
+
+  /// copy.md §5b Hours (LOC-5)
+  ///
+  /// In en, this message translates to:
+  /// **'Between'**
+  String get placeHoursBetween;
+
+  /// copy.md §5b Hours value
+  ///
+  /// In en, this message translates to:
+  /// **'{from} – {to}'**
+  String placeHoursRange(String from, String to);
+
+  /// copy.md §5b S-19 row subline, e.g. Arrive · Tue, 6 – 10 PM
+  ///
+  /// In en, this message translates to:
+  /// **'{trigger} · {when}'**
+  String placeSubline(String trigger, String when);
+
+  /// copy.md §5b S-19 pill (LOC-7)
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get placeStatusActive;
+
+  /// copy.md §5b S-19 row (LOC-12)
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get placeStatusPaused;
+
+  /// copy.md §5b S-19 row (PRM-10)
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for location access'**
+  String get placeStatusWaitingAccess;
+
+  /// copy.md §5b place menu
+  ///
+  /// In en, this message translates to:
+  /// **'Edit place'**
+  String get placeMenuEdit;
+
+  /// copy.md §5b place menu
+  ///
+  /// In en, this message translates to:
+  /// **'Delete place'**
+  String get placeMenuDelete;
+
+  /// copy.md §5b S-19 empty state
+  ///
+  /// In en, this message translates to:
+  /// **'No places yet'**
+  String get placesEmptyTitle;
+
+  /// copy.md §5b S-19 empty state
+  ///
+  /// In en, this message translates to:
+  /// **'Pin a place and get reminded when you arrive or leave.'**
+  String get placesEmptySub;
+
+  /// copy.md §5b S-19 empty state
+  ///
+  /// In en, this message translates to:
+  /// **'Add a place'**
+  String get placesEmptyButton;
+
+  /// copy.md §5b banner (PRM-10)
+  ///
+  /// In en, this message translates to:
+  /// **'Place reminders need location set to \"Allow all the time\".'**
+  String get placesBannerBackground;
+
+  /// copy.md §5b banner (PRM-10)
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on Precise location so arrivals are noticed.'**
+  String get placesBannerPrecise;
+
+  /// copy.md §5b banner (PRM-10)
+  ///
+  /// In en, this message translates to:
+  /// **'Location is off — place reminders are paused.'**
+  String get placesBannerOff;
+
+  /// copy.md §5b banner (LOC-14)
+  ///
+  /// In en, this message translates to:
+  /// **'Only the 100 nearest places are being watched.'**
+  String get placesBannerLimit;
+
+  /// copy.md §5b delete dialog (LOC-2)
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {place}?'**
+  String placeDeleteTitle(String place);
+
+  /// copy.md §5b delete dialog (LOC-2)
+  ///
+  /// In en, this message translates to:
+  /// **'{n, plural, =1{Its reminder will be deleted too.} other{Its {n} reminders will be deleted too.}}'**
+  String placeDeleteBody(int n);
+
+  /// copy.md §5b snackbar
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted {place}'**
+  String placeDeletedSnack(String place);
+
+  /// copy.md §5b S-24
+  ///
+  /// In en, this message translates to:
+  /// **'Search a place or address'**
+  String get pickerSearchHint;
+
+  /// copy.md §5b S-24
+  ///
+  /// In en, this message translates to:
+  /// **'No places found for \"{query}\"'**
+  String pickerNoResults(String query);
+
+  /// copy.md §5b S-24 caption
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get pickerName;
+
+  /// copy.md §5b S-24 caption
+  ///
+  /// In en, this message translates to:
+  /// **'Icon'**
+  String get pickerIcon;
+
+  /// copy.md §5b S-24 caption
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get pickerColor;
+
+  /// copy.md §5b S-24 caption
+  ///
+  /// In en, this message translates to:
+  /// **'Within'**
+  String get pickerWithin;
+
+  /// copy.md §5b S-24 default name
+  ///
+  /// In en, this message translates to:
+  /// **'Pinned place'**
+  String get pickerDefaultName;
+
+  /// copy.md §5b S-24 button
+  ///
+  /// In en, this message translates to:
+  /// **'Use this place'**
+  String get pickerUse;
+
+  /// copy.md §5b S-24 button (editing)
+  ///
+  /// In en, this message translates to:
+  /// **'Save place'**
+  String get pickerSave;
+
+  /// copy.md §5b S-24 chip
+  ///
+  /// In en, this message translates to:
+  /// **'My location'**
+  String get pickerMyLocation;
+
+  /// copy.md §5b icon name (TalkBack)
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get placeIconHome;
+
+  /// copy.md §5b icon name
+  ///
+  /// In en, this message translates to:
+  /// **'Work'**
+  String get placeIconWork;
+
+  /// copy.md §5b icon name
+  ///
+  /// In en, this message translates to:
+  /// **'Store'**
+  String get placeIconStore;
+
+  /// copy.md §5b icon name
+  ///
+  /// In en, this message translates to:
+  /// **'Gym'**
+  String get placeIconGym;
+
+  /// copy.md §5b icon name
+  ///
+  /// In en, this message translates to:
+  /// **'School'**
+  String get placeIconSchool;
+
+  /// copy.md §5b icon name
+  ///
+  /// In en, this message translates to:
+  /// **'Food'**
+  String get placeIconFood;
+
+  /// copy.md §5b icon name
+  ///
+  /// In en, this message translates to:
+  /// **'Health'**
+  String get placeIconHealth;
+
+  /// copy.md §5b icon name
+  ///
+  /// In en, this message translates to:
+  /// **'Parking'**
+  String get placeIconParking;
+
+  /// copy.md §5b icon name
+  ///
+  /// In en, this message translates to:
+  /// **'Travel'**
+  String get placeIconTravel;
+
+  /// copy.md §5b icon name
+  ///
+  /// In en, this message translates to:
+  /// **'Worship'**
+  String get placeIconWorship;
+
+  /// copy.md §5b icon name
+  ///
+  /// In en, this message translates to:
+  /// **'Heart'**
+  String get placeIconHeart;
+
+  /// copy.md §5b icon name
+  ///
+  /// In en, this message translates to:
+  /// **'Pin'**
+  String get placeIconPin;
+
+  /// copy.md §5b color name
+  ///
+  /// In en, this message translates to:
+  /// **'Blue'**
+  String get placeColorBlue;
+
+  /// copy.md §5b color name
+  ///
+  /// In en, this message translates to:
+  /// **'Indigo'**
+  String get placeColorIndigo;
+
+  /// copy.md §5b color name
+  ///
+  /// In en, this message translates to:
+  /// **'Teal'**
+  String get placeColorTeal;
+
+  /// copy.md §5b color name
+  ///
+  /// In en, this message translates to:
+  /// **'Green'**
+  String get placeColorGreen;
+
+  /// copy.md §5b color name
+  ///
+  /// In en, this message translates to:
+  /// **'Orange'**
+  String get placeColorOrange;
+
+  /// copy.md §5b color name
+  ///
+  /// In en, this message translates to:
+  /// **'Pink'**
+  String get placeColorPink;
+
+  /// copy.md §5b color name
+  ///
+  /// In en, this message translates to:
+  /// **'Red'**
+  String get placeColorRed;
+
+  /// copy.md §5b color name
+  ///
+  /// In en, this message translates to:
+  /// **'Grey'**
+  String get placeColorGrey;
+
+  /// copy.md §5b S-25 bar title
+  ///
+  /// In en, this message translates to:
+  /// **'New Place Reminder'**
+  String get placeFormNew;
+
+  /// copy.md §5b S-25 bar title
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Place Reminder'**
+  String get placeFormEdit;
+
+  /// copy.md §5b S-25 placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Buy milk'**
+  String get placeFormHint1;
+
+  /// copy.md §5b S-25 placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Take out the bins'**
+  String get placeFormHint2;
+
+  /// copy.md §5b S-25 placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Keys, wallet, phone?'**
+  String get placeFormHint3;
+
+  /// copy.md §5b S-25 placeholder from an event (LOC-11)
+  ///
+  /// In en, this message translates to:
+  /// **'What do you need there?'**
+  String get placeFormHintEvent;
+
+  /// copy.md §5b S-25 caption
+  ///
+  /// In en, this message translates to:
+  /// **'Place'**
+  String get placeFormCaptionPlace;
+
+  /// copy.md §5b S-25 caption
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me when I'**
+  String get placeFormCaptionTrigger;
+
+  /// copy.md §5b S-25 caption
+  ///
+  /// In en, this message translates to:
+  /// **'When'**
+  String get placeFormCaptionWhen;
+
+  /// copy.md §5b S-25 row
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get placeFormActive;
+
+  /// copy.md §5b S-25 row
+  ///
+  /// In en, this message translates to:
+  /// **'Hours'**
+  String get placeFormHours;
+
+  /// copy.md §5b S-25 hours sheet
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get placeFormFrom;
+
+  /// copy.md §5b S-25 hours sheet
+  ///
+  /// In en, this message translates to:
+  /// **'To'**
+  String get placeFormTo;
+
+  /// copy.md §5b S-25 row (LOC-6)
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me'**
+  String get placeFormRemindMe;
+
+  /// copy.md §5b S-25 segment
+  ///
+  /// In en, this message translates to:
+  /// **'First time'**
+  String get placeFormFirstTime;
+
+  /// copy.md §5b S-25 segment
+  ///
+  /// In en, this message translates to:
+  /// **'Every time'**
+  String get placeFormEveryTime;
+
+  /// copy.md §5b S-25 hint
+  ///
+  /// In en, this message translates to:
+  /// **'At most once an hour'**
+  String get placeFormEveryTimeHint;
+
+  /// copy.md §5b S-25 / S-30 switch (LOC-12)
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get placeFormPaused;
+
+  /// copy.md §5b link row (LOC-11)
+  ///
+  /// In en, this message translates to:
+  /// **'For: {event} · {when}'**
+  String placeFormFor(String event, String when);
+
+  /// copy.md §5b S-25 empty place row
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a place'**
+  String get placeFormChoose;
+
+  /// copy.md §5b S-25 validation
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on Arrive, Leave, or both.'**
+  String get placeFormNeedTrigger;
+
+  /// copy.md §5b snackbar
+  ///
+  /// In en, this message translates to:
+  /// **'Saved · rings at {place}'**
+  String placeFormSaved(String place);
+
+  /// copy.md §5b S-25 summary
+  ///
+  /// In en, this message translates to:
+  /// **'Rings when you arrive at {place}'**
+  String placeSummaryArrive(String place);
+
+  /// copy.md §5b S-25 summary
+  ///
+  /// In en, this message translates to:
+  /// **'Rings when you leave {place}'**
+  String placeSummaryLeave(String place);
+
+  /// copy.md §5b S-25 summary
+  ///
+  /// In en, this message translates to:
+  /// **'Rings when you arrive at or leave {place}'**
+  String placeSummaryBoth(String place);
+
+  /// copy.md §5b S-09
+  ///
+  /// In en, this message translates to:
+  /// **'Ring when you get there'**
+  String get placeBgTitle;
+
+  /// copy.md §5b S-09
+  ///
+  /// In en, this message translates to:
+  /// **'To notice when you arrive or leave, the app needs your location even when it\'s closed. Choose \"Allow all the time\" on the next screen.'**
+  String get placeBgBody;
+
+  /// copy.md §5b S-09
+  ///
+  /// In en, this message translates to:
+  /// **'Your location stays on this phone. It\'s never stored or shared.'**
+  String get placeBgFoot;
+
+  /// copy.md §5b capture suggestion (LOC-16)
+  ///
+  /// In en, this message translates to:
+  /// **'Make this a place reminder at {place}?'**
+  String captureSuggestPlace(String place);
+
+  /// copy.md §5b capture suggestion button
+  ///
+  /// In en, this message translates to:
+  /// **'Make it a place reminder'**
+  String get captureSuggestButton;
+
+  /// copy.md §5b event shortcut (LOC-11)
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me when I get there'**
+  String get remindWhenThere;
+
+  /// copy.md §5b Schedule subline (VW-17)
+  ///
+  /// In en, this message translates to:
+  /// **'Arrived at {place} · {time}'**
+  String placeArrivedAt(String place, String time);
+
+  /// copy.md §5b Schedule subline (VW-17)
+  ///
+  /// In en, this message translates to:
+  /// **'Left {place} · {time}'**
+  String placeLeftAt(String place, String time);
+
+  /// copy.md §2 notif.place.arrived (LOC-9)
+  ///
+  /// In en, this message translates to:
+  /// **'Arrived at {place}'**
+  String notifPlaceArrived(String place);
+
+  /// copy.md §2 notif.place.left (LOC-9)
+  ///
+  /// In en, this message translates to:
+  /// **'Left {place}'**
+  String notifPlaceLeft(String place);
+
+  /// copy.md §5b S-57 row
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get reliabilityLocation;
+
+  /// copy.md §5b S-57 value
+  ///
+  /// In en, this message translates to:
+  /// **'Always'**
+  String get locationAlways;
+
+  /// copy.md §5b S-57 value
+  ///
+  /// In en, this message translates to:
+  /// **'Only while using the app'**
+  String get locationWhileUsing;
+
+  /// copy.md §5b S-57 value
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get locationOff;
+
+  /// copy.md §5b S-57 row
+  ///
+  /// In en, this message translates to:
+  /// **'Precise location'**
+  String get reliabilityPrecise;
+
+  /// S-30 place stat card
+  ///
+  /// In en, this message translates to:
+  /// **'watching'**
+  String get detailPlaceWatching;
+
+  /// S-30 place stat card
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting'**
+  String get detailPlaceWaiting;
+
+  /// S-30 place stat card (fired)
+  ///
+  /// In en, this message translates to:
+  /// **'Rang'**
+  String get detailPlaceRang;
+
+  /// S-30 place stat card
+  ///
+  /// In en, this message translates to:
+  /// **'radius'**
+  String get detailPlaceRadius;
+
+  /// S-30 place stat card
+  ///
+  /// In en, this message translates to:
+  /// **'from you'**
+  String get detailPlaceFromYou;
+
+  /// S-30 place row
+  ///
+  /// In en, this message translates to:
+  /// **'When I arrive'**
+  String get detailPlaceWhenArrive;
+
+  /// S-30 place row
+  ///
+  /// In en, this message translates to:
+  /// **'When I leave'**
+  String get detailPlaceWhenLeave;
+
+  /// S-30 place row
+  ///
+  /// In en, this message translates to:
+  /// **'When I arrive or leave'**
+  String get detailPlaceWhenBoth;
+
+  /// copy.md §9
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t search without a connection. Drag the map to place the pin.'**
+  String get errorPlaceSearchOffline;
+
+  /// copy.md §9 (LOC-11)
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t find \"{location}\". Search or drag the map.'**
+  String errorEventLocation(String location);
+
+  /// distance / radius in meters
+  ///
+  /// In en, this message translates to:
+  /// **'{n} m'**
+  String distanceMeters(int n);
+
+  /// distance in km
+  ///
+  /// In en, this message translates to:
+  /// **'{km} km'**
+  String distanceKm(String km);
+
+  /// distance in feet
+  ///
+  /// In en, this message translates to:
+  /// **'{n} ft'**
+  String distanceFeet(int n);
+
+  /// distance in miles
+  ///
+  /// In en, this message translates to:
+  /// **'{mi} mi'**
+  String distanceMiles(String mi);
 }
 
 class _AppLocalizationsDelegate

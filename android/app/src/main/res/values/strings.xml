@@ -7,6 +7,9 @@
     <string name="notif_prepared">I\'m prepared</string>
     <string name="notif_done">Done</string>
     <string name="notif_snooze_1h">Snooze 1h</string>
+    <!-- LOC-9 place reminders -->
+    <string name="notif_in_1_hour">In 1 hour</string>
+    <string name="notif_next_time">Next time</string>
     <string name="notif_snooze_5m">Snooze 5m</string>
     <string name="notif_snooze_1m">Snooze 1m</string>
     <string name="notif_open">Open</string>

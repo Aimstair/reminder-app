@@ -31,6 +31,7 @@ class ActionReceiver : BroadcastReceiver() {
         when (action) {
             DONE -> {
                 cancelSiblings(context, key, keepDayOf = false) // OCC-4
+                if (alarm.kind == "place") db.recordPlaceFire(occurrenceOf(key), "", "done", System.currentTimeMillis()) // LOC-8
                 val verb = if (alarm.kind == "bill") R.string.notif_confirm_paid else R.string.notif_confirm_done
                 Notifications.showUndo(context, alarm, verb) // NTF-9, BIL-4
             }
@@ -48,7 +49,13 @@ class ActionReceiver : BroadcastReceiver() {
                 rescheduleAs(context, alarm, System.currentTimeMillis() + delay)
             }
             TOMORROW -> rescheduleAs(context, alarm, tomorrowAtDayTime()) // NTF-4, PRF-5 default
+            NEXT -> {
+                // LOC-9: wait for the next arrive/leave, even in First time mode
+                db.clearPlaceFires(occurrenceOf(key))
+                Notifications.dismiss(context, key)
+            }
             UNDO -> {
+                if (alarm.kind == "place") db.clearPlaceDone(occurrenceOf(key))
                 // Spike: Dart restores cancelled alarms when it reconciles the journal.
                 Notifications.dismiss(context, key)
             }
@@ -70,6 +77,8 @@ class ActionReceiver : BroadcastReceiver() {
             .forEach { AlarmScheduler.cancel(context, it.key) }
     }
 
+    private fun occurrenceOf(key: String) = key.substringBefore(':')
+
     private fun tomorrowAtDayTime(): Long =
         LocalDate.now().plusDays(1).atTime(LocalTime.of(9, 0))
             .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
@@ -80,6 +89,7 @@ class ActionReceiver : BroadcastReceiver() {
         const val SNOOZE = "app.aimstair.reminder_app.SNOOZE"
         const val TOMORROW = "app.aimstair.reminder_app.TOMORROW"
         const val UNDO = "app.aimstair.reminder_app.UNDO"
+        const val NEXT = "app.aimstair.reminder_app.NEXT"
 
         const val EXTRA_TITLE = "title"
         const val EXTRA_BODY = "body"

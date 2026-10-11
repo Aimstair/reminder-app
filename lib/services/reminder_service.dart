@@ -2,6 +2,8 @@
 /// occurrence actions, reschedule and scoped edits. docs/architecture.md §6 key runtime flows.
 library;
 
+import 'dart:async';
+
 import 'package:reminder_core/reminder_core.dart';
 
 import '../data/occurrence_repository.dart';
@@ -31,6 +33,12 @@ class ReminderService {
   /// Extra alarms computed from the same data (DIG-3 digest notification); set by AppServices.
   List<PlannedAlarm> Function(List<Reminder> active, Map<String, Occurrence> saved, DateTime now) extraAlarms =
       (_, _, _) => const [];
+
+  /// LOC-13: runs after every alarm sync (geofences follow the same data); set by AppServices.
+  Future<void> Function() afterSync = () async {};
+
+  /// LOC-8: extra tidy-up during [housekeeping] (archive expired place reminders); set by AppServices.
+  Future<void> Function() extraHousekeeping = () async {};
 
   /// PRM-7: a pending test alarm, included in every sync until it has fired.
   PlannedAlarm? _testAlarm;
@@ -74,6 +82,7 @@ class ReminderService {
       }
     }
     await gateway.sync(alarms);
+    unawaited(afterSync().catchError((Object _) {})); // geofences in the background — saving doesn't wait
     return alarms;
   }
 
@@ -95,6 +104,7 @@ class ReminderService {
         await reminders.update(r.copyWith(status: ReminderStatus.archived));
       }
     }
+    await extraHousekeeping();
   }
 
   /// Applies notification buttons tapped while Flutter wasn't running (NTF-8).
@@ -173,6 +183,25 @@ class ReminderService {
         case JournalActionType.undo:
           // OCC-5: back to open
           await occurrences.save(reminderId: reminderId, occurrenceKey: occKey, state: OccurrenceState.pending);
+        case JournalActionType.arrived || JournalActionType.left:
+          // LOC-8: the geofence rang this occurrence; it shows under Today until Done.
+          final occ = await occurrences.find(reminderId, occKey);
+          if (occ?.state.isResolved ?? false) break;
+          await occurrences.save(
+            reminderId: reminderId,
+            occurrenceKey: occKey,
+            state: OccurrenceState.pending,
+            firedAt: actedAt,
+            firedBy: type == JournalActionType.arrived ? PlaceEvent.arrive : PlaceEvent.leave,
+          );
+        case JournalActionType.nextTime:
+          // LOC-9: back to waiting for the next arrive/leave.
+          await occurrences.save(
+            reminderId: reminderId,
+            occurrenceKey: occKey,
+            state: OccurrenceState.pending,
+            clearFired: true,
+          );
       }
     } on InvalidTransition {
       // Stale tap (e.g. already resolved in the app) — ignore.

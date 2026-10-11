@@ -6,8 +6,9 @@ import 'package:reminder_core/reminder_core.dart';
 
 import 'alarm_api.g.dart';
 
-/// Notification buttons recorded natively (NTF-8), plus in-app actions (skip).
-enum JournalActionType { done, prepared, snooze, tomorrow, undo, skip }
+/// Notification buttons recorded natively (NTF-8), plus in-app actions (skip) and place triggers
+/// (LOC-8: arrived / left; LOC-9: next time).
+enum JournalActionType { done, prepared, snooze, tomorrow, undo, skip, arrived, left, nextTime }
 
 class JournalAction {
   const JournalAction({required this.id, required this.alarmKey, required this.type, required this.actedAt});
@@ -127,6 +128,9 @@ class PigeonAlarmGateway extends AlarmGateway {
     'SNOOZE' => JournalActionType.snooze,
     'TOMORROW' => JournalActionType.tomorrow,
     'UNDO' => JournalActionType.undo,
+    'PLACE_ARRIVED' => JournalActionType.arrived,
+    'PLACE_LEFT' => JournalActionType.left,
+    'NEXT' => JournalActionType.nextTime,
     _ => null,
   };
 }

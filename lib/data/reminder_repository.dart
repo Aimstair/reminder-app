@@ -128,6 +128,7 @@ class ReminderRepository {
     source: r.source,
     templateId: r.templateId,
     status: r.status,
+    place: r.place,
   );
 
   static String _wall(DateTime d, TimingType t) => t == TimingType.date ? formatWallDate(d) : formatWallDateTime(d);
@@ -161,6 +162,7 @@ class ReminderRepository {
     source: jsonEncode(r.source.toJson()),
     templateId: r.templateId,
     status: r.status,
+    place: r.place == null ? null : jsonEncode(r.place!.toJson()), // LOC-3
   );
 
   static Reminder _fromRow(ReminderRow row) => Reminder(
@@ -201,5 +203,8 @@ class ReminderRepository {
     source: ReminderSource.fromJson((jsonDecode(row.source) as Map).cast<String, Object?>()),
     templateId: row.templateId,
     status: row.status,
+    place: row.kind == Kind.place && row.place != null
+        ? PlaceTrigger.fromJson((jsonDecode(row.place!) as Map).cast<String, Object?>())
+        : null,
   );
 }

@@ -1,3 +1,10 @@
+import java.util.Properties
+
+// S-19 maps: Google Maps key from android/local.properties (MAPS_API_KEY=...), never in git.
+val mapsApiKey: String = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}.getProperty("MAPS_API_KEY", "")
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -27,6 +34,7 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["mapsApiKey"] = mapsApiKey
     }
 
     buildTypes {
@@ -51,4 +59,6 @@ flutter {
 dependencies {
     // Pigeon @async host methods are generated as Kotlin suspend functions.
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    // LOC-13: geofencing + fused location (own Kotlin, architecture.md §3)
+    implementation("com.google.android.gms:play-services-location:21.3.0")
 }

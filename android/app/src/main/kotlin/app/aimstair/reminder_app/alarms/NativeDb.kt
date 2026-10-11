@@ -10,7 +10,7 @@ import android.database.sqlite.SQLiteOpenHelper
  * alarms and handle notification buttons while Flutter isn't running.
  */
 class NativeDb private constructor(context: Context) :
-    SQLiteOpenHelper(context, "native.db", null, 1) {
+    SQLiteOpenHelper(context, "native.db", null, 2) {
 
     data class Alarm(
         val key: String,
@@ -55,9 +55,126 @@ class NativeDb private constructor(context: Context) :
                 outcome TEXT NOT NULL
             )"""
         )
+        createPlaceTables(db)
     }
 
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        if (oldVersion < 2) createPlaceTables(db)
+    }
+
+    /** LOC-13: one row per watched place; LOC-6/LOC-7: what each place reminder already rang for. */
+    private fun createPlaceTables(db: SQLiteDatabase) {
+        db.execSQL(
+            """CREATE TABLE geofences (
+                place_id TEXT PRIMARY KEY,
+                lat REAL NOT NULL,
+                lng REAL NOT NULL,
+                radius INTEGER NOT NULL,
+                arrive INTEGER NOT NULL,
+                leave INTEGER NOT NULL,
+                payload TEXT NOT NULL
+            )"""
+        )
+        db.execSQL(
+            """CREATE TABLE place_fires (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                occurrence TEXT NOT NULL,
+                reminder_id TEXT NOT NULL,
+                event TEXT NOT NULL,
+                fired_at INTEGER NOT NULL
+            )"""
+        )
+        db.execSQL("CREATE INDEX place_fires_occ ON place_fires(occurrence)")
+    }
+
+    // ---- geofences (LOC-13) ----
+
+    data class Geofence(
+        val placeId: String,
+        val lat: Double,
+        val lng: Double,
+        val radius: Int,
+        val arrive: Boolean,
+        val leave: Boolean,
+        val payload: String,
+    )
+
+    fun replaceGeofences(list: List<Geofence>) {
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            db.delete("geofences", null, null)
+            list.forEach { g ->
+                db.insert("geofences", null, ContentValues().apply {
+                    put("place_id", g.placeId)
+                    put("lat", g.lat)
+                    put("lng", g.lng)
+                    put("radius", g.radius)
+                    put("arrive", if (g.arrive) 1 else 0)
+                    put("leave", if (g.leave) 1 else 0)
+                    put("payload", g.payload)
+                })
+            }
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+    }
+
+    fun geofences(where: String? = null, args: Array<String>? = null): List<Geofence> {
+        readableDatabase.query("geofences", null, where, args, null, null, null).use { c ->
+            val out = mutableListOf<Geofence>()
+            while (c.moveToNext()) {
+                out += Geofence(
+                    placeId = c.getString(c.getColumnIndexOrThrow("place_id")),
+                    lat = c.getDouble(c.getColumnIndexOrThrow("lat")),
+                    lng = c.getDouble(c.getColumnIndexOrThrow("lng")),
+                    radius = c.getInt(c.getColumnIndexOrThrow("radius")),
+                    arrive = c.getInt(c.getColumnIndexOrThrow("arrive")) == 1,
+                    leave = c.getInt(c.getColumnIndexOrThrow("leave")) == 1,
+                    payload = c.getString(c.getColumnIndexOrThrow("payload")),
+                )
+            }
+            return out
+        }
+    }
+
+    fun geofence(placeId: String): Geofence? = geofences("place_id = ?", arrayOf(placeId)).firstOrNull()
+
+    // ---- place fires (LOC-6, LOC-7, LOC-9) ----
+
+    fun recordPlaceFire(occurrence: String, reminderId: String, event: String, at: Long) {
+        writableDatabase.insert("place_fires", null, ContentValues().apply {
+            put("occurrence", occurrence)
+            put("reminder_id", reminderId)
+            put("event", event)
+            put("fired_at", at)
+        })
+    }
+
+    /** First time: has this occurrence rung (since the last "Next time")? */
+    fun placeFired(occurrence: String): Boolean = countFires("occurrence = ? AND event != 'done'", arrayOf(occurrence)) > 0
+
+    /** Done from the notification stops further rings for the occurrence (LOC-8). */
+    fun placeDone(occurrence: String): Boolean = countFires("occurrence = ? AND event = 'done'", arrayOf(occurrence)) > 0
+
+    fun lastPlaceFire(reminderId: String): Long? =
+        readableDatabase.rawQuery(
+            "SELECT MAX(fired_at) FROM place_fires WHERE reminder_id = ? AND event != 'done'", arrayOf(reminderId)
+        ).use { c -> if (c.moveToFirst() && !c.isNull(0)) c.getLong(0) else null }
+
+    /** LOC-9 Next time: the occurrence waits for the next trigger again. */
+    fun clearPlaceFires(occurrence: String) {
+        writableDatabase.delete("place_fires", "occurrence = ? AND event != 'done'", arrayOf(occurrence))
+    }
+
+    fun clearPlaceDone(occurrence: String) {
+        writableDatabase.delete("place_fires", "occurrence = ? AND event = 'done'", arrayOf(occurrence))
+    }
+
+    private fun countFires(where: String, args: Array<String>): Int =
+        readableDatabase.rawQuery("SELECT COUNT(*) FROM place_fires WHERE $where", args)
+            .use { c -> if (c.moveToFirst()) c.getInt(0) else 0 }
 
     // ---- alarms ----
 

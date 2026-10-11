@@ -68,6 +68,9 @@ class OccurrenceRepository {
     DateTime? overrideEnd,
     List<AlertStage>? overrideAlertPlan,
     bool clearOverrides = false,
+    DateTime? firedAt,
+    PlaceEvent? firedBy,
+    bool clearFired = false,
   }) async {
     final existing = await find(reminderId, occurrenceKey);
     final now = _now();
@@ -83,8 +86,12 @@ class OccurrenceRepository {
       snoozedUntil: snoozedUntil,
       resolvedAt: resolvedAt,
       alertsSent: existing?.alertsSent ?? const {},
+      // LOC-8: a fire is kept until "Next time" clears it
+      firedAt: clearFired ? null : (firedAt ?? existing?.firedAt),
+      firedBy: clearFired ? null : (firedBy ?? existing?.firedBy),
     );
-    await _db.into(_db.occurrences).insertOnConflictUpdate(_toRow(occ));
+    // Replace the whole row: insertOnConflictUpdate skips nulls, so a cleared fire (LOC-9) or snooze stayed.
+    await _db.into(_db.occurrences).insert(_toRow(occ).toCompanion(false), mode: InsertMode.insertOrReplace);
     return occ;
   }
 
@@ -109,6 +116,8 @@ class OccurrenceRepository {
     snoozedUntil: o.snoozedUntil,
     resolvedAt: o.resolvedAt,
     alertsSent: jsonEncode(o.alertsSent.toList()),
+    firedAt: o.firedAt,
+    firedBy: o.firedBy,
   );
 
   static Occurrence _fromRow(OccurrenceRow r) => Occurrence(
@@ -132,5 +141,7 @@ class OccurrenceRepository {
     snoozedUntil: r.snoozedUntil,
     resolvedAt: r.resolvedAt,
     alertsSent: (jsonDecode(r.alertsSent) as List).cast<String>().toSet(),
+    firedAt: r.firedAt,
+    firedBy: r.firedBy,
   );
 }

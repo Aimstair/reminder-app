@@ -1816,4 +1816,418 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get actionJoin => 'Join';
+
+  @override
+  String get typePlace => 'Place';
+
+  @override
+  String get drawerPlaces => 'Places';
+
+  @override
+  String get placesTitle => 'Places';
+
+  @override
+  String get placesFilterAll => 'All';
+
+  @override
+  String get placesFilterActive => 'Active now';
+
+  @override
+  String get placesFilterPaused => 'Paused';
+
+  @override
+  String get placesNearby => 'Nearby';
+
+  @override
+  String placesReminderCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n reminders',
+      one: '1 reminder',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get placeTriggerArrive => 'Arrive';
+
+  @override
+  String get placeTriggerLeave => 'Leave';
+
+  @override
+  String get placeTriggerBoth => 'Arrive or leave';
+
+  @override
+  String get placeActiveAny => 'Any day';
+
+  @override
+  String get placeActiveDate => 'On a date';
+
+  @override
+  String get placeActiveRepeats => 'Repeats';
+
+  @override
+  String get placeHoursAny => 'Any time';
+
+  @override
+  String get placeHoursBetween => 'Between';
+
+  @override
+  String placeHoursRange(String from, String to) {
+    return '$from – $to';
+  }
+
+  @override
+  String placeSubline(String trigger, String when) {
+    return '$trigger · $when';
+  }
+
+  @override
+  String get placeStatusActive => 'Active';
+
+  @override
+  String get placeStatusPaused => 'Paused';
+
+  @override
+  String get placeStatusWaitingAccess => 'Waiting for location access';
+
+  @override
+  String get placeMenuEdit => 'Edit place';
+
+  @override
+  String get placeMenuDelete => 'Delete place';
+
+  @override
+  String get placesEmptyTitle => 'No places yet';
+
+  @override
+  String get placesEmptySub =>
+      'Pin a place and get reminded when you arrive or leave.';
+
+  @override
+  String get placesEmptyButton => 'Add a place';
+
+  @override
+  String get placesBannerBackground =>
+      'Place reminders need location set to \"Allow all the time\".';
+
+  @override
+  String get placesBannerPrecise =>
+      'Turn on Precise location so arrivals are noticed.';
+
+  @override
+  String get placesBannerOff => 'Location is off — place reminders are paused.';
+
+  @override
+  String get placesBannerLimit =>
+      'Only the 100 nearest places are being watched.';
+
+  @override
+  String placeDeleteTitle(String place) {
+    return 'Delete $place?';
+  }
+
+  @override
+  String placeDeleteBody(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Its $n reminders will be deleted too.',
+      one: 'Its reminder will be deleted too.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String placeDeletedSnack(String place) {
+    return 'Deleted $place';
+  }
+
+  @override
+  String get pickerSearchHint => 'Search a place or address';
+
+  @override
+  String pickerNoResults(String query) {
+    return 'No places found for \"$query\"';
+  }
+
+  @override
+  String get pickerName => 'Name';
+
+  @override
+  String get pickerIcon => 'Icon';
+
+  @override
+  String get pickerColor => 'Color';
+
+  @override
+  String get pickerWithin => 'Within';
+
+  @override
+  String get pickerDefaultName => 'Pinned place';
+
+  @override
+  String get pickerUse => 'Use this place';
+
+  @override
+  String get pickerSave => 'Save place';
+
+  @override
+  String get pickerMyLocation => 'My location';
+
+  @override
+  String get placeIconHome => 'Home';
+
+  @override
+  String get placeIconWork => 'Work';
+
+  @override
+  String get placeIconStore => 'Store';
+
+  @override
+  String get placeIconGym => 'Gym';
+
+  @override
+  String get placeIconSchool => 'School';
+
+  @override
+  String get placeIconFood => 'Food';
+
+  @override
+  String get placeIconHealth => 'Health';
+
+  @override
+  String get placeIconParking => 'Parking';
+
+  @override
+  String get placeIconTravel => 'Travel';
+
+  @override
+  String get placeIconWorship => 'Worship';
+
+  @override
+  String get placeIconHeart => 'Heart';
+
+  @override
+  String get placeIconPin => 'Pin';
+
+  @override
+  String get placeColorBlue => 'Blue';
+
+  @override
+  String get placeColorIndigo => 'Indigo';
+
+  @override
+  String get placeColorTeal => 'Teal';
+
+  @override
+  String get placeColorGreen => 'Green';
+
+  @override
+  String get placeColorOrange => 'Orange';
+
+  @override
+  String get placeColorPink => 'Pink';
+
+  @override
+  String get placeColorRed => 'Red';
+
+  @override
+  String get placeColorGrey => 'Grey';
+
+  @override
+  String get placeFormNew => 'New Place Reminder';
+
+  @override
+  String get placeFormEdit => 'Edit Place Reminder';
+
+  @override
+  String get placeFormHint1 => 'Buy milk';
+
+  @override
+  String get placeFormHint2 => 'Take out the bins';
+
+  @override
+  String get placeFormHint3 => 'Keys, wallet, phone?';
+
+  @override
+  String get placeFormHintEvent => 'What do you need there?';
+
+  @override
+  String get placeFormCaptionPlace => 'Place';
+
+  @override
+  String get placeFormCaptionTrigger => 'Remind me when I';
+
+  @override
+  String get placeFormCaptionWhen => 'When';
+
+  @override
+  String get placeFormActive => 'Active';
+
+  @override
+  String get placeFormHours => 'Hours';
+
+  @override
+  String get placeFormFrom => 'From';
+
+  @override
+  String get placeFormTo => 'To';
+
+  @override
+  String get placeFormRemindMe => 'Remind me';
+
+  @override
+  String get placeFormFirstTime => 'First time';
+
+  @override
+  String get placeFormEveryTime => 'Every time';
+
+  @override
+  String get placeFormEveryTimeHint => 'At most once an hour';
+
+  @override
+  String get placeFormPaused => 'Paused';
+
+  @override
+  String placeFormFor(String event, String when) {
+    return 'For: $event · $when';
+  }
+
+  @override
+  String get placeFormChoose => 'Choose a place';
+
+  @override
+  String get placeFormNeedTrigger => 'Turn on Arrive, Leave, or both.';
+
+  @override
+  String placeFormSaved(String place) {
+    return 'Saved · rings at $place';
+  }
+
+  @override
+  String placeSummaryArrive(String place) {
+    return 'Rings when you arrive at $place';
+  }
+
+  @override
+  String placeSummaryLeave(String place) {
+    return 'Rings when you leave $place';
+  }
+
+  @override
+  String placeSummaryBoth(String place) {
+    return 'Rings when you arrive at or leave $place';
+  }
+
+  @override
+  String get placeBgTitle => 'Ring when you get there';
+
+  @override
+  String get placeBgBody =>
+      'To notice when you arrive or leave, the app needs your location even when it\'s closed. Choose \"Allow all the time\" on the next screen.';
+
+  @override
+  String get placeBgFoot =>
+      'Your location stays on this phone. It\'s never stored or shared.';
+
+  @override
+  String captureSuggestPlace(String place) {
+    return 'Make this a place reminder at $place?';
+  }
+
+  @override
+  String get captureSuggestButton => 'Make it a place reminder';
+
+  @override
+  String get remindWhenThere => 'Remind me when I get there';
+
+  @override
+  String placeArrivedAt(String place, String time) {
+    return 'Arrived at $place · $time';
+  }
+
+  @override
+  String placeLeftAt(String place, String time) {
+    return 'Left $place · $time';
+  }
+
+  @override
+  String notifPlaceArrived(String place) {
+    return 'Arrived at $place';
+  }
+
+  @override
+  String notifPlaceLeft(String place) {
+    return 'Left $place';
+  }
+
+  @override
+  String get reliabilityLocation => 'Location';
+
+  @override
+  String get locationAlways => 'Always';
+
+  @override
+  String get locationWhileUsing => 'Only while using the app';
+
+  @override
+  String get locationOff => 'Off';
+
+  @override
+  String get reliabilityPrecise => 'Precise location';
+
+  @override
+  String get detailPlaceWatching => 'watching';
+
+  @override
+  String get detailPlaceWaiting => 'Waiting';
+
+  @override
+  String get detailPlaceRang => 'Rang';
+
+  @override
+  String get detailPlaceRadius => 'radius';
+
+  @override
+  String get detailPlaceFromYou => 'from you';
+
+  @override
+  String get detailPlaceWhenArrive => 'When I arrive';
+
+  @override
+  String get detailPlaceWhenLeave => 'When I leave';
+
+  @override
+  String get detailPlaceWhenBoth => 'When I arrive or leave';
+
+  @override
+  String get errorPlaceSearchOffline =>
+      'Can\'t search without a connection. Drag the map to place the pin.';
+
+  @override
+  String errorEventLocation(String location) {
+    return 'Couldn\'t find \"$location\". Search or drag the map.';
+  }
+
+  @override
+  String distanceMeters(int n) {
+    return '$n m';
+  }
+
+  @override
+  String distanceKm(String km) {
+    return '$km km';
+  }
+
+  @override
+  String distanceFeet(int n) {
+    return '$n ft';
+  }
+
+  @override
+  String distanceMiles(String mi) {
+    return '$mi mi';
+  }
 }

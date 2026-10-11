@@ -10,8 +10,11 @@ import '../l10n/gen/app_localizations.dart';
 import '../ui/money_format.dart';
 
 class NotificationTextBuilder {
-  NotificationTextBuilder({required this.l10n, required this.prefs, String? locale})
+  NotificationTextBuilder({required this.l10n, required this.prefs, String? locale, this.placeName})
     : _locale = locale ?? l10n.localeName;
+
+  /// LOC-9: a place's name by id, for place reminders re-ringing after "In 1 hour".
+  final String? Function(String placeId)? placeName;
 
   /// Loads date-format data for [locale]; call once before use (UI and background jobs).
   static Future<void> init(String locale) => initializeDateFormatting(locale);
@@ -37,7 +40,10 @@ class NotificationTextBuilder {
     }
 
     final String body;
-    if (c.alertKind == AlertKind.nag) {
+    if (r.kind == Kind.place) {
+      final name = placeName?.call(r.place!.placeId) ?? '';
+      body = r.place!.onArrive ? l10n.notifPlaceArrived(name) : l10n.notifPlaceLeft(name); // notif.place.*
+    } else if (c.alertKind == AlertKind.nag) {
       body = dayDiff >= 0 ? l10n.notifNagToday : l10n.notifNagSince(date(anchorWall)); // notif.nag
     } else if (r.kind == Kind.bill && c.stage?.label == null) {
       body = _billBody(r, when(anchorWall)); // BIL-4

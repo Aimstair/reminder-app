@@ -5,6 +5,8 @@ import android.os.Bundle
 import app.aimstair.reminder_app.alarms.AlarmHostApi
 import app.aimstair.reminder_app.alarms.AlarmHostApiImpl
 import app.aimstair.reminder_app.alarms.Notifications
+import app.aimstair.reminder_app.places.PlaceHostApi
+import app.aimstair.reminder_app.places.PlaceHostApiImpl
 import app.aimstair.reminder_app.platform.PendingLaunch
 import app.aimstair.reminder_app.platform.PlatformFlutterApi
 import app.aimstair.reminder_app.platform.PlatformHostApi
@@ -17,6 +19,7 @@ import kotlinx.coroutines.launch
 
 class MainActivity : FlutterActivity() {
     private var platform: PlatformHostApiImpl? = null
+    private var places: PlaceHostApiImpl? = null
     private var flutterApi: PlatformFlutterApi? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -25,6 +28,7 @@ class MainActivity : FlutterActivity() {
         val messenger = flutterEngine.dartExecutor.binaryMessenger
         AlarmHostApi.setUp(messenger, AlarmHostApiImpl(this))
         platform = PlatformHostApiImpl(this).also { PlatformHostApi.setUp(messenger, it) }
+        places = PlaceHostApiImpl(this).also { PlaceHostApi.setUp(messenger, it) } // LOC-13, PRM-9
         flutterApi = PlatformFlutterApi(messenger)
     }
 
@@ -74,6 +78,7 @@ class MainActivity : FlutterActivity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         if (platform?.onPermissionResult(requestCode, grantResults) == true) return
+        if (places?.onPermissionResult(requestCode, grantResults) == true) return
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 }

@@ -47,6 +47,7 @@ class Reminders extends Table with Synced {
   TextColumn get source => text()(); // JSON ReminderSource
   TextColumn get templateId => text().nullable()();
   TextColumn get status => textEnum<ReminderStatus>()();
+  TextColumn get place => text().nullable()(); // LOC-3: JSON PlaceTrigger, place reminders only (schema v5)
 }
 
 @DataClassName('OccurrenceRow')
@@ -60,11 +61,25 @@ class Occurrences extends Table with Synced {
   DateTimeColumn get snoozedUntil => dateTime().nullable()();
   DateTimeColumn get resolvedAt => dateTime().nullable()();
   TextColumn get alertsSent => text().withDefault(const Constant('[]'))(); // JSON list of alarm keys
+  DateTimeColumn get firedAt => dateTime().nullable()(); // LOC-8: when a place reminder rang (schema v5)
+  TextColumn get firedBy => textEnum<PlaceEvent>().nullable()(); // arrive | leave
 
   @override
   List<Set<Column<Object>>> get uniqueKeys => [
     {reminderId, occurrenceKey},
   ];
+}
+
+/// LOC-1: saved places that place reminders ring at.
+@DataClassName('PlaceRow')
+class Places extends Table with Synced {
+  TextColumn get name => text()();
+  RealColumn get latitude => real()();
+  RealColumn get longitude => real()();
+  TextColumn get address => text().nullable()();
+  IntColumn get radiusMeters => integer()();
+  TextColumn get icon => textEnum<PlaceIcon>()();
+  TextColumn get color => textEnum<PlaceColor>()();
 }
 
 /// CAL-6: user-added alerts on a read-only synced calendar event.
@@ -100,12 +115,12 @@ class MetricsQueue extends Table {
   DateTimeColumn get at => dateTime()();
 }
 
-@DriftDatabase(tables: [Reminders, Occurrences, CalendarOverlays, Prefs, MetricsQueue])
+@DriftDatabase(tables: [Reminders, Occurrences, CalendarOverlays, Places, Prefs, MetricsQueue])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? driftDatabase(name: 'app'));
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -135,6 +150,13 @@ class AppDatabase extends _$AppDatabase {
           if (sub == null) continue;
           await customStatement('UPDATE reminders SET sub_kind = ? WHERE id = ?', [sub.name, row.read<String>('id')]);
         }
+      }
+      if (from < 5) {
+        // LOC-*: places and place reminders
+        await m.createTable(places);
+        await m.addColumn(reminders, reminders.place);
+        await m.addColumn(occurrences, occurrences.firedAt);
+        await m.addColumn(occurrences, occurrences.firedBy);
       }
     },
     beforeOpen: (details) async {
