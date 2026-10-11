@@ -8,6 +8,7 @@ import 'alert.dart';
 import 'attachment.dart';
 import 'enums.dart';
 import 'money.dart';
+import 'place.dart';
 
 /// Fields every synced row carries (DAT-1, DAT-4).
 class RecordMeta {
@@ -141,7 +142,8 @@ class Reminder {
     this.source = const ManualSource(),
     this.templateId,
     this.status = ReminderStatus.active,
-  });
+    this.place,
+  }) : assert((kind == Kind.place) == (place != null), 'LOC-3: place reminders and only they have a place');
 
   final RecordMeta meta;
   final String title;
@@ -176,12 +178,16 @@ class Reminder {
   final String? templateId;
   final ReminderStatus status;
 
+  /// LOC-3: where and when a place reminder rings (only for [Kind.place]).
+  final PlaceTrigger? place;
+
   String get id => meta.id;
 
-  /// Completable types (Terms §0): Task and Bill (BIL-1) always, Occasion per occurrence. CAL-3: imported calendar
-  /// events never are.
+  /// Completable types (Terms §0): Task, Bill (BIL-1) and place reminders (LOC-3) always, Occasion per
+  /// occurrence. CAL-3: imported calendar events never are.
   bool get completable =>
-      (kind == Kind.task || kind == Kind.occasion || kind == Kind.bill) && source is! DeviceCalendarSource;
+      (kind == Kind.task || kind == Kind.occasion || kind == Kind.bill || kind == Kind.place) &&
+      source is! DeviceCalendarSource;
 
   bool get repeats => rrule != null;
 
@@ -206,6 +212,7 @@ class Reminder {
     ReminderSource? source,
     String? Function()? templateId,
     ReminderStatus? status,
+    PlaceTrigger? place,
   }) {
     final k = kind ?? this.kind;
     final sub = subKind != null ? subKind() : this.subKind;
@@ -228,6 +235,7 @@ class Reminder {
       source: source ?? this.source,
       templateId: templateId != null ? templateId() : this.templateId,
       status: status ?? this.status,
+      place: k == Kind.place ? (place ?? this.place) : null,
     );
   }
 }
@@ -245,6 +253,8 @@ class Occurrence {
     this.snoozedUntil,
     this.resolvedAt,
     this.alertsSent = const {},
+    this.firedAt,
+    this.firedBy,
   });
 
   final RecordMeta meta;
@@ -265,6 +275,10 @@ class Occurrence {
 
   /// SCH-6: alarm keys already shown.
   final Set<String> alertsSent;
+
+  /// LOC-8: when a place reminder rang for this occurrence (instant), and why. Null = still waiting.
+  final DateTime? firedAt;
+  final PlaceEvent? firedBy;
 
   String get id => meta.id;
 }

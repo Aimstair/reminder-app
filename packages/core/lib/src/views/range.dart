@@ -75,7 +75,7 @@ class RangeView {
     }
 
     for (final r in reminders) {
-      if (r.meta.isDeleted) continue;
+      if (r.meta.isDeleted || r.kind == Kind.place) continue; // LOC-10: no time, not in Day/Month
       // ±1 day of padding covers zones far from the device zone; exact filtering below.
       final keys = <DateTime>{
         ...occurrenceKeysBetween(r, addDays(from, -1), addDays(to, 2)),

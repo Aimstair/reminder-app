@@ -94,6 +94,7 @@ List<AlertStage> defaultAlertPlan(Kind kind, TimingType timing, {BillKind bill =
     AlertStage(AlertOffset.zero),
   ],
   Kind.task => const [AlertStage(AlertOffset.zero)],
+  Kind.place => const [], // LOC-3: rings at the place, not at a time
   Kind.bill => switch (bill) {
     BillKind.payment => const [AlertStage(AlertOffset(-2, OffsetUnit.days)), AlertStage(AlertOffset.zero)],
     BillKind.subscription => const [AlertStage(AlertOffset(-1, OffsetUnit.days))],

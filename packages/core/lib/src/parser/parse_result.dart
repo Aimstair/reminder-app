@@ -25,6 +25,20 @@ class ParsedTiming {
   String toString() => '$type $start${end != null ? '–$end' : ''}${tz != null ? ' [$tz]' : ''}';
 }
 
+/// PRS-43: a place phrase ("when I get home") — the capture sheet suggests a place reminder (LOC-16).
+class ParsedPlace {
+  const ParsedPlace({required this.name, required this.saved, required this.arrive, required this.leave});
+
+  /// The saved place's name, or the words as typed ("the stadium").
+  final String name;
+  final bool saved;
+  final bool arrive;
+  final bool leave;
+
+  @override
+  String toString() => '$name${saved ? ' ✓' : ' ✗'} ${arrive ? 'A' : ''}${leave ? 'L' : ''}';
+}
+
 class ParseResult {
   const ParseResult({
     required this.title,
@@ -39,6 +53,7 @@ class ParseResult {
     this.amount,
     this.billKind = BillKind.payment,
     this.subKind,
+    this.place,
   });
 
   /// Empty when nothing is left after extraction (PRS-36).
@@ -67,12 +82,15 @@ class ParseResult {
 
   /// SUB-2: subtype guessed from the words (birthday, video call, appointment…).
   final SubKind? subKind;
+
+  /// PRS-43: a place phrase was found.
+  final ParsedPlace? place;
   final Set<ParseFlag> flags;
 
   @override
   String toString() =>
       'ParseResult(title: "$title", timing: $timing, kind: $kind, context: $context, rrule: $rrule, '
-      'repeatMode: $repeatMode, alerts: $alerts, nag: $nag, amount: $amount, billKind: $billKind, subKind: $subKind, flags: $flags)';
+      'repeatMode: $repeatMode, alerts: $alerts, nag: $nag, amount: $amount, billKind: $billKind, subKind: $subKind, place: $place, flags: $flags)';
 }
 
 /// Inputs the parser needs besides the text.
@@ -84,6 +102,7 @@ class ParseContext {
     this.dayTimeHour = 9,
     this.dayTimeMinute = 0,
     this.currency = 'USD',
+    this.savedPlaces = const [],
   });
 
   /// Current wall time in [defaultTimeZone]. Only the calendar fields are used.
@@ -101,4 +120,7 @@ class ParseContext {
 
   /// ISO 4217 default currency (BIL-2, the phone's region) for "$" and bare "dollars".
   final String currency;
+
+  /// PRS-43: names of the user's saved places (LOC-1).
+  final List<String> savedPlaces;
 }

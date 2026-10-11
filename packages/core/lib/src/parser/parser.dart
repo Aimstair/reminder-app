@@ -97,6 +97,9 @@ class _Run {
   bool dayBefore = false;
   int? startByWeekday;
 
+  /// PRS-43: place phrase found in the text.
+  ParsedPlace? place;
+
   /// PRS-37: amount found in the text, and the characters it used (given back on non-bills).
   Money? amount;
   List<int> amountSpan = const [];
@@ -150,6 +153,7 @@ class _Run {
     _ranges();
     _times();
     _dates();
+    _place(); // PRS-43: after dates/times, so {X} stops where they start
 
     var title = _title();
     final (kind, billKind) = _kind(title);
@@ -227,6 +231,7 @@ class _Run {
       amount: amount,
       billKind: billKind,
       subKind: guessSubKind(kind, title), // SUB-2
+      place: place,
       flags: flags,
     );
   }
@@ -290,6 +295,84 @@ class _Run {
     final f = RegExp(r"^(?:(?:work|personal):\s*)?(?:please )?(remind me to|don'?t forget to|remember to)\s+")
         .firstMatch(lower);
     if (f != null) _use(f.start, f.end, absorb: false);
+  }
+
+  static const _i = r"i(?:'|’)?m|i am";
+  static final _arriveRe = RegExp(
+    r'\b(?:when|once|as soon as)\s+(?:i\s+get\s+(?:to\s+)?|i\s+arrive\s+(?:at\s+)?|i\s+reach\s+|(?:' +
+        _i +
+        r')\s+at\s+)',
+  );
+  static final _leaveRe = RegExp(r'\b(?:when|once|after|before)\s+(?:i\s+leave\s+|(?:' + _i + r')\s+leaving\s+)');
+  static final _orLeaveRe = RegExp(r'^or\s+(?:when\s+i\s+)?leave\s+');
+  static final _xOrLeaveRe = RegExp(r'\s+or\s+(?:when\s+i\s+)?leave\s+');
+
+  /// PRS-43 "the gym" / "my work" → "gym" / "work" for matching saved places.
+  static String _placeKey(String s) =>
+      s.toLowerCase().replaceAll('’', "'").replaceFirst(RegExp(r'^(the|my)\s+'), '').trim();
+
+  /// {X}: from [start] to a used character, a comma/period, or an action verb.
+  int _placeEnd(int start) {
+    var end = start;
+    while (end < text.length && !used[end] && !',.;!?'.contains(text[end])) {
+      end++;
+    }
+    final verb = RegExp(r'\s(?:' + taskVerbs.map(RegExp.escape).join('|') + r')\b').firstMatch(lower.substring(start, end));
+    return verb == null ? end : start + verb.start;
+  }
+
+  /// PRS-43: "when I get home", "when I leave work", "at Trader Joe's" (saved places only).
+  void _place() {
+    String? savedName(String x) {
+      final k = _placeKey(x);
+      for (final s in ctx.savedPlaces) {
+        if (_placeKey(s) == k) return s;
+      }
+      return null;
+    }
+
+    ParsedPlace make(String x, {required bool arrive, required bool leave}) {
+      final saved = savedName(x);
+      return ParsedPlace(name: saved ?? x, saved: saved != null, arrive: arrive, leave: leave);
+    }
+
+    for (final (re, arrive) in [(_arriveRe, true), (_leaveRe, false)]) {
+      for (final m in re.allMatches(lower)) {
+        if (!_free(m.start, m.end)) continue;
+        var xStart = m.end;
+        var both = false;
+        // "when I arrive at or leave home"
+        final orLeave = _orLeaveRe.firstMatch(lower.substring(xStart));
+        if (arrive && orLeave != null) {
+          both = true;
+          xStart += orLeave.end;
+        }
+        final end = _placeEnd(xStart);
+        var x = text.substring(xStart, end).trim();
+        // "when I get home or leave home"
+        final tail = _xOrLeaveRe.firstMatch(x.toLowerCase());
+        if (arrive && tail != null && _placeKey(x.substring(tail.end)) == _placeKey(x.substring(0, tail.start))) {
+          both = true;
+          x = x.substring(0, tail.start).trim();
+        }
+        if (x.isEmpty) continue;
+        _use(m.start, end, absorb: false);
+        place = make(x, arrive: arrive || both, leave: !arrive || both);
+        return;
+      }
+    }
+
+    // Bare "at {saved place}" only when nothing else says when.
+    if (date != null || time != null || relative != null || rec != null) return;
+    for (final m in RegExp(r'\bat\s+').allMatches(lower)) {
+      if (!_free(m.start, m.end)) continue;
+      final end = _placeEnd(m.end);
+      final x = text.substring(m.end, end).trim();
+      if (x.isEmpty || savedName(x) == null) continue;
+      _use(m.start, end, absorb: false);
+      place = make(x, arrive: true, leave: false);
+      return;
+    }
   }
 
   void _alerts() {

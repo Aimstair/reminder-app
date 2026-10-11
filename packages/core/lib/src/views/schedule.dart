@@ -4,6 +4,7 @@ library;
 
 import '../engine/occurrence_engine.dart';
 import '../model/enums.dart';
+import '../model/place.dart';
 import '../model/prefs.dart';
 import '../model/reminder.dart';
 import '../planner/alarm_planner.dart';
@@ -22,6 +23,8 @@ class ScheduleItem {
     required this.state,
     required this.group,
     required this.overdue,
+    this.firedAt,
+    this.firedBy,
   });
 
   final Reminder reminder;
@@ -35,6 +38,10 @@ class ScheduleItem {
   final OccurrenceState state;
   final ScheduleGroup group;
   final bool overdue;
+
+  /// VW-17: when and why a place reminder rang (instant); null for everything else.
+  final DateTime? firedAt;
+  final PlaceEvent? firedBy;
 
   String get occurrenceId => AlarmPlanner.occurrenceId(reminder.id, occurrenceKey);
 }
@@ -53,9 +60,33 @@ class ScheduleView {
     final today = dateOnly(instantToWall(now, deviceZone));
     final weekEnd = addDays(today, 7 - today.weekday % 7); // exclusive: the coming Sunday starts "Later"
     final items = <ScheduleItem>[];
+    final fired = <String, List<Occurrence>>{};
+    for (final o in saved.values) {
+      if (o.firedAt != null && !o.state.isResolved) (fired[o.reminderId] ??= []).add(o);
+    }
 
     for (final r in reminders) {
       if (r.meta.isDeleted || r.status != ReminderStatus.active) continue;
+      if (r.kind == Kind.place) {
+        // VW-17 / LOC-10: only place reminders that rang and aren't done; due at the end of that day (LOC-8).
+        for (final o in fired[r.id] ?? const <Occurrence>[]) {
+          final day = dateOnly(instantToWall(o.firedAt!, deviceZone));
+          final times = OccurrenceTimes.of(r, day, prefs);
+          final overdue = times.isOverdue(r, o.state, now);
+          items.add(ScheduleItem(
+            reminder: r,
+            occurrenceKey: o.occurrenceKey,
+            start: instantToWall(o.firedAt!, deviceZone),
+            times: times,
+            state: o.state,
+            group: overdue ? ScheduleGroup.overdue : ScheduleGroup.today,
+            overdue: overdue,
+            firedAt: o.firedAt,
+            firedBy: o.firedBy,
+          ));
+        }
+        continue;
+      }
       for (final key in _keys(r, now)) {
         final occ = saved[AlarmPlanner.occurrenceId(r.id, key)];
         final state = occ?.state ?? OccurrenceState.pending;

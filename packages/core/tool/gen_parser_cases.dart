@@ -30,17 +30,20 @@ const _defaultYear = 2026;
 
 void main() {
   final doc = File('../../docs/parser-test-set.md').readAsLinesSync();
-  final rowRe = RegExp(r'^\| ([A-O]\d+) \|');
+  final rowRe = RegExp(r'^\| ([A-P]\d+) \|');
   final cases = <String>[];
   final errors = <String>[];
 
   for (final line in doc) {
     if (!rowRe.hasMatch(line)) continue;
     final cols = line.split('|').map((c) => c.trim()).toList();
-    // ['', id, input, title, when, type, ctx, repeat, notes, '']
+    // ['', id, input, title, when, type, ctx, repeat, notes, ''] — §P has Place instead of Repeat (PRS-43)
     final id = cols[1];
+    final places = id.startsWith('P');
     try {
-      cases.add(_case(id, cols[2], cols[3], cols[4], cols[5], cols[6], cols[7], cols[8]));
+      cases.add(
+        _case(id, cols[2], cols[3], cols[4], cols[5], cols[6], places ? '' : cols[7], cols[8], place: places ? cols[7] : null),
+      );
     } catch (e) {
       errors.add('$id: $e');
     }
@@ -67,7 +70,17 @@ void main() {
 
 String _q(String s) => "'${s.replaceAll(r'\', r'\\').replaceAll("'", r"\'").replaceAll(r'$', r'\$')}'";
 
-String _case(String id, String input, String title, String when, String type, String ctx, String repeat, String notes) {
+String _case(
+  String id,
+  String input,
+  String title,
+  String when,
+  String type,
+  String ctx,
+  String repeat,
+  String notes, {
+  String? place,
+}) {
   var locale = 'en-US';
   final loc = RegExp(r'^`\[(en-[A-Z]{2})\]`\s*').firstMatch(input);
   if (loc != null) {
@@ -112,13 +125,22 @@ String _case(String id, String input, String title, String when, String type, St
       'rrule: ${rrule == null ? 'null' : _q(rrule)}, afterCompletion: $afterCompletion, '
       'alerts: ${alerts == null ? 'null' : '[${alerts.map(_q).join(', ')}]'}, '
       'nag: ${nag == null ? 'null' : _q(nag)}, '
-      'billKind: ${billKind == null ? 'null' : _q(billKind)}, amount: ${amount == null ? 'null' : _q(amount)}, ${subKind == null ? '' : 'subKind: ${_q(subKind)}, '}flags: {${flags.map(_q).join(', ')}}),';
+      'billKind: ${billKind == null ? 'null' : _q(billKind)}, amount: ${amount == null ? 'null' : _q(amount)}, ${subKind == null ? '' : 'subKind: ${_q(subKind)}, '}'
+      '${place == null ? '' : 'place: ${_place(place)}, '}${when.isEmpty ? 'checkTiming: false, ' : ''}'
+      'flags: {${flags.map(_q).join(', ')}}),';
+}
+
+/// PRS-43 Place column: "Home ✓ A" · "the mall ✗ L" · "Home ✓ AL" · "—" (no place) → 'name|saved|A/L/AL'.
+String _place(String col) {
+  if (col == '—') return "''";
+  final m = RegExp(r'^(.+) (✓|✗) (AL|A|L)$').firstMatch(col) ?? (throw 'bad place $col');
+  return _q('${m.group(1)}|${m.group(2) == '✓'}|${m.group(3)}');
 }
 
 /// "Oct 11 18:00" · "Oct 12 (date)" · "2027-03-01 (date)" · "Oct 6 14:00–16:00"
 /// "Oct 10 21:00 – Oct 11 01:00" · "Oct 6 09:00–09:30 [Asia/Tokyo]" · "Nov 1 01:30 (EDT, first)" · "*(none)*"
 String _timing(String when) {
-  if (when == '*(none)*') return 'null';
+  if (when == '*(none)*' || when.isEmpty) return 'null';
   String? tz;
   final tzm = RegExp(r'\s*\[([A-Za-z_/]+)\]$').firstMatch(when);
   if (tzm != null) {

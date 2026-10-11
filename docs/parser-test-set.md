@@ -6,7 +6,7 @@ Related: [`behavior-spec.md`](behavior-spec.md) §8 (`CAP-*` rules) · [`product
 
 **v0 exit criterion:** ≥ 90% of counted cases pass. **v1.0 release:** ≥ 95%. Stretch cases (§S) are not counted.
 
-**Status (2026-10-09):** ✅ **147 / 147 pass** — implementation `packages/core/lib/src/parser/`, tests `packages/core/test/parser/` (cases generated from this file: `cd packages/core && dart run tool/gen_parser_cases.dart`). Stretch cases S1–S6 not yet supported. **2026-10-11:** 14 place rows (§P, `PRS-43`) added — not implemented yet.
+**Status (2026-10-11):** ✅ **228 / 228 pass** — implementation `packages/core/lib/src/parser/`, tests `packages/core/test/parser/` (cases generated from this file: `cd packages/core && dart run tool/gen_parser_cases.dart`). Stretch cases S1–S6 not yet supported. Place rows §P (`PRS-43`) included.
 
 ---
 
@@ -149,7 +149,7 @@ A row **passes** when every field shown in the row matches. Title comparison ign
   - **Both:** an arrive and a leave phrase for the same place joined by *or* ("when I get home or leave home", "when I arrive at or leave home").
   - {X} runs to the end of the input or to the next date/time phrase. It matches a **saved place** by name, ignoring case and a leading *the / my* ("the gym" → Gym); *home* and *work* match saved places named Home and Work. Otherwise `saved: false` and the name is kept as typed ("the stadium").
   - A bare **at {X}** counts only when {X} is a saved place **and** the input has no date or time ("buy milk at Trader Joe's" yes; "meet Sam at 5 at work" no — that's a timed reminder).
-  - Context keywords inside {X} still apply (PRS-31: "the office" → Work). Dates in the input are still parsed (they become *On a date*).
+  - Words inside {X} don't set the context ("the post office" stays Personal); the rest of the text does (PRS-31). {X} also ends before an action verb (PRS-29 list) or a comma, so "after I leave the office email the report" → place *the office*, title *Email the report*. Dates in the input are still parsed (they become *On a date*).
 
 ### Title
 - **PRS-33** Remove all parsed date, time, zone, recurrence, and alert phrases, plus fillers: *remind me to, don't forget to, remember to, at, on, by, for, due* (only when attached to a parsed phrase).
@@ -455,7 +455,7 @@ Column **Place**: name · ✓ saved / ✗ not saved · **A** arrive / **L** leav
 | P8 | lock the door when I'm leaving home | Lock the door | | T | P | Home ✓ L | |
 | P9 | water plants when I get home or leave home | Water plants | | T | P | Home ✓ AL | |
 | P10 | meet Sam at 5 at work | Meet Sam at work | Oct 5 17:00 | T | P | — | has a time → bare "at" ignored · `ambiguous_time` |
-| P11 | after I leave the office email the report | Email the report | | T | W | the office ✗ L | office → Work |
+| P11 | after I leave the office email the report | Email the report | | T | W | the office ✗ L | {X} stops at the verb · report → Work |
 | P12 | remind me to buy stamps when I get to the post office | Buy stamps | | T | P | the post office ✗ A | |
 | P13 | go home tomorrow | Go home | Oct 6 (date) | T | P | — | no trigger phrase |
 | P14 | grab coffee when I reach my work | Grab coffee | | T | P | Work ✓ A | "my" ignored |

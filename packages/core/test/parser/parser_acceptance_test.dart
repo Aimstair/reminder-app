@@ -16,7 +16,12 @@ const _flagNames = {
 };
 
 ReminderParser _parser(String locale) => ReminderParser(
-  ParseContext(now: DateTime(2026, 10, 5, 14, 0), defaultTimeZone: 'America/New_York', locale: locale),
+  ParseContext(
+    now: DateTime(2026, 10, 5, 14, 0),
+    defaultTimeZone: 'America/New_York',
+    locale: locale,
+    savedPlaces: const ['Home', 'Work', 'Gym', "Trader Joe's"], // §1 setup (PRS-43)
+  ),
 );
 
 /// Compares every field the row states (docs/parser-test-set.md §2). Returns mismatches.
@@ -27,7 +32,9 @@ List<String> check(ParserCase c, ParseResult r) {
   }
 
   eq('title', c.title, r.title);
-  if (c.timing == null) {
+  if (!c.checkTiming) {
+    // §P rows without a When: not checked
+  } else if (c.timing == null) {
     eq('timing', null, r.timing?.toString());
   } else if (r.timing == null) {
     errs.add('timing: expected ${c.timing!.start} got null');
@@ -46,6 +53,10 @@ List<String> check(ParserCase c, ParseResult r) {
   eq('billKind', c.billKind, r.kind == Kind.bill ? r.billKind.name : null);
   eq('amount', c.amount, r.amount?.toString());
   if (c.subKind != null) eq('subKind', c.subKind, r.subKind?.name);
+  if (c.place != null) {
+    final p = r.place;
+    eq('place', c.place, p == null ? '' : '${p.name}|${p.saved}|${p.arrive ? 'A' : ''}${p.leave ? 'L' : ''}');
+  }
   eq('flags', (c.flags.toList()..sort()).join(','), (r.flags.map((f) => _flagNames[f]!).toList()..sort()).join(','));
   return errs;
 }

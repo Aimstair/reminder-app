@@ -22,7 +22,8 @@ class InvalidTransition implements Exception {
 /// Applies one action. Throws [InvalidTransition] for anything the spec doesn't allow.
 OccurrenceState transition(OccurrenceState from, OccurrenceAction action, Kind kind) {
   const open = {OccurrenceState.pending, OccurrenceState.snoozed};
-  final completable = kind == Kind.task || kind == Kind.occasion || kind == Kind.bill; // BIL-1: bills are completable
+  // BIL-1: bills are completable; LOC-3: so are place reminders
+  final completable = kind == Kind.task || kind == Kind.occasion || kind == Kind.bill || kind == Kind.place;
   final next = switch (action) {
     OccurrenceAction.snooze when open.contains(from) => OccurrenceState.snoozed,
     OccurrenceAction.alertFired when from == OccurrenceState.snoozed => OccurrenceState.pending,
@@ -93,7 +94,7 @@ class OccurrenceTimes {
             Kind.event => startInstant.add(const Duration(hours: 1)),
             _ => startInstant,
           };
-    final due = r.kind == Kind.task ? (endWall != null ? endInstant : startInstant) : startInstant;
+    final due = r.kind == Kind.task || r.kind == Kind.place ? (endWall != null ? endInstant : startInstant) : startInstant;
     return OccurrenceTimes._(startInstant, due, endInstant, start);
   }
 

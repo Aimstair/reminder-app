@@ -86,8 +86,19 @@ class AlarmPlanner {
   List<PlannedAlarm> plan(List<Reminder> reminders, Map<String, Occurrence> saved, DateTime now) {
     final out = <PlannedAlarm>[];
     final horizon = now.add(window);
+    final byReminder = <String, List<Occurrence>>{};
+    for (final o in saved.values) {
+      (byReminder[o.reminderId] ??= []).add(o);
+    }
     for (final r in reminders) {
       if (r.meta.isDeleted || r.status != ReminderStatus.active) continue;
+      if (r.kind == Kind.place) {
+        // LOC-13: place reminders ring from geofences (Kotlin); only "In 1 hour" is a timed alarm (LOC-9).
+        for (final o in byReminder[r.id] ?? const <Occurrence>[]) {
+          out.addAll(_placeSnooze(r, o, now, horizon));
+        }
+        continue;
+      }
       for (final start in _starts(r, now)) {
         final id = occurrenceId(r.id, start);
         out.addAll(_forOccurrence(r, id, start, saved[id], now, horizon));
@@ -208,6 +219,26 @@ class AlarmPlanner {
     return out;
   }
 
+  /// LOC-9: "In 1 hour" re-rings a fired place reminder as a normal alarm.
+  List<PlannedAlarm> _placeSnooze(Reminder r, Occurrence o, DateTime now, DateTime horizon) {
+    final at = o.snoozedUntil;
+    if (o.state != OccurrenceState.snoozed || at == null || !at.isAfter(now) || at.isAfter(horizon)) return const [];
+    final key = '${occurrenceId(r.id, o.occurrenceKey)}:snz${at.millisecondsSinceEpoch}:0';
+    if (o.alertsSent.contains(key)) return const [];
+    final times = OccurrenceTimes.of(r, o.occurrenceKey, prefs);
+    final t = text(AlertContext(reminder: r, times: times, fireAt: at, alertKind: AlertKind.snooze));
+    return [
+      PlannedAlarm(
+        key: key,
+        fireAt: at,
+        title: t.title,
+        body: t.body,
+        kind: 'place',
+        lateCutoff: prefs.lateAlertCutoff ?? const Duration(days: 3650),
+      ),
+    ];
+  }
+
   /// ALR-2/ALR-3: minutes/hours add to the instant; days/weeks/months move the wall date, keeping the time.
   /// When [s] fires for an occurrence with [times] (ALR-2): minute/hour offsets from the anchor instant,
   /// day/week/month offsets on the wall calendar so the time of day stays put.
@@ -256,6 +287,7 @@ class AlarmPlanner {
         Kind.meeting || Kind.event => 'meeting',
         Kind.occasion => (stage?.isPrep ?? false) ? 'occasion_prep' : 'occasion_day',
         Kind.task => 'task',
+        Kind.place => 'place', // LOC-9: In 1 hour · Next time · Done
         // BIL-4
         Kind.bill => switch (bill) {
           BillKind.payment => 'bill',

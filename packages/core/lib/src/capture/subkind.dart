@@ -28,7 +28,7 @@ SubKind? guessSubKind(Kind kind, String title) {
       if (_has(t, travelWords)) return SubKind.travel;
       if (_has(t, socialWords)) return SubKind.social;
       return null;
-    case Kind.task || Kind.bill:
+    case Kind.task || Kind.bill || Kind.place:
       return null;
   }
 }

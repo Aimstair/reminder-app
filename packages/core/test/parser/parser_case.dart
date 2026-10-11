@@ -15,6 +15,8 @@ class ParserCase {
     required this.billKind,
     required this.amount,
     this.subKind,
+    this.place,
+    this.checkTiming = true,
     required this.flags,
   });
 
@@ -40,6 +42,12 @@ class ParserCase {
 
   /// SUB-2 subtype, e.g. 'holiday'; null = the row doesn't state one (not checked).
   final String? subKind;
+
+  /// PRS-43: 'name|saved|A/L/AL'; '' = no place expected; null = not checked (§A–O rows).
+  final String? place;
+
+  /// False when the row leaves When empty (§P place rows).
+  final bool checkTiming;
   final Set<String> flags;
 }
 

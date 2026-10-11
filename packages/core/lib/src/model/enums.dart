@@ -1,8 +1,9 @@
 /// Shared enums for the reminder model (docs/behavior-spec.md, reminder-app-concept.md data model).
 library;
 
-/// Reminder type — a behavior preset (concept §Core Concepts 1).
-enum Kind { task, meeting, event, occasion, bill }
+/// Reminder type — a behavior preset (concept §Core Concepts 1). [place] reminders ring at a place
+/// instead of a time and live on their own screen (LOC-3); they're never offered as a capture type.
+enum Kind { task, meeting, event, occasion, bill, place }
 
 /// BIL-1: what kind of bill (only meaningful when the type is [Kind.bill]).
 enum BillKind { payment, subscription, trial }
