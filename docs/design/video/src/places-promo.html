@@ -1,0 +1,881 @@
+<!doctype html>
+<!--
+  Places launch film (15 s, 1920×1080). Every frame is a pure function of time: seek(t) poses all
+  components. Nothing is a screenshot — the screens are rebuilt from the same tokens and parts as
+  mockups 11–15 (docs/design/mockups/src/places.html) so each element can move on its own.
+  Preview a frame: open with ?t=7.5 · render: node render.js (see docs/design/video/README.md)
+  Scenes: 0 intro · 1 browse the map · 2 create (picker → form) · 3 leave / arrive notifications · 4 outro
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+@font-face { font-family: Inter; font-weight: 400; src: url(../../../../assets/fonts/Inter-Regular.ttf); }
+@font-face { font-family: Inter; font-weight: 500; src: url(../../../../assets/fonts/Inter-Medium.ttf); }
+@font-face { font-family: Inter; font-weight: 600; src: url(../../../../assets/fonts/Inter-SemiBold.ttf); }
+@font-face { font-family: Inter; font-weight: 700; src: url(../../../../assets/fonts/Inter-Bold.ttf); }
+@font-face { font-family: Ph; src: url(../../../../assets/fonts/Phosphor-Regular.ttf); }
+@font-face { font-family: PhF; src: url(../../../../assets/fonts/Phosphor-Fill.ttf); }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1920px; height: 1080px; overflow: hidden; background: #06080F; }
+body { font-family: Inter; -webkit-font-smoothing: antialiased; letter-spacing: -0.2px; color: #fff; }
+.L { position: absolute; left: 0; top: 0; }
+#stage { position: absolute; inset: 0; overflow: hidden; }
+
+/* ---------- app tokens (design-direction.md §3), same as the mockups ---------- */
+.app {
+  --bg: #F2F2F7; --surface: #FFFFFF; --text: #000; --text2: rgba(60,60,67,.6);
+  --sep: rgba(60,60,67,.18); --accent: #007AFF; --fill: rgba(118,118,128,.12);
+  --seg-on: #FFFFFF; --shadow: 0 2px 10px rgba(0,0,0,.12);
+  --blue:#007AFF; --indigo:#5856D6; --teal:#30B0C7; --green:#34C759; --orange:#FF9500;
+  --pink:#FF2D55; --red:#FF3B30; --grey:#8E8E93;
+  color: var(--text); letter-spacing: -0.2px;
+}
+.app.dark {
+  --bg: #000; --surface: #1C1C1E; --text: #FFF; --text2: rgba(235,235,245,.6);
+  --sep: rgba(84,84,88,.6); --accent: #0A84FF; --fill: rgba(118,118,128,.24);
+  --blue:#0A84FF; --teal:#40C8E0; --green:#30D158; --orange:#FF9F0A;
+}
+.i { font-family: Ph; font-style: normal; line-height: 1; display: inline-block; }
+.f { font-family: PhF; font-style: normal; line-height: 1; display: inline-block; }
+.abs { position: absolute; }
+.map { position: absolute; left: 0; right: 0; top: 0; overflow: hidden; }
+.ring { position: absolute; border-radius: 50%; transform: translate(-50%,-50%); }
+.pin { position: absolute; width: 36px; height: 36px; border-radius: 50%; transform: translate(-50%,-50%);
+       display: flex; align-items: center; justify-content: center; color: #fff; font-size: 19px;
+       border: 2.5px solid #fff; box-shadow: 0 3px 8px rgba(0,0,0,.25); }
+.pin.big { width: 46px; height: 46px; font-size: 24px; }
+.pin .count { position: absolute; top: -8px; right: -9px; min-width: 19px; height: 19px; border-radius: 10px;
+       background: #fff; font: 700 11px Inter; display: flex; align-items: center; justify-content: center; padding: 0 5px; }
+.pin .live { position: absolute; bottom: -3px; right: -3px; width: 12px; height: 12px; border-radius: 50%;
+       background: #34C759; border: 2px solid #fff; }
+.me { position: absolute; width: 18px; height: 18px; border-radius: 50%; background: #0A84FF; border: 3px solid #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,.3); transform: translate(-50%,-50%); }
+.halo { position: absolute; width: 38px; height: 38px; border-radius: 50%; background: rgba(10,132,255,.2); transform: translate(-50%,-50%); }
+.fab-sm { position: absolute; width: 44px; height: 44px; border-radius: 22px; background: var(--surface);
+      box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--accent); }
+.circle-btn { width: 44px; height: 44px; border-radius: 22px; background: var(--surface); box-shadow: var(--shadow);
+      display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--text); }
+.title-pill { height: 44px; border-radius: 22px; background: var(--surface); box-shadow: var(--shadow); padding: 0 20px;
+      display: flex; align-items: center; gap: 8px; font: 600 17px Inter; }
+.chips { display: flex; gap: 8px; }
+.chip { height: 36px; border-radius: 18px; background: var(--surface); padding: 0 14px; display: flex; align-items: center; gap: 7px;
+      font: 600 15px Inter; box-shadow: 0 1px 4px rgba(0,0,0,.08); white-space: nowrap; }
+.chip.on { background: var(--text); color: var(--bg); }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.sheet { position: absolute; left: 0; right: 0; bottom: -240px; /* room for spring overshoot */ background: var(--bg); border-radius: 24px 24px 0 0;
+      box-shadow: 0 -4px 20px rgba(0,0,0,.10); }
+.grab { width: 36px; height: 5px; border-radius: 3px; background: rgba(120,120,128,.35); margin: 7px auto 0; }
+.caption { font: 600 13px Inter; color: var(--text2); text-transform: uppercase; letter-spacing: .3px; padding: 0 32px; margin: 16px 0 7px; }
+.group { background: var(--surface); border-radius: 12px; margin: 0 16px; overflow: hidden; position: relative; }
+.row { display: flex; align-items: center; min-height: 54px; padding: 0 16px; gap: 12px; position: relative; }
+.row + .row::before { content: ""; position: absolute; top: 0; right: 0; left: 60px; border-top: .5px solid var(--sep); }
+.row.noicon + .row::before, .row.nosep::before { left: 16px; }
+.tile { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 19px; flex: none; position: relative; }
+.tile.soft { width: 44px; height: 44px; border-radius: 12px; font-size: 22px; }
+.grow { flex: 1; min-width: 0; }
+.t17 { font: 400 17px/22px Inter; }
+.t17b { font: 600 17px/22px Inter; }
+.t15 { font: 400 15px/20px Inter; color: var(--text2); }
+.t13 { font: 400 13px/18px Inter; color: var(--text2); }
+.ell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.val { font: 400 17px Inter; color: var(--text2); display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.val .i { font-size: 15px; opacity: .55; }
+.switch { width: 51px; height: 31px; border-radius: 16px; background: rgba(118,118,128,.16); position: relative; flex: none; }
+.knob { position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.2); }
+.seg { display: flex; background: var(--fill); border-radius: 10px; padding: 2px; height: 36px; position: relative; }
+.seg > div { flex: 1; display: flex; align-items: center; justify-content: center; font: 500 15px Inter; border-radius: 8px; white-space: nowrap; position: relative; }
+.seg .on { font-weight: 600; }
+.seg > .seghi, .seghi { position: absolute; flex: none; top: 2px; bottom: 2px; border-radius: 8px; background: var(--seg-on); box-shadow: 0 2px 6px rgba(0,0,0,.12); }
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: #34C759; display: inline-block; flex: none; }
+.fab { position: absolute; right: 25px; bottom: 32px; width: 60px; height: 60px; border-radius: 30px; background: var(--accent);
+      color: #fff; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 8px 20px rgba(0,122,255,.35); }
+.btn { height: 54px; border-radius: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; font: 600 19px Inter; }
+.caret { display: inline-block; width: 2px; height: 22px; background: var(--accent); vertical-align: -4px; margin-left: 1px; border-radius: 1px; }
+
+/* ---------- phone ---------- */
+#phone { width: 414px; height: 868px; border-radius: 60px; background: #1D1D1F;
+         padding: 12px; box-shadow: inset 0 0 0 1.5px #3A3A3C, inset 0 0 0 5px #0B0B0C; transform-origin: 207px 434px; }
+#screen { position: relative; width: 390px; height: 844px; border-radius: 48px; overflow: hidden; background: #000; isolation: isolate; }
+.scr { position: absolute; left: 0; top: 0; width: 390px; height: 844px; overflow: hidden; background: var(--bg); }
+#island { position: absolute; left: 50%; top: 11px; width: 108px; height: 31px; margin-left: -54px; border-radius: 16px; background: #000; z-index: 60; }
+.finger { position: absolute; left: 0; top: 0; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; z-index: 70;
+          background: rgba(60,60,72,.28); border: 2.5px solid rgba(255,255,255,.95);
+          box-shadow: 0 6px 18px rgba(0,0,0,.30), 0 0 0 1px rgba(0,0,0,.10), inset 0 0 12px rgba(255,255,255,.35); }
+.tapRip { position: absolute; left: 0; top: 0; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; z-index: 69;
+          border: 2px solid rgba(255,255,255,.9); background: rgba(255,255,255,.18); }
+
+/* ---------- film type ---------- */
+.cap { position: absolute; }
+.eb { font: 600 26px Inter; letter-spacing: -.3px; color: #007AFF; }
+.hl { font: 600 80px/1.06 Inter; letter-spacing: -2.2px; color: #1D1D1F; margin-top: 14px; }
+.hl .ln { display: block; white-space: nowrap; }
+.sub { font: 400 28px/1.38 Inter; color: #6E6E73; margin-top: 24px; max-width: 560px; letter-spacing: -.4px; }
+.fl { position: absolute; left: 0; top: 0; }
+.flc { background: #fff; color: #000; border-radius: 18px; padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+       box-shadow: 0 0 0 1px rgba(0,0,0,.04), 0 10px 30px rgba(0,0,0,.08); white-space: nowrap; }
+.fr { position: absolute; left: 0; top: 0; border-radius: 50%; }
+
+/* world (scene 3) */
+.wring { position: absolute; border-radius: 50%; }
+.wpin { position: absolute; width: 58px; height: 58px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 30px; border: 3.5px solid #fff; box-shadow: 0 3px 8px rgba(0,0,0,.25); }
+.wlab { position: absolute; font: 600 19px Inter; color: #1D1D1F; background: #fff; letter-spacing: -.2px;
+        padding: 7px 14px; border-radius: 14px; white-space: nowrap; box-shadow: 0 0 0 1px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.08); }
+.ev { position: absolute; display: flex; align-items: center; gap: 10px; font: 700 21px Inter; color: #fff; padding: 11px 18px 11px 12px;
+      border-radius: 18px; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,.14); }
+.ev .evi { width: 34px; height: 34px; border-radius: 11px; background: rgba(255,255,255,.22); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+
+/* lock screen + notifications (mockup 05) */
+.nt { position: absolute; left: 12px; right: 12px; top: 0; border-radius: 26px; background: rgba(44,44,48,.94); overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+.nth { display: flex; align-items: center; gap: 9px; padding: 14px 16px 0; font: 400 14px Inter; color: rgba(235,235,245,.6); }
+.nta { width: 22px; height: 22px; border-radius: 6px; background: #F5A300; color: #000; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.ntb { display: flex; align-items: center; gap: 13px; padding: 11px 16px 0; }
+.ntt { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex: none; }
+.ntbtn { display: flex; gap: 8px; padding: 13px 14px 14px; }
+.ntbtn div { flex: 1; height: 40px; border-radius: 14px; background: rgba(120,120,128,.32); display: flex; align-items: center; justify-content: center;
+             font: 600 15px Inter; color: #fff; white-space: nowrap; }
+.dg { display: inline-block; height: 118px; overflow: hidden; }
+.dgc div { height: 118px; line-height: 118px; text-align: center; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+/* ================= helpers ================= */
+const $ = (id) => document.getElementById(id);
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const lerp = (a, b, u) => a + (b - a) * u;
+const E = {
+  lin: (t) => t,
+  inQuad: (t) => t * t,
+  inCubic: (t) => t * t * t,
+  outCubic: (t) => 1 - Math.pow(1 - t, 3),
+  outQuart: (t) => 1 - Math.pow(1 - t, 4),
+  inOutSine: (t) => -(Math.cos(Math.PI * t) - 1) / 2,
+  inOutCubic: (t) => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2),
+  inOutQuint: (t) => (t < .5 ? 16 * t ** 5 : 1 - Math.pow(-2 * t + 2, 5) / 2),
+  outExpo: (t) => (t >= 1 ? 1 : 1 - Math.pow(2, -10 * t)),
+  inExpo: (t) => (t <= 0 ? 0 : Math.pow(2, 10 * t - 10)),
+  inOutExpo: (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t < .5 ? Math.pow(2, 20 * t - 10) / 2 : (2 - Math.pow(2, -20 * t + 10)) / 2),
+  outBack: (t) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); },
+  outBackS: (t) => { const c1 = 2.6, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); },
+};
+/** progress of t through [a, b], eased */
+const p = (t, a, b, e = E.lin) => e(clamp((t - a) / (b - a)));
+/** damped spring 0 → 1 (seconds since start) */
+const spr = (dt, f = 1.55, d = 6.5) => (dt <= 0 ? 0 : 1 - Math.exp(-d * dt) * Math.cos(2 * Math.PI * f * dt));
+/** keyframe track: [[t, value(number|array), easeIntoThisKey?], ...] */
+function track(t, keys, def = E.inOutCubic) {
+  if (t <= keys[0][0]) return keys[0][1];
+  for (let i = 1; i < keys.length; i++) {
+    const [t1, v1, e] = keys[i]; const [t0, v0] = keys[i - 1];
+    if (t <= t1) {
+      const u = (e || def)((t - t0) / (t1 - t0));
+      return Array.isArray(v0) ? v0.map((a, j) => a + (v1[j] - a) * u) : v0 + (v1 - v0) * u;
+    }
+  }
+  return keys[keys.length - 1][1];
+}
+/** pose an element: c = centered on its left/top, x/y px, s scale, r rotate, o opacity, b blur */
+function T(el, o = {}) {
+  if (typeof el === 'string') el = $(el);
+  let tr = o.c ? 'translate(-50%,-50%) ' : '';
+  if (o.x || o.y) tr += `translate(${(o.x || 0).toFixed(2)}px,${(o.y || 0).toFixed(2)}px) `;
+  if (o.yp) tr += `translateY(${o.yp.toFixed(2)}%) `;
+  if (o.r) tr += `rotate(${o.r.toFixed(3)}deg) `;
+  const s = o.s ?? 1, sx = (o.sx ?? 1) * s, sy = (o.sy ?? 1) * s;
+  if (sx !== 1 || sy !== 1) tr += `scale(${sx.toFixed(4)},${sy.toFixed(4)})`;
+  el.style.transform = tr || 'none';
+  if (o.o !== undefined) { const v = clamp(o.o); el.style.opacity = v.toFixed(3); el.style.visibility = v <= 0.002 ? 'hidden' : 'visible'; }
+  if (o.b !== undefined) el.style.filter = o.b > 0.05 ? `blur(${o.b.toFixed(2)}px)` : 'none';
+}
+// display (not visibility) so children posed visible by T() can't leak out of a hidden scene
+const show = (el, on) => { (typeof el === 'string' ? $(el) : el).style.display = on ? '' : 'none'; };
+const C = { // place colors (design-direction.md DS17), light / dark
+  blue: [0, 122, 255], indigo: [88, 86, 214], teal: [48, 176, 199], green: [52, 199, 89], orange: [255, 149, 0],
+  pink: [255, 45, 85], red: [255, 59, 48], grey: [142, 142, 147] };
+const CD = { blue: [10, 132, 255], indigo: [94, 92, 230], teal: [64, 200, 224], green: [48, 209, 88], orange: [255, 159, 10] };
+const rgba = (c, a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
+const mix = (a, b, u) => a.map((v, i) => v + (b[i] - v) * u);
+const I = { house: 'e2c2', briefcase: 'e0ee', cart: 'e41e', barbell: 'e0b6', grad: 'e62c', fork: 'e262', aid: 'e56e', car: 'e112',
+  plane: 'e5d6', church: 'ecea', heart: 'e2a8', pin: 'e316', search: 'e30c', back: 'e138', next: 'e13a', plus: 'e3d4', x: 'e4f6',
+  gps: 'e1d6', nav: 'eade', arrive: 'e428', leave: 'e42a', clock: 'e19a', repeat: 'e3f6', mic: 'e326', bell: 'e0ce', check: 'e182',
+  pause: 'e39e', note: 'e34c' };
+const ic = (n, cls = 'i', extra = '') => `<span class="${cls}" style="${extra}">&#x${I[n]};</span>`;
+/** offset of el inside root, ignoring transforms (for finger targets) */
+function posIn(el, root) {
+  let x = 0, y = 0, e = el;
+  while (e && e !== root) { x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; }
+  return { x, y, cx: x + el.offsetWidth / 2, cy: y + el.offsetHeight / 2, w: el.offsetWidth, h: el.offsetHeight };
+}
+/** split a headline into masked words: "Every place,|at a glance." — *word* gets the gradient class */
+function words(text, grad = 'g1') {
+  return text.split('|').map((line) => '<span class="ln">' + line.split(' ').map((w) => {
+    const g = w.startsWith('*'); w = w.replace(/\*/g, '');
+    return `<span class="w"><span class="wi${g ? ' ' + grad : ''}">${w}</span></span>`;
+  }).join(' ') + '</span>').join('');
+}
+
+/* ================= map art ================= */
+function mapSvg(x0, y0, w, h) { // light app map, same drawing as the mockups, extended for panning
+  const c = { land: '#EEF0F3', block: '#E5E8EC', park: '#DCEFD8', water: '#CFE3F6', road: '#FFFFFF', major: '#FFFFFF', casing: '#D9DDE3', label: '#9AA0A8' };
+  let s = `<svg width="${w}" height="${h}" viewBox="${x0} ${y0} ${w} ${h}" style="position:absolute;left:${x0}px;top:${y0}px;display:block">`
+    + `<rect x="${x0}" y="${y0}" width="${w}" height="${h}" fill="${c.land}"/>`;
+  const xs = [], ys = [];
+  for (let x = -40 - 74 * 12; x < x0 + w; x += 74) if (x > x0 - 80) xs.push(x);
+  for (let y = -40 - 62 * 12; y < y0 + h; y += 62) if (y > y0 - 70) ys.push(y);
+  for (const x of xs) for (const y of ys) {
+    if ((((x * 7 + y * 3) % 5) + 5) % 5 === 0) continue;
+    s += `<rect x="${x + 8}" y="${y + 8}" width="58" height="46" rx="4" fill="${c.block}"/>`;
+  }
+  s += `<path d="M-900 560 C -700 500, -520 610, -360 570 S -120 480, -40 520 C 80 470, 140 600, 250 560 S 420 470, 620 520 S 900 600, 1200 540 L 1200 650 C 900 690, 760 600, 620 600 C 430 560, 330 650, 240 640 S 70 560, -40 610 S -300 660, -500 630 S -760 650, -900 660 Z" fill="${c.water}"/>`;
+  for (const [x, y, ww, hh] of [[252, 96, 120, 98], [-20, 300, 96, 84], [-330, 40, 140, 110], [480, 330, 130, 96], [30, -220, 150, 100], [-260, 760, 160, 110], [420, 760, 140, 100], [640, -120, 120, 120]])
+    s += `<rect x="${x}" y="${y}" width="${ww}" height="${hh}" rx="10" fill="${c.park}"/>`;
+  for (const x of xs) s += `<rect x="${x}" y="${y0}" width="8" height="${h}" fill="${c.road}"/>`;
+  for (const y of ys) s += `<rect x="${x0}" y="${y}" width="${w}" height="8" fill="${c.road}"/>`;
+  const major = (d) => `<path d="${d}" stroke="${c.casing}" stroke-width="17" fill="none"/><path d="${d}" stroke="${c.major}" stroke-width="13" fill="none"/>`;
+  s += major('M-900 250 C -500 228, -200 245, -40 238 C 120 226, 260 260, 640 214 S 1000 190, 1300 205');
+  s += major('M168 -900 C 160 -500, 176 -200, 168 -40 C 176 200, 150 420, 196 900 S 212 1200, 200 1400');
+  s += `<text x="300" y="232" font-family="Inter" font-size="10" font-weight="600" fill="${c.label}" transform="rotate(-6 300 232)">Main St</text>`
+    + `<text x="160" y="140" font-family="Inter" font-size="10" font-weight="600" fill="${c.label}" transform="rotate(88 160 140)">Oak Ave</text>`;
+  return s + '</svg>';
+}
+function worldSvg() { // dark city for scene 3: blocks 120 × 100, roads centred on multiples of 120 / 100
+  const X0 = -1200, Y0 = -600, W = 4200, H = 2800; // overscan so the camera never finds an edge
+  const c = { land: '#EEF0F3', a: '#E5E8EC', b: '#E3E6EA', park: '#DCEFD8', water: '#CFE3F6', road: '#FFFFFF', major: '#FFFFFF', casing: '#D9DDE3', label: '#9AA0A8' };
+  let s = `<svg width="${W}" height="${H}" viewBox="${X0} ${Y0} ${W} ${H}" style="position:absolute;left:${X0}px;top:${Y0}px;display:block"><rect x="${X0}" y="${Y0}" width="${W}" height="${H}" fill="${c.land}"/>`;
+  for (let x = X0; x < X0 + W; x += 120) for (let y = Y0; y < Y0 + H; y += 100) {
+    const k = ((((x / 120) * 7 + (y / 100) * 13) % 11) + 11) % 11;
+    const fill = k === 4 || k === 9 ? c.park : k % 2 ? c.a : c.b;
+    if (k === 6 || k === 2) { // split blocks into houses
+      s += `<rect x="${x + 8}" y="${y + 8}" width="48" height="84" rx="5" fill="${fill}"/><rect x="${x + 64}" y="${y + 8}" width="48" height="84" rx="5" fill="${fill}"/>`;
+    } else s += `<rect x="${x + 8}" y="${y + 8}" width="104" height="84" rx="6" fill="${fill}"/>`;
+  }
+  s += `<path d="M-1300 1180 C -900 1100, -400 1240, -50 1130 C 300 1060, 520 1220, 900 1150 S 1500 1010, 1900 1080 S 2400 1180, 2700 1100 L 3100 1150 L 3100 1300 L 2700 1240 C 2400 1300, 2100 1200, 1900 1210 S 1300 1150, 900 1280 S 300 1200, -50 1270 C -400 1380, -900 1240, -1300 1320 Z" fill="${c.water}"/>`;
+  for (let x = X0; x <= X0 + W; x += 120) s += `<rect x="${x - 4}" y="${Y0}" width="8" height="${H}" fill="${c.road}"/>`;
+  for (let y = Y0; y <= Y0 + H; y += 100) s += `<rect x="${X0}" y="${y - 4}" width="${W}" height="8" fill="${c.road}"/>`;
+  const major = (d) => `<path d="${d}" stroke="${c.casing}" stroke-width="24" fill="none"/><path d="${d}" stroke="${c.major}" stroke-width="16" fill="none"/>`;
+  s += major('M-1300 600 L 3100 600') + major('M960 -700 L 960 2300') + major('M-1300 2100 C -400 1700, 0 1650, 300 1500 S 1500 300, 3100 -100');
+  s += `<text x="690" y="588" font-family="Inter" font-size="15" font-weight="600" fill="${c.label}" letter-spacing="1">MAIN ST</text>`
+    + `<text x="1700" y="588" font-family="Inter" font-size="15" font-weight="600" fill="${c.label}" letter-spacing="1">MAIN ST</text>`
+    + `<text x="948" y="330" font-family="Inter" font-size="15" font-weight="600" fill="${c.label}" letter-spacing="1" transform="rotate(90 948 330)">OAK AVE</text>`;
+  return s + '</svg>';
+}
+
+/* ================= scene parts ================= */
+function ringEl(id, x, y, r, c, faded) {
+  const a = faded ? .06 : .13, e = faded ? .3 : .6;
+  return `<div id="${id}" class="ring" style="left:${x}px;top:${y}px;width:${2 * r}px;height:${2 * r}px;background:${rgba(c, a)};border:1.5px solid ${rgba(c, e)}"></div>`;
+}
+function pinEl(id, x, y, c, icon, { count, live, big, extra = '' } = {}) {
+  return `<div id="${id}" class="pin${big ? ' big' : ''}" style="left:${x}px;top:${y}px;background:${rgba(c)};${extra}">${ic(icon, 'f')}`
+    + (count ? `<div class="count" style="color:${rgba(c)}">${count}</div>` : '') + (live ? '<div class="live"></div>' : '') + '</div>';
+}
+
+/* 11 · Places (S-19) */
+function placesHTML() {
+  const mh = 392;
+  let h = `<div class="map" style="height:${mh + 30}px"><div id="pMap" class="L" style="width:390px;height:${mh + 30}px;transform-origin:0 0">`
+    + mapSvg(-560, -560, 1520, 1560)
+    + ringEl('pR1', 286, 142, 40, C.indigo) + ringEl('pR2', 268, 318, 48, C.green) + ringEl('pR3', 52, 162, 34, C.orange, true) + ringEl('pR0', 108, 286, 46, C.teal)
+    + `<div id="pHalo" class="halo" style="left:178px;top:246px"></div><div id="pMe" class="me" style="left:178px;top:246px"></div>`
+    + pinEl('pP1', 286, 142, C.indigo, 'briefcase') + pinEl('pP2', 268, 318, C.green, 'cart') + pinEl('pP3', 52, 162, C.orange, 'barbell')
+    + pinEl('pP0', 108, 286, C.teal, 'house', { count: 2, live: true })
+    + `</div><div id="pNav" class="fab-sm" style="right:16px;top:${mh - 62}px">${ic('nav')}</div></div>`;
+  h += `<div id="pT0" class="abs" style="left:16px;top:54px"><div class="circle-btn">${ic('back')}</div></div>`
+    + `<div id="pT1" class="abs" style="left:0;right:0;top:54px;display:flex;justify-content:center"><div class="title-pill">${ic('pin', 'i', 'font-size:20px;color:var(--teal)')}Places</div></div>`
+    + `<div id="pT2" class="abs" style="right:16px;top:54px"><div class="circle-btn">${ic('search')}</div></div>`
+    + `<div class="abs chips" style="left:16px;top:110px"><div id="pC0" class="chip on">All&nbsp;<span style="opacity:.6">5</span></div>`
+    + `<div id="pC1" class="chip"><span class="dot" style="background:var(--green)"></span>Active now</div><div id="pC2" class="chip">${ic('pause', 'i', 'font-size:15px;color:var(--text2)')}Paused</div></div>`;
+  const head = (c, icon, name, n, meta) => `<div class="pst" style="display:flex;align-items:center;gap:10px;padding:16px 20px 8px">`
+    + `<div class="tile" style="width:28px;height:28px;border-radius:8px;font-size:16px;background:${rgba(c)}">${ic(icon, 'f')}</div>`
+    + `<span style="font:700 20px/25px Inter">${name}</span>`
+    + `<span style="min-width:24px;height:24px;border-radius:12px;background:var(--fill);font:600 14px Inter;display:flex;align-items:center;justify-content:center;padding:0 8px">${n}</span>`
+    + `<span style="flex:1"></span><span class="t15">${meta}</span></div>`;
+  const rem = (c, kind, title, sub, live) => `<div class="row" style="min-height:62px;gap:14px">`
+    + `<div style="width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:17px;background:${rgba(c, .15)};color:${rgba(c)}">${ic(kind === 'l' ? 'leave' : 'arrive')}</div>`
+    + `<div class="grow"><div class="t17 ell">${title}</div>`
+    + `<div class="t15 ell" style="display:flex;align-items:center;gap:5px;margin-top:2px">${ic('clock', 'i', 'font-size:15px;flex:none')}<span class="ell">${sub}</span></div></div>`
+    + (live ? `<span style="display:flex;align-items:center;gap:5px;font:600 13px Inter;color:var(--green);background:rgba(52,199,89,.14);height:24px;padding:0 9px;border-radius:12px;white-space:nowrap"><span class="live-dot"></span>Active</span>` : '')
+    + '</div>';
+  h += `<div id="pSheet" class="sheet" style="top:${mh}px"><div class="grab"></div>`
+    + `<div class="pst" style="display:flex;align-items:baseline;justify-content:space-between;padding:10px 20px 0"><span style="font:700 28px/34px Inter;letter-spacing:-.4px">Nearby</span><span class="t15">5 reminders</span></div>`
+    + head(C.teal, 'house', 'Home', 2, '0.2 mi')
+    + `<div class="group pst">` + rem(C.teal, 'a', 'Take out the bins', 'Arrive · Tue, 6 – 10 PM', true) + rem(C.teal, 'l', 'Keys, wallet, phone?', 'Leave · Any time', true) + '</div>'
+    + head(C.green, 'cart', "Trader Joe's", 1, '0.6 mi')
+    + `<div class="group pst">` + rem(C.green, 'a', 'Buy milk', 'Arrive · Weekdays, 9 AM – 5 PM', false) + '</div>'
+    + `</div><div id="pFab" class="fab">${ic('plus')}</div>`;
+  return h;
+}
+
+/* 12 · Place picker (S-24) */
+const ICONS = ['house', 'briefcase', 'cart', 'barbell', 'grad', 'fork', 'aid', 'car', 'plane', 'church', 'heart', 'pin'];
+const COLORS = ['blue', 'indigo', 'teal', 'green', 'orange', 'pink', 'red', 'grey'];
+function pickerHTML() {
+  const mh = 262;
+  let h = `<div class="map" style="height:844px"><div id="kMap" class="L" style="width:390px;height:${mh + 30}px;transform-origin:195px 182px">`
+    + mapSvg(-760, -700, 1900, 1800)
+    + `<div id="kHalo" class="halo" style="left:96px;top:136px"></div><div class="me" style="left:96px;top:136px"></div></div>`
+    + `<div id="kRing" class="ring" style="left:195px;top:182px"></div>`
+    + `<div id="kShadow" class="abs" style="left:195px;top:200px;width:30px;height:9px;margin-left:-15px;border-radius:50%;background:rgba(0,0,0,.25);filter:blur(2px)"></div>`
+    + `<div id="kPin" class="pin big" style="left:195px;top:182px"><span id="kG0" class="f" style="position:absolute">&#x${I.pin};</span><span id="kG1" class="f" style="position:absolute">&#x${I.cart};</span></div>`
+    + `<div class="fab-sm" style="right:16px;top:${mh - 60}px">${ic('nav')}</div></div>`;
+  h += `<div class="abs" style="left:16px;right:16px;top:54px;display:flex;gap:10px"><div id="kBack" class="circle-btn" style="flex:none">${ic('back')}</div>`
+    + `<div id="kSearch" style="flex:1;height:44px;border-radius:12px;background:var(--surface);box-shadow:var(--shadow);display:flex;align-items:center;gap:8px;padding:0 12px">`
+    + `${ic('search', 'i', 'font-size:18px;color:var(--text2)')}<span class="t17" style="white-space:pre"><span id="kQ"></span><span id="kPh" style="color:var(--text2)">Search a place</span></span><span id="kCaret" class="caret"></span><span style="flex:1"></span><span id="kX">${ic('x', 'i', 'font-size:16px;color:var(--text2)')}</span></div></div>`
+    + `<div class="abs chips" style="left:16px;top:108px">`
+    + [['teal', 'house', 'Home'], ['indigo', 'briefcase', 'Work'], ['orange', 'barbell', 'Gym']].map(([c, i, n], k) => `<div id="kC${k}" class="chip">${ic(i, 'f', `font-size:16px;color:${rgba(C[c])}`)}${n}</div>`).join('')
+    + `<div id="kC3" class="chip">${ic('gps', 'i', 'font-size:16px;color:var(--accent)')}My location</div></div>`
+    + `<div id="kRes" class="abs" style="left:16px;right:16px;top:156px;background:var(--surface);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.16);overflow:hidden;transform-origin:50% 0">`
+    + [["Trader Joe's", '1234 Main St, Springfield', '0.6 mi'], ["Trader Joe's", '88 Elm Ave, Shelbyville', '2.4 mi'], ["Trader Joe's Wine Shop", '5 Market Sq, Capital City', '3.1 mi']].map(([n, a, d], k) =>
+      `<div id="kRr${k}" class="row" style="min-height:60px"><div class="tile" style="background:var(--fill);color:var(--text2);border-radius:50%">${ic('pin')}</div>`
+      + `<div class="grow"><div class="t17b ell">${n}</div><div class="t13 ell">${a}</div></div><span class="t13">${d}</span></div>`).join('') + '</div>';
+  h += `<div id="kSheet" class="sheet" style="top:${mh}px"><div class="grab"></div>`
+    + `<div class="kst" style="display:flex;gap:12px;align-items:center;padding:12px 20px 4px"><div id="kTile" class="tile soft"><span id="kT0" class="f" style="position:absolute">&#x${I.pin};</span><span id="kT1" class="f" style="position:absolute">&#x${I.cart};</span></div>`
+    + `<div class="grow"><div style="font:700 20px Inter">Trader Joe's</div><div class="t15 ell">1234 Main St, Springfield</div></div></div>`
+    + `<div class="caption kst" style="margin-top:8px">Name</div><div class="group kst"><div class="row noicon" style="min-height:48px"><span class="t17">Trader Joe's</span></div></div>`
+    + `<div class="caption kst">Icon</div><div id="kGrid" class="group kst" style="padding:10px 10px 6px;display:grid;grid-template-columns:repeat(6,1fr);gap:6px">`
+    + `<div id="kSel" style="position:absolute;left:0;top:0;height:44px;border-radius:10px"></div>`
+    + ICONS.map((n, k) => `<div id="kI${k}" style="height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--text2);position:relative">`
+      + (k === 2 || k === 11 ? `<span id="kIr${k}" class="i" style="position:absolute">&#x${I[n]};</span><span id="kIf${k}" class="f" style="position:absolute">&#x${I[n]};</span>` : ic(n)) + '</div>').join('')
+    + `</div><div class="caption kst">Color</div><div id="kCols" class="group kst" style="padding:12px 14px;display:flex;justify-content:space-between">`
+    + `<div id="kCSel" style="position:absolute;left:0;top:12px;width:30px;height:30px;border-radius:50%"></div>`
+    + COLORS.map((c, k) => `<div id="kD${k}" style="width:30px;height:30px;border-radius:50%;background:${rgba(C[c])};position:relative"></div>`).join('')
+    + `</div><div class="caption kst">Within</div><div class="group kst"><div class="row noicon" style="min-height:52px;gap:14px"><span class="t13">100 m</span>`
+    + `<div id="kTrack" style="flex:1;height:4px;border-radius:2px;background:var(--fill);position:relative"><div id="kFill" style="position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--accent)"></div>`
+    + `<div id="kThumb" style="position:absolute;top:50%;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);margin:-13px 0 0 -13px"></div></div>`
+    + `<span class="t13">2 km</span><span id="kVal" class="t17b" style="width:58px;text-align:right">100 m</span></div></div>`
+    + `<div id="kBtn" class="btn kst" style="margin:18px 16px 0;background:var(--accent);color:#fff">Use this place</div></div>`;
+  return h;
+}
+
+/* 13 · Place reminder form (S-25) */
+function formHTML() {
+  const sw = (id) => `<div id="${id}" class="switch"><div class="knob"></div></div>`;
+  return `<div id="fDim" class="abs" style="inset:0;background:rgba(0,0,0,.4)"></div>`
+    + `<div id="fSheet" class="sheet" style="top:46px;background:var(--bg)"><div class="grab"></div>`
+    + `<div class="fst" style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px 0"><span style="font:400 17px Inter;color:var(--accent);width:80px">Cancel</span>`
+    + `<span style="font:600 17px Inter">New Place Reminder</span><div style="width:80px;height:34px;display:flex;justify-content:flex-end"><span id="fSave" class="btn" style="height:34px;width:80px;border-radius:17px;background:var(--accent);color:#fff;font-size:17px;position:relative;overflow:hidden">`
+    + `<span id="fSaveT">Save</span><span id="fSaveC" class="i" style="position:absolute;font-size:20px">&#x${I.check};</span></span></div></div>`
+    + `<div id="fTitleBox" class="group fst" style="margin-top:14px;padding:14px 16px;display:flex;align-items:center;gap:12px"><span class="grow" style="font:500 20px Inter;white-space:pre"><span id="fTitle"></span><span id="fPh" style="color:var(--text2);font-weight:400">Remind me to…</span><span id="fCaret" class="caret"></span></span>`
+    + `<div style="width:38px;height:38px;border-radius:19px;background:var(--fill);display:flex;align-items:center;justify-content:center;font-size:19px;color:var(--accent)">${ic('mic')}</div></div>`
+    + `<div class="caption fst">Place</div><div class="group fst"><div class="row" style="min-height:60px"><div class="tile" style="background:var(--green)">${ic('cart', 'f')}</div>`
+    + `<div class="grow"><div class="t17">Trader Joe's</div><div class="t13 ell">300 m · 1234 Main St, Springfield</div></div><span class="i" style="color:var(--text2);opacity:.6">&#x${I.next};</span></div></div>`
+    + `<div class="caption fst">Remind me when I</div><div class="group fst">`
+    + `<div class="row"><div class="tile" style="background:var(--teal)">${ic('arrive')}</div><span class="t17 grow">Arrive</span>${sw('fSwA')}</div>`
+    + `<div class="row"><div class="tile" style="background:var(--orange)">${ic('leave')}</div><span class="t17 grow">Leave</span>${sw('fSwL')}</div></div>`
+    + `<div class="caption fst">When</div><div class="group fst">`
+    + `<div class="row noicon" style="min-height:56px"><div class="seg grow"><div id="fSegHi" class="seghi"></div><div id="fSg0">Any day</div><div id="fSg1">On a date</div><div id="fSg2">Repeats</div></div></div>`
+    + `<div id="fExp" style="overflow:hidden;height:0">`
+    + `<div class="row"><div class="tile" style="background:var(--grey)">${ic('repeat')}</div><span class="t17 grow">Repeat</span><span class="val">Weekdays${ic('next')}</span></div>`
+    + `<div class="row"><div class="tile" style="background:var(--blue)">${ic('clock')}</div><span class="t17 grow">Hours</span><span class="val">9:00 AM – 5:00 PM${ic('next')}</span></div></div>`
+    + `<div class="row"><div class="tile" style="background:var(--indigo)">${ic('bell')}</div><span class="t17 grow" style="white-space:nowrap">Remind me</span><div class="seg" style="width:172px;height:32px;font-size:14px"><div class="seghi" style="left:2px;width:84px"></div><div class="on">First time</div><div>Every time</div></div></div></div>`
+    + `<div class="t13 fst" style="padding:8px 32px 0;display:flex;gap:6px;align-items:flex-start;position:relative;min-height:44px">${ic('pin', 'i', 'font-size:14px;margin-top:2px')}`
+    + `<span style="position:relative;flex:1"><span id="fSum0" style="position:absolute;left:0;top:0">Rings when you arrive at Trader Joe's.</span><span id="fSum1" style="position:absolute;left:0;top:0">Rings when you arrive at Trader Joe's, weekdays, 9 AM – 5 PM.</span></span></div>`
+    + `<div style="margin:12px 16px 0" class="seg fst"><div class="seghi" style="left:2px;width:calc(50% - 2px)"></div><div class="on">Personal</div><div>Work</div></div>`
+    + `</div>`;
+}
+
+/* 05-style lock screen with place notifications (LOC-9, copy.md) */
+function notifHTML(id, c, icon, title, body) {
+  return `<div id="${id}" class="nt"><div id="${id}c">`
+    + `<div class="nth"><div class="nta">${ic('bell', 'f')}</div><span>Reminder App · Places</span><span style="flex:1"></span><span>now</span></div>`
+    + `<div class="ntb"><div class="ntt" style="background:${rgba(c, .22)};color:${rgba(c)}">${ic(icon, 'f')}</div>`
+    + `<div style="min-width:0"><div style="font:600 18px/23px Inter;color:#fff">${title}</div><div style="font:400 15px/20px Inter;color:rgba(235,235,245,.6)">${body}</div></div></div>`
+    + `<div class="ntbtn"><div>In 1 hour</div><div>Next time</div><div id="${id}done" style="background:#0A84FF">Done</div></div></div>`
+    + `<div id="${id}d" class="abs" style="left:0;right:0;top:0;height:64px;display:flex;align-items:center;gap:12px;padding:0 18px">`
+    + `<div style="width:34px;height:34px;border-radius:50%;background:#30D158;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px">${ic('check', 'f')}</div>`
+    + `<span style="font:600 17px Inter;color:#fff">Done</span><span style="font:400 17px Inter;color:rgba(235,235,245,.75)">· ${title}</span><span style="flex:1"></span><span style="font:600 17px Inter;color:#0A84FF">Undo</span></div></div>`;
+}
+function lockHTML() {
+  const a = '8:05', b = '4:45';
+  const digits = [...a].map((ch, k) => `<span class="dg"><span id="dg${k}" class="dgc" style="display:block"><div>${ch}</div><div>${b[k]}</div></span></span>`).join('');
+  return `<div class="abs" style="inset:0;background:linear-gradient(165deg,#1d2744 0%,#151b2f 45%,#1b1530 100%)"></div>`
+    + `<div id="lB0" class="abs" style="left:-140px;top:420px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(64,200,224,.22),rgba(64,200,224,0) 68%)"></div>`
+    + `<div id="lB1" class="abs" style="left:150px;top:-120px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(94,92,230,.30),rgba(94,92,230,0) 68%)"></div>`
+    + `<div id="lWarm" class="abs" style="inset:0;background:linear-gradient(180deg,rgba(255,140,60,.0),rgba(255,120,80,.22))"></div>`
+    + `<div class="abs" style="left:0;right:0;top:66px;text-align:center;font:500 19px Inter;color:rgba(235,235,245,.78)">Tuesday, October 13</div>`
+    + `<div class="abs" style="left:0;right:0;top:86px;display:flex;justify-content:center;font:400 112px Inter;letter-spacing:-3px;color:#fff;font-variant-numeric:tabular-nums">${digits}</div>`
+    + `<div id="nStack" class="abs" style="left:0;right:0;top:236px">`
+    + notifHTML('n1', CD.teal, 'house', 'Keys, wallet, phone?', 'Left Home')
+    + notifHTML('n2', CD.green, 'cart', 'Buy milk', "Arrived at Trader Joe's") + `</div>`
+    + `<div class="abs" style="left:44px;bottom:46px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px">${ic('car')}</div>`
+    + `<div class="abs" style="right:44px;bottom:46px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px">${ic('heart')}</div>`
+    + `<div class="abs" style="left:50%;bottom:10px;width:134px;height:5px;margin-left:-67px;border-radius:3px;background:rgba(255,255,255,.85)"></div>`;
+}
+
+/* ================= world (scene 3) ================= */
+const HOME = { x: 420, y: 560, r: 112 }, TJ = { x: 1400, y: 650, r: 124 };
+const ROAD_Y = 600, START_X = 420;
+function worldHTML() {
+  const wr = (id, P, c) => `<div id="${id}" class="wring" style="left:${P.x - P.r}px;top:${P.y - P.r}px;width:${2 * P.r}px;height:${2 * P.r}px;background:${rgba(c, .12)};border:2px solid ${rgba(c, .6)}"></div>`
+    + `<div id="${id}s" class="wring" style="left:${P.x - P.r}px;top:${P.y - P.r}px;width:${2 * P.r}px;height:${2 * P.r}px;border:3px solid ${rgba(c, .9)}"></div>`
+    + `<div id="${id}d" class="wring" style="left:${P.x - P.r - 14}px;top:${P.y - P.r - 14}px;width:${2 * P.r + 28}px;height:${2 * P.r + 28}px;display:none"></div>`;
+  const wp = (id, P, c, icon, name) => `<div id="${id}" class="wpin" style="left:${P.x - 29}px;top:${P.y - 29}px;background:${rgba(c)}">${ic(icon, 'f')}</div>`
+    + `<div id="${id}l" class="wlab" style="left:${P.x + 40}px;top:${P.y - 62}px">${name}</div>`;
+  const deco = [[900, 250, 90, C.indigo, 'briefcase', 'Work'], [700, 950, 80, C.orange, 'barbell', 'Gym'], [1900, 300, 100, C.indigo, 'grad', 'School'], [2050, 900, 90, C.teal, 'fork', 'Café']];
+  let h = `<div id="world" class="L" style="width:2600px;height:1500px;transform-origin:0 0">${worldSvg()}`;
+  deco.forEach(([x, y, r, c, icon, n], k) => {
+    h += `<div class="wring" style="left:${x - r}px;top:${y - r}px;width:${2 * r}px;height:${2 * r}px;background:${rgba(c, .08)};border:1.5px solid ${rgba(c, .4)}"></div>`
+      + `<div class="wpin" style="left:${x - 24}px;top:${y - 24}px;width:48px;height:48px;font-size:24px;background:${rgba(c)};opacity:.75">${ic(icon, 'f')}</div>`;
+  });
+  h += wr('wR0', HOME, C.teal) + wr('wR1', TJ, C.green)
+    + `<div id="wTrail" class="abs" style="left:${START_X}px;top:${ROAD_Y - 4}px;height:8px;border-radius:4px;transform-origin:0 50%"></div>`
+    + wp('wP0', HOME, C.teal, 'house', 'Home') + wp('wP1', TJ, C.green, 'cart', "Trader Joe's")
+    + `<div id="wHalo" class="abs" style="left:0;top:0;width:90px;height:90px;margin:-45px 0 0 -45px;border-radius:50%;background:rgba(0,122,255,.16)"></div>`
+    + `<div id="wDot" class="abs" style="left:0;top:0;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;background:#007AFF;border:4px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25)"></div>`
+    + `<div id="ev0" class="ev" style="left:0;top:0;background:${rgba(C.teal)}"><div class="evi">${ic('leave')}</div>Left Home · 8:05 AM</div>`
+    + `<div id="ev1" class="ev" style="left:0;top:0;background:${rgba(C.green)}"><div class="evi">${ic('arrive')}</div>Arrived · 4:45 PM</div>`
+    + '</div>';
+  return h;
+}
+
+/* ================= build ================= */
+const stage = $('stage');
+stage.innerHTML = `
+<div id="bg" class="L" style="width:1920px;height:1080px;background:#F5F5F7"></div>
+<div id="worldWrap" class="L" style="left:96px;top:300px;width:1104px;height:684px;border-radius:32px;overflow:hidden;background:#EEF0F3;
+  box-shadow:0 0 0 1px rgba(0,0,0,.05),0 12px 40px rgba(0,0,0,.08)">${worldHTML()}</div>
+<div id="floor" class="L"></div>
+<div id="heroShadow" class="L" style="width:110px;height:18px;margin:-9px 0 0 -55px;border-radius:50%;background:rgba(0,0,0,.16);filter:blur(6px)"></div>
+
+<div id="heroT" class="cap" style="left:0;width:1920px;top:580px;text-align:center"><div class="hl" style="font-size:88px;margin:0">${words('Reminders that know|where you are.')}</div></div>
+
+<div id="cap1" class="cap" style="left:1130px;top:330px"><div class="eb">Browse</div>
+  <div class="hl">${words('Every place,|at a glance.')}</div><div class="sub">Each pin with its radius, and what's active right now.</div></div>
+<div id="cap2" class="cap" style="left:150px;top:330px"><div class="eb">Create</div>
+  <div class="hl">${words('Drop a pin.|Set the radius.')}</div><div class="sub">Search any address, pick an icon and a color, from 100 m to 2 km.</div></div>
+<div id="cap2b" class="cap" style="left:150px;top:330px"><div class="eb">Create</div>
+  <div class="hl">${words('Arrive, leave,|or both.')}</div><div class="sub">Only on the days and hours you choose.</div></div>
+<div id="cap3" class="cap" style="left:120px;top:96px"><div class="eb">Get reminded</div>
+  <div class="hl" style="font-size:72px;margin-top:14px">${words('Rings the moment you get there.')}</div></div>
+
+<div id="fl0" class="fl"><div class="flc"><div class="tile" style="background:${rgba(C.teal)};width:40px;height:40px;border-radius:11px;font-size:22px">${ic('house', 'f')}</div>
+  <div><div style="font:600 19px Inter">Home</div><div style="font:400 15px Inter;color:rgba(60,60,67,.6)">2 reminders · 0.2 mi</div></div></div></div>
+<div id="fl1" class="fl"><div class="flc" style="padding:10px 18px"><span class="live-dot" style="width:12px;height:12px"></span><span style="font:600 19px Inter;color:#1F9D45">Active now</span></div></div>
+<div id="fl2" class="fl"><div class="flc"><div class="tile" style="background:${rgba(C.green)};width:40px;height:40px;border-radius:11px;font-size:22px">${ic('cart', 'f')}</div>
+  <div><div style="font:600 19px Inter">Trader Joe's</div><div style="font:400 15px Inter;color:rgba(60,60,67,.6)">Arrive · Weekdays</div></div></div></div>
+
+<div id="radC" class="L" style="width:400px;height:400px;margin:-200px 0 0 -200px">
+  <div id="radR" class="abs" style="left:50%;top:50%;border-radius:50%;border:1.5px solid rgba(0,122,255,.6);background:rgba(0,122,255,.10)"></div>
+  <div id="radR2" class="abs" style="left:50%;top:50%"></div>
+  <div class="abs" style="left:0;right:0;top:128px;text-align:center;font:600 24px Inter;letter-spacing:-.3px;color:#6E6E73">Within</div>
+  <div id="radV" class="abs" style="left:0;right:0;top:156px;text-align:center;font:600 84px/1 Inter;letter-spacing:-2.5px;color:#1D1D1F;font-variant-numeric:tabular-nums">100<span style="font-size:48px;letter-spacing:-1px;color:#6E6E73"> m</span></div>
+</div>
+
+<div id="pshadow" class="L" style="width:380px;height:44px;margin:-22px 0 0 -190px;border-radius:50%;background:rgba(0,0,0,.22);filter:blur(22px)"></div>
+<div id="phoneWrap" class="L" style="width:414px;height:868px">
+  <div id="phone"><div id="screen" class="app">
+    <div id="scrPlaces" class="scr">${placesHTML()}</div>
+    <div id="scrPicker" class="scr">${pickerHTML()}<div id="scrForm" class="abs" style="inset:0">${formHTML()}</div></div>
+    <div id="scrOff" class="abs" style="inset:0;background:#000"></div>
+    <div id="scrLock" class="scr app dark">${lockHTML()}</div>
+    <div id="tapRip" class="tapRip"></div><div id="fg" class="finger"></div><div id="fg2" class="finger"></div>
+    <div id="island"></div>
+  </div></div>
+</div>
+
+<div id="heroPin" class="pin" style="left:0;top:0;transform-origin:50% 50%;background:${rgba(C.teal)}">${ic('house', 'f')}<div id="heroCount" class="count" style="color:${rgba(C.teal)}">2</div><div id="heroLive" class="live"></div></div>
+
+<div id="outro" class="L" style="width:1920px;height:1080px">
+  <div id="oFloor" class="L"></div>
+  <div id="oPins" class="L"></div>
+  <div id="oLogo" class="L" style="width:140px;height:140px;margin:-70px 0 0 -70px;border-radius:32px;background:#007AFF;
+     display:flex;align-items:center;justify-content:center;color:#fff;font-size:76px;box-shadow:0 1px 2px rgba(0,0,0,.08),0 14px 36px rgba(0,0,0,.14)">${ic('pin', 'f')}</div>
+  <div id="oT" class="cap" style="left:0;width:1920px;top:570px;text-align:center"><div class="hl" style="font-size:120px;margin:0;letter-spacing:-3.5px">${words('Places')}</div></div>
+  <div id="oS" class="cap" style="left:0;width:1920px;top:716px;text-align:center;font:400 36px Inter;color:#6E6E73;letter-spacing:-.5px">Remind me when I get there.</div>
+  <div id="oE" class="cap" style="left:0;width:1920px;top:796px;text-align:center"><span style="font:600 22px Inter;color:#007AFF;letter-spacing:-.2px">New in Reminder App 1.0</span></div>
+</div>
+<div id="fade" class="L" style="width:1920px;height:1080px;background:#F5F5F7"></div>
+`;
+
+// floor ripples (intro + outro) and outro orbit pins
+const RIP = [C.teal, C.indigo, C.green, C.orange];
+$('floor').innerHTML = RIP.map((c, k) => `<div id="fr${k}" class="fr" style="border:2px solid ${rgba(c, .6)}"></div>`).join('');
+$('oFloor').innerHTML = RIP.map((c, k) => `<div id="or${k}" class="fr" style="border:2px solid ${rgba(c, .5)}"></div>`).join('');
+const OPINS = [['teal', 'house'], ['indigo', 'briefcase'], ['green', 'cart'], ['orange', 'barbell'], ['pink', 'heart'], ['blue', 'plane']];
+$('oPins').innerHTML = OPINS.map(([c, i], k) => `<div id="op${k}" class="pin" style="left:0;top:0;width:64px;height:64px;font-size:32px;border-width:4px;background:${rgba(C[c])};box-shadow:0 4px 12px rgba(0,0,0,.18)">${ic(i, 'f')}</div>`
+  + `<div id="opr${k}" class="ring" style="left:0;top:0;width:150px;height:150px;background:${rgba(C[c], .10)};border:2px solid ${rgba(C[c], .45)}"></div>`).join('');
+
+const screenEl = $('screen');
+const q = (sel) => [...document.querySelectorAll(sel)];
+const PST = q('.pst'), KST = q('.kst'), FST = q('.fst');
+const HERO_LINES = q('#heroT .ln');
+
+/* ================= timeline constants ================= */
+// phone pose: [t, [x, y, scale, rotY, rotX, rotZ]]
+const PHONE = [
+  [0, [600, 540, .95, 0, 0, 0]],
+  [1.95, [600, 540, .95, 0, 0, 0]],
+  [2.8, [612, 540, .95, 17, 5, -1], E.outCubic],
+  [4.5, [632, 534, .965, 11, 3, 0], E.inOutSine],
+  [5.2, [1330, 540, .95, -15, 4, 1], E.inOutQuint],
+  [6.9, [1312, 545, .965, -10, 3, 0], E.inOutSine],
+  [7.4, [1292, 362, 1.22, -6, 2, 0], E.inOutCubic],
+  [8.2, [1286, 356, 1.245, -5, 2, 0], E.inOutSine],
+  [8.65, [1322, 540, .96, -12, 4, 0], E.inOutCubic],
+  [10.25, [1306, 540, .98, -8, 3, 0], E.inOutSine],
+  [10.9, [1490, 540, .93, -12, 3, 0], E.inOutQuint],
+  [13.4, [1474, 546, .94, -6, 2, 0], E.inOutSine],
+  [13.95, [2500, 640, .8, -40, 4, 6], E.inCubic],
+];
+const phonePose = (t) => track(t, PHONE);
+/** canvas position of a point on the flat (unrotated) phone screen */
+function screenToCanvas(t, sx, sy) {
+  const [x, y, s] = phonePose(t);
+  return [x + (sx + 12 - 207) * s, y + (sy + 12 - 434) * s];
+}
+
+// world dot: distance travelled along Main St (s px from START_X)
+function dotS(t) {
+  if (t < 11.0) return 0;
+  if (t < 11.6) return lerp(0, 170, E.inOutCubic((t - 11.0) / .6));
+  if (t < 12.5) return lerp(170, 800, E.inOutCubic((t - 11.6) / .9));
+  return lerp(800, 905, E.outCubic(clamp((t - 12.5) / .5)));
+}
+const dotPos = (t) => [START_X + dotS(t), ROAD_Y];
+const inside = (P, t) => { const [x, y] = dotPos(t); return Math.hypot(x - P.x, y - P.y) <= P.r; };
+let T_LEAVE = 0, T_ARRIVE = 0;
+for (let t = 10.9; t < 13.2; t += 1 / 600) {
+  if (!T_LEAVE && !inside(HOME, t)) T_LEAVE = t;
+  if (!T_ARRIVE && inside(TJ, t)) T_ARRIVE = t;
+}
+const T_N1 = T_LEAVE + .1, T_N2 = T_ARRIVE + .1;
+
+/* finger script (screen coordinates), filled in once layout exists */
+let FG = [], FG2 = [], VIS = [], VIS2 = [], TAPS = [];
+let SLIDER = null;
+function measure() {
+  const P = (id) => posIn($(id), screenEl);
+  const fab = P('pFab'), res = P('kRr0'), cart = P('kI2'), green = P('kD3'), btn = P('kBtn'), track_ = P('kTrack');
+  const title = P('fTitleBox'), swA = P('fSwA'), rep = P('fSg2'), save = P('fSave');
+  const n2done = P('n2done');
+  SLIDER = { x0: track_.x, w: track_.w, y: track_.cy };
+  const thumb = (f) => [SLIDER.x0 + SLIDER.w * f, SLIDER.y];
+  FG = [
+    [2.9, [262, 168]], [3.05, [250, 172]], [3.55, [190, 237]], [3.62, [186, 241], E.outCubic], [3.8, [168, 190]], [4.28, [114, 132]],
+    [4.38, [250, 600]], [4.6, [fab.cx, fab.cy], E.outCubic],
+    [5.86, [300, 560]], [6.06, [res.cx, res.cy], E.outCubic],
+    [6.95, [260, 640]], [7.16, [cart.cx, cart.cy], E.outCubic], [7.43, [green.cx, green.cy]], [7.66, thumb(.05)],
+    [7.72, thumb(.05)], [8.12, thumb(.22)], [8.26, [btn.cx, btn.cy]],
+    [8.7, [250, 330]], [8.84, [title.cx - 40, title.cy], E.outCubic], [9.28, [swA.cx, swA.cy]], [9.55, [rep.cx, rep.cy]], [9.98, [save.cx, save.cy]],
+    [12.98, [250, 760]], [13.18, [n2done.cx, n2done.cy], E.outCubic], // n2 is at the top of the stack when tapped
+  ];
+  VIS = [[2.9, 3.64], [3.8, 4.32], [4.38, 4.76], [5.86, 6.24], [6.95, 8.42], [8.7, 10.14], [12.98, 13.42]];
+  FG2 = [[3.8, [222, 232]], [4.28, [276, 290]]]; // pinch centred on (195, 211)
+  VIS2 = [[3.8, 4.32]];
+  TAPS = [4.64, 6.1, 7.2, 7.47, 8.3, 8.86, 9.32, 9.6, 10.03, 13.22];
+}
+const fingerAt = (t) => track(t, FG);
+const tapPress = (t) => { let k = 0; for (const tp of TAPS) { const d = t - tp; if (d > -.09 && d < .14) k = Math.max(k, d < 0 ? (d + .09) / .09 : 1 - d / .14); } return k; };
+const visAmt = (t, wins) => { let v = 0; for (const [a, b] of wins) v = Math.max(v, Math.min(p(t, a, a + .1), 1 - p(t, b - .1, b))); return v; };
+
+/* ================= caption animator ================= */
+function caption(id, t, tin, tout, { from = 'up' } = {}) {
+  const el = $(id);
+  if (t < tin - .01 || t > tout + .5) { show(el, false); return; }
+  show(el, true);
+  const out = p(t, tout, tout + .42, E.inCubic);
+  // Apple keynote style: each line fades up a little, one after another; leaves with a plain fade
+  T(el, { y: -14 * out, o: 1 - out });
+  const parts = [el.querySelector('.eb'), ...el.querySelectorAll('.ln'), el.querySelector('.sub')].filter(Boolean);
+  parts.forEach((pt, i) => { const a = tin + i * .09, u = p(t, a, a + .75, E.outQuart); T(pt, { y: (1 - u) * 26, o: u }); });
+}
+
+/* ================= seek ================= */
+function seek(t) {
+  const f = Math.round(t * 120);
+  /* --- backdrop --- */
+  T('fade', { o: 1 - p(t, 0, .25) });
+
+  /* --- intro: pin drop, floor ripples, title --- */
+  const IMPACT = .52;
+  const heroTarget = screenToCanvas(t, 108, 286);
+  const hp = $('heroPin');
+  if (t < 1.98) {
+    const fall = p(t, .06, IMPACT, E.inQuad);
+    let x = 960, y = lerp(-180, 420, fall), s = 3.6, sx = 1, sy = 1;
+    if (t < IMPACT) { sy = 1 + .22 * fall; sx = 1 - .1 * fall; }
+    else { const d = t - IMPACT; const w = Math.exp(-7 * d) * Math.cos(2 * Math.PI * 2.2 * d); sx = 1 + .22 * w; sy = 1 - .24 * w; }
+    const m = p(t, 1.36, 1.96, E.inOutCubic);
+    x = lerp(x, heroTarget[0], m); y = lerp(y, heroTarget[1], m) - 150 * Math.sin(Math.PI * m);
+    s = lerp(3.6, phonePose(t)[2], m);
+    T(hp, { x, y, s, sx, sy, r: -8 * Math.sin(Math.PI * m), o: 1, c: true });
+    T('heroCount', { s: p(t, 1.62, 1.9, E.outBack), o: p(t, 1.62, 1.8) });
+    T('heroLive', { s: p(t, 1.68, 1.96, E.outBack), o: p(t, 1.68, 1.84) });
+    T('heroShadow', { x: 960, y: 482, s: lerp(.3, 1, fall) * (1 - m), o: lerp(0, .9, fall) * (1 - m) });
+  } else { T(hp, { o: 0 }); T('heroShadow', { o: 0 }); }
+  RIP.forEach((c, k) => {
+    const a = IMPACT + k * .11, u = p(t, a, a + 1.25, E.outCubic);
+    T('fr' + k, { x: 960, y: 486, c: true, o: (t > a ? 1 : 0) * (1 - p(t, a + .1, a + 1.25, E.inOutSine)) });
+    const r = 40 + u * 820; const el = $('fr' + k); el.style.width = el.style.height = (2 * r).toFixed(1) + 'px';
+    el.style.transform = `translate(-50%,-50%) translate(960px,486px) scale(1,.3)`;
+  });
+  // headline
+  { const el = $('heroT'); const out = p(t, 1.3, 1.62, E.inCubic);
+    if (t > 1.8) show(el, false); else {
+      show(el, true); T(el, { y: -16 * out, o: 1 - out });
+      HERO_LINES.forEach((ln, i) => { const a = .62 + i * .12, u = p(t, a, a + .7, E.outQuart); T(ln, { y: (1 - u) * 28, o: u }); });
+    } }
+
+  /* --- phone --- */
+  let [px, py, ps, ry, rx, rz] = phonePose(t);
+  // buzz on each notification
+  for (const tn of [T_N1, T_N2]) { const d = t - tn; if (d > 0 && d < .6) { const w = Math.exp(-7 * d) * Math.sin(2 * Math.PI * 22 * d); rz += 1.6 * w; px += 5 * w; } }
+  const appear = p(t, 1.42, 1.85, E.outCubic);
+  const pw = $('phoneWrap');
+  pw.style.transform = `translate(${(px - 207).toFixed(2)}px,${(py - 434).toFixed(2)}px) scale(${(ps * lerp(.94, 1, appear)).toFixed(4)}) perspective(1900px) rotateX(${rx.toFixed(3)}deg) rotateY(${ry.toFixed(3)}deg) rotateZ(${rz.toFixed(3)}deg)`;
+  pw.style.transformOrigin = '207px 434px';
+  pw.style.opacity = (appear * (1 - p(t, 13.75, 13.95))).toFixed(3);
+  pw.style.visibility = appear > 0 && t < 13.96 ? 'visible' : 'hidden';
+  T('pshadow', { x: px - ry * 3, y: py + 450 * ps, sx: ps * 1.05, sy: ps, o: appear * .9 * (1 - p(t, 13.6, 13.9)) });
+
+  /* --- screen 1: Places --- */
+  const scrP = $('scrPlaces');
+  if (t < 5.3) {
+    show(scrP, true);
+    const rv = p(t, 1.8, 2.4, E.inOutCubic);
+    scrP.style.clipPath = rv >= 1 ? 'none' : `circle(${(rv * 980).toFixed(1)}px at 108px 286px)`;
+    const push = p(t, 4.72, 5.2, E.inOutCubic);
+    T(scrP, { s: 1 - .06 * push, o: 1 - .5 * push });
+    // map pan + pinch
+    const pan = track(t, [[3.05, [0, 0]], [3.55, [-60, 65]], [3.85, [-74, 80], E.outCubic]]);
+    const z = track(t, [[3.85, 1], [4.28, 1.22], [4.55, 1.2, E.outCubic]]);
+    const intro = 1.18 - .18 * p(t, 1.6, 2.6, E.outCubic); // settle-zoom while revealing
+    // pinch zooms around the screen centre; the reveal zoom keeps the Home pin still (hand-off from the hero pin)
+    $('pMap').style.transform = `translate(${pan[0].toFixed(2)}px,${pan[1].toFixed(2)}px) translate(195px,211px) scale(${z.toFixed(4)}) translate(-195px,-211px) translate(108px,286px) scale(${intro.toFixed(4)}) translate(-108px,-286px)`;
+    // pins: Home is the hand-off from the hero pin; others spring in
+    T('pP0', { c: true, o: t >= 1.97 ? 1 : 0 });
+    [['pP1', 2.05], ['pP2', 2.14], ['pP3', 2.23]].forEach(([id, a], k) => T(id, { c: true, s: spr(t - a, 1.7, 7), o: (t > a ? 1 : 0) * (k === 2 ? .55 : 1) }));
+    const breathe = 1 + .045 * Math.sin((t - 2) * 2 * Math.PI / 1.5);
+    [['pR0', 1.92], ['pR1', 2.08], ['pR2', 2.17], ['pR3', 2.26]].forEach(([id, a], k) => T(id, { c: true, s: E.outBack(p(t, a, a + .55)) * (k === 0 ? breathe : 1), o: p(t, a, a + .2) }));
+    T('pHalo', { c: true, s: 1 + 1.2 * ((t * .9) % 1), o: .9 * (1 - ((t * .9) % 1)) });
+    T('pMe', { c: true, s: E.outBack(p(t, 2.0, 2.4)) });
+    // chrome
+    ['pT0', 'pT1', 'pT2'].forEach((id, k) => { const u = p(t, 1.98 + k * .05, 2.5 + k * .05, E.outBack); T(id, { y: (1 - u) * -90, o: p(t, 1.98 + k * .05, 2.2 + k * .05) }); });
+    ['pC0', 'pC1', 'pC2'].forEach((id, k) => { const u = p(t, 2.12 + k * .06, 2.6 + k * .06, E.outCubic); T(id, { x: (1 - u) * 60, o: u }); });
+    T('pNav', { s: E.outBack(p(t, 2.3, 2.7)) });
+    T('pSheet', { y: 470 * (1 - spr(t - 2.0, 1.4, 6.5)) });
+    PST.forEach((el, i) => { const a = 2.14 + i * .06, u = p(t, a, a + .5, E.outCubic); T(el, { y: (1 - u) * 26, o: u }); });
+    const fabPress = p(t, 4.55, 4.64) * (1 - p(t, 4.64, 4.78));
+    T('pFab', { s: spr(t - 2.45, 1.6, 7) * (1 - .14 * fabPress) });
+  } else show(scrP, false);
+
+  /* --- screen 2: picker + form --- */
+  const scrK = $('scrPicker');
+  if (t >= 4.7 && t < 10.75) {
+    show(scrK, true);
+    const rv = p(t, 4.7, 5.2, E.inOutCubic);
+    scrK.style.clipPath = rv >= 1 ? 'none' : `circle(${(rv * 1000).toFixed(1)}px at 335px 782px)`;
+    ['kBack', 'kSearch'].forEach((id, k) => { const u = p(t, 5.0 + k * .05, 5.45 + k * .05, E.outBack); T(id, { y: (1 - u) * -80, o: p(t, 5 + k * .05, 5.2 + k * .05) }); });
+    [0, 1, 2, 3].forEach((k) => { const u = p(t, 5.12 + k * .05, 5.55 + k * .05, E.outCubic); T('kC' + k, { x: (1 - u) * 50, o: u }); });
+    // typing
+    const QS = "trader joe's"; const n = Math.round(p(t, 5.35, 5.9) * QS.length);
+    $('kQ').textContent = QS.slice(0, n); show('kPh', n === 0); show('kX', n > 0);
+    const typing = t > 5.3 && t < 5.95; T('kCaret', { o: t < 6.12 && (typing || ((t * 2.2) % 1) < .55) ? 1 : 0 });
+    // results drop down as you type; tap the first one
+    { const u = p(t, 5.55, 5.85, E.outCubic), out = p(t, 6.16, 6.34, E.inCubic);
+      T('kRes', { sy: lerp(.92, 1, u), y: -14 * out, o: u * (1 - out) });
+      [0, 1, 2].forEach((k) => { const a = 5.6 + k * .06, v = p(t, a, a + .3, E.outCubic); T('kRr' + k, { x: (1 - v) * 18, o: v }); });
+      $('kRr0').style.background = `rgba(118,118,128,${(.16 * p(t, 6.04, 6.1) * (1 - p(t, 6.2, 6.34))).toFixed(3)})`; }
+    // fly to the result
+    const fly = p(t, 6.1, 6.75, E.inOutCubic);
+    $('kMap').style.transform = `translate(${lerp(230, 0, fly).toFixed(2)}px,${lerp(-200, 0, fly).toFixed(2)}px) scale(${lerp(.62, 1, fly).toFixed(4)})`;
+    T('kHalo', { c: true, s: 1 + 1.2 * ((t * .9) % 1), o: .9 * (1 - ((t * .9) % 1)) });
+    // icon + colour choice
+    const iconU = p(t, 7.2, 7.4, E.outCubic), colU = p(t, 7.48, 7.66, E.inOutCubic);
+    const col = mix(C.blue, C.green, colU);
+    const DROP = 6.76;
+    const fall = p(t, 6.46, DROP, E.inQuad);
+    let sx = 1, sy = 1;
+    if (t < DROP) { sy = 1 + .25 * fall; sx = 1 - .12 * fall; } else { const d = t - DROP; const w = Math.exp(-8 * d) * Math.cos(2 * Math.PI * 2.4 * d); sx = 1 + .25 * w; sy = 1 - .25 * w; }
+    const pop = iconU > 0 && iconU < 1 ? 1 + .25 * Math.sin(Math.PI * iconU) : 1;
+    T('kPin', { c: true, y: (1 - fall) * -260, sx: sx * pop, sy: sy * pop, o: t > 6.46 ? 1 : 0 });
+    $('kPin').style.background = rgba(col);
+    T('kG0', { o: 1 - iconU, s: 1 - .4 * iconU }); T('kG1', { o: iconU, s: .6 + .4 * iconU });
+    T('kShadow', { s: lerp(.3, 1, fall), o: fall * (t > 6.46 ? 1 : 0) });
+    // radius slider 100 → 300 m drives the ring live (S-24)
+    const sl = p(t, 7.72, 8.12, E.inOutCubic), frac = lerp(.05, .22, sl), meters = Math.round(lerp(100, 300, sl) / 10) * 10;
+    const r = lerp(30, 62, sl) * E.outBack(p(t, DROP, DROP + .5));
+    const ring = $('kRing'); ring.style.width = ring.style.height = (2 * Math.max(0, r)).toFixed(1) + 'px';
+    ring.style.background = rgba(col, .13); ring.style.border = `1.5px solid ${rgba(col, .6)}`;
+    T(ring, { c: true, o: p(t, DROP, DROP + .1) });
+    $('kFill').style.width = (frac * 100).toFixed(2) + '%'; $('kThumb').style.left = (frac * 100).toFixed(2) + '%';
+    $('kVal').textContent = meters + ' m';
+    // sheet
+    T('kSheet', { y: 620 * (1 - spr(t - 6.6, 1.35, 6.5)) });
+    KST.forEach((el, i) => { const a = 6.68 + i * .025, u = p(t, a, a + .35, E.outCubic); T(el, { y: (1 - u) * 22, o: u }); });
+    const tile = $('kTile'); tile.style.background = rgba(col, .16); tile.style.color = rgba(col);
+    T('kT0', { o: 1 - iconU }); T('kT1', { o: iconU, s: .6 + .4 * iconU });
+    // icon grid selection box slides pin → cart
+    const cell = (k) => posIn($('kI' + k), $('kGrid'));
+    const c11 = cell(11), c2 = cell(2), selU = E.outBack(iconU);
+    const sel = $('kSel'); sel.style.width = c2.w + 'px';
+    sel.style.left = lerp(c11.x, c2.x, selU).toFixed(2) + 'px'; sel.style.top = lerp(c11.y, c2.y, E.outCubic(iconU)).toFixed(2) + 'px';
+    sel.style.background = rgba(col, .16); sel.style.boxShadow = `inset 0 0 0 2px ${rgba(col)}`;
+    T('kIr11', { o: iconU }); T('kIf11', { o: 1 - iconU }); $('kIf11').style.color = rgba(C.blue);
+    T('kIr2', { o: 1 - iconU }); T('kIf2', { o: iconU, s: .7 + .3 * E.outBack(iconU) }); $('kIf2').style.color = rgba(col);
+    // colour ring slides blue → green
+    const d0 = posIn($('kD0'), $('kCols')), d3 = posIn($('kD3'), $('kCols'));
+    const cs = $('kCSel'); cs.style.left = lerp(d0.x, d3.x, E.outBack(colU)).toFixed(2) + 'px';
+    cs.style.boxShadow = `0 0 0 2.5px var(--surface),0 0 0 4.5px ${rgba(col)}`;
+    const btnPress = p(t, 8.22, 8.3) * (1 - p(t, 8.3, 8.44));
+    $('kBtn').style.transform += ` scale(${(1 - .04 * btnPress).toFixed(4)})`;
+    // form
+    const fIn = t >= 8.4;
+    show('scrForm', fIn);
+    if (fIn) {
+      T('fDim', { o: p(t, 8.4, 8.7) * (1 - p(t, 10.3, 10.6)) });
+      T('fSheet', { y: 820 * (1 - spr(t - 8.42, 1.25, 6.5)) + 860 * p(t, 10.22, 10.55, E.inCubic) });
+      FST.forEach((el, i) => { const a = 8.5 + i * .035, u = p(t, a, a + .45, E.outCubic); T(el, { y: (1 - u) * 20, o: u }); });
+      const TT = 'Buy milk'; const n2 = Math.round(p(t, 8.95, 9.3) * TT.length);
+      $('fTitle').textContent = TT.slice(0, n2); show('fPh', n2 === 0);
+      T('fCaret', { o: t > 8.88 && t < 9.5 && (t < 9.32 || ((t * 2.2) % 1) < .55) ? 1 : 0 });
+      const sw = E.outBack(p(t, 9.32, 9.55)), swc = p(t, 9.32, 9.5);
+      $('fSwA').style.background = `rgba(${lerp(118, 52, swc) | 0},${lerp(118, 199, swc) | 0},${lerp(128, 89, swc) | 0},${lerp(.16, 1, swc).toFixed(3)})`;
+      $('fSwA').firstChild.style.transform = `translateX(${(20 * sw).toFixed(2)}px) scaleX(${(1 + .18 * Math.sin(Math.PI * swc)).toFixed(3)})`;
+      // segmented control Any day → Repeats, then Repeat + Hours rows open
+      const sg = p(t, 9.6, 9.85, E.outBack), segW = $('fSg0').offsetWidth;
+      const hi = $('fSegHi'); hi.style.width = segW + 'px'; hi.style.left = (2 + lerp(0, 2 * segW, sg)).toFixed(2) + 'px';
+      $('fSg0').style.fontWeight = sg < .5 ? 600 : 500; $('fSg2').style.fontWeight = sg >= .5 ? 600 : 500;
+      $('fExp').style.height = (109 * p(t, 9.68, 10.0, E.inOutCubic)).toFixed(2) + 'px';
+      T('fSum0', { o: 1 - p(t, 9.85, 10.05) }); T('fSum1', { o: p(t, 9.9, 10.1) });
+      // Save → check
+      const sv = p(t, 10.05, 10.22, E.inOutCubic);
+      const save = $('fSave'); save.style.width = lerp(80, 34, sv).toFixed(2) + 'px';
+      save.style.background = sv > 0 ? rgba(mix(C.blue, C.green, sv)) : 'var(--accent)';
+      T('fSaveT', { o: 1 - sv * 2 }); T('fSaveC', { o: p(t, 10.12, 10.22), s: E.outBack(p(t, 10.12, 10.3)) });
+    }
+  } else show(scrK, false);
+
+  /* --- screen 3: lock screen + notifications --- */
+  const scrL = $('scrLock');
+  // the screen sleeps after Save, then wakes on the lock screen
+  T('scrOff', { o: t < 10.9 ? p(t, 10.22, 10.42) : 0 });
+  if (t >= 10.45) {
+    show(scrL, true);
+    const wake = p(t, 10.5, 10.9, E.outCubic);
+    T(scrL, { s: lerp(1.08, 1, wake), o: wake });
+    // clock rolls 8:05 → 4:45 as the day passes
+    [0, 2].forEach((k, i) => { const u = p(t, 11.8 + i * .07, 12.25 + i * .07, E.inOutCubic); $('dg' + k).style.transform = `translateY(${(-118 * u).toFixed(2)}px)`; });
+    T('lWarm', { o: p(t, 11.8, 12.4) });
+    T('lB0', { x: 30 * Math.sin(t), y: 20 * Math.cos(t * .8) });
+    // n2 first in the stack once it arrives, n1 is pushed down
+    const n2u = spr(t - T_N2, 1.4, 6.5), n1u = spr(t - T_N1, 1.4, 6.5);
+    const coll = p(t, 13.25, 13.5, E.inOutCubic);
+    const n2h = lerp(166, 64, coll);
+    $('n2').style.height = n2h.toFixed(2) + 'px'; $('n1').style.height = '166px';
+    T('n2', { y: (1 - n2u) * -70, s: lerp(.9, 1, Math.min(1, n2u)), o: p(t, T_N2, T_N2 + .12) });
+    T('n1', { y: (1 - n1u) * -70 + (n2h + 12) * spr(t - T_N2, 1.4, 6.5), s: lerp(.9, 1, Math.min(1, n1u)), o: p(t, T_N1, T_N1 + .12) });
+    for (const [id, tn, c] of [['n1', T_N1, CD.teal], ['n2', T_N2, CD.green]]) {
+      const g = 1 - p(t, tn, tn + .9, E.outCubic);
+      $(id).style.boxShadow = `0 10px 30px rgba(0,0,0,.35), 0 0 0 ${(2 + 10 * (1 - g)).toFixed(1)}px ${rgba(c, (.55 * g).toFixed(3))}`;
+    }
+    T('n2c', { o: 1 - p(t, 13.25, 13.38) }); T('n2d', { o: p(t, 13.36, 13.5), y: (1 - p(t, 13.36, 13.5, E.outCubic)) * 8 });
+    T('n1d', { o: 0 });
+    const dp = p(t, 13.15, 13.22) * (1 - p(t, 13.22, 13.32));
+    $('n2done').style.transform = `scale(${(1 - .08 * dp).toFixed(3)})`;
+  } else show(scrL, false);
+
+  /* --- finger --- */
+  { const v = visAmt(t, VIS), [fx, fy] = fingerAt(t), pr = tapPress(t);
+    T('fg', { x: fx, y: fy, s: (1.25 - .25 * v) * (1 - .18 * pr), o: v * .95 });
+    const v2 = visAmt(t, VIS2), [gx, gy] = track(t, FG2);
+    T('fg2', { x: gx, y: gy, s: 1.25 - .25 * v2, o: v2 * .95 });
+    let rp = null; for (const tp of TAPS) if (t >= tp && t < tp + .45) rp = tp;
+    if (rp !== null) { const u = (t - rp) / .45; const [rx2, ry2] = fingerAt(rp); T('tapRip', { x: rx2, y: ry2, s: 1 + 1.6 * E.outCubic(u), o: .9 * (1 - u) }); } else T('tapRip', { o: 0 });
+  }
+
+  /* --- floaters around the phone (scene 1) and the radius counter (scene 2) --- */
+  [['fl0', 236, 300, 2.5, 0], ['fl1', 214, 560, 2.62, 1.3], ['fl2', 250, 800, 2.74, 2.4]].forEach(([id, x, y, a, ph]) => {
+    const u = p(t, a, a + .7, E.outBackS), out = p(t, 4.42 + (x % 3) * .05, 4.8, E.inCubic);
+    T(id, { x: x - 110 + (1 - u) * 120 - out * 160, y: y - 34 + 14 * Math.sin(t * 1.6 + ph) + (1 - u) * 30, s: (.7 + .3 * u) * (1 - .2 * out), o: Math.min(1, u * 1.6) * (1 - out) });
+  });
+  { const u = p(t, 7.5, 7.95, E.outExpo), out = p(t, 8.28, 8.6, E.inCubic), sl = p(t, 7.72, 8.12, E.inOutCubic);
+    const meters = Math.round(lerp(100, 300, sl) / 10) * 10;
+    T('radC', { x: 1710, y: 620 + (1 - u) * 60, s: .85 + .15 * u, o: u * (1 - out), b: 10 * out });
+    $('radV').firstChild.nodeValue = String(meters);
+    const r = lerp(150, 182, sl); for (const [id, k] of [['radR', 1], ['radR2', 1.12]]) { const el = $(id); el.style.width = el.style.height = (2 * r * k).toFixed(1) + 'px'; el.style.transform = `translate(-50%,-50%) rotate(${(t * 30 * k).toFixed(2)}deg)`; } }
+
+  /* --- captions --- */
+  caption('cap1', t, 2.45, 4.45);
+  caption('cap2', t, 5.15, 8.3);
+  caption('cap2b', t, 8.55, 9.98);
+  caption('cap3', t, 11.0, 13.4);
+
+  /* --- world: leave Home, arrive Trader Joe's (LOC-9) --- */
+  const ww = $('worldWrap');
+  if (t >= 10.35 && t < 14.1) {
+    show(ww, true);
+    const inU = p(t, 10.45, 11.1, E.outExpo), out = p(t, 13.45, 13.95, E.inCubic);
+    const zs = lerp(1.9, 1.12, inU) + .08 * p(t, 12.45, 13.0, E.inOutCubic) + .25 * out;
+    const camS = dotS(Math.max(11.0, t - .12)), cx = START_X + camS * .92, cy = ROAD_Y + 10;
+    const sxp = 440, syp = 330; // dot's spot inside the map panel
+    $('world').style.transform = `translate(${(sxp - cx * zs).toFixed(2)}px,${(syp - cy * zs).toFixed(2)}px) scale(${zs.toFixed(4)})`;
+    T(ww, { s: lerp(.96, 1, inU) - .02 * out, o: inU * (1 - out) });
+    const [dx, dy] = dotPos(t);
+    T('wDot', { x: dx, y: dy, s: E.outBack(p(t, 10.75, 11.05)) });
+    const v = Math.abs(dotS(t + 1 / 120) - dotS(t - 1 / 120)) * 60;
+    T('wHalo', { x: dx, y: dy, sx: 1 + Math.min(1.4, v / 500), sy: 1, o: .6 + .4 * Math.sin(t * 6) * .5 });
+    const tr = $('wTrail'); tr.style.width = Math.max(0, dotS(t)).toFixed(1) + 'px';
+    tr.style.background = 'rgba(0,122,255,.55)';
+    // rings: entrance, dashed spin, flash + shockwave on crossing
+    for (const [id, P, tc, a] of [['wR0', HOME, T_LEAVE, 10.55], ['wR1', TJ, T_ARRIVE, 10.65]]) {
+      const u = E.outBack(p(t, a, a + .6));
+      const flash = p(t, tc, tc + .06) * (1 - p(t, tc + .06, tc + .7));
+      T(id, { s: u * (1 + .08 * flash), o: p(t, a, a + .2) });
+      $(id).style.filter = 'none';
+      T(id + 'd', { s: u, r: t * 18 * (id === 'wR0' ? 1 : -1), o: p(t, a, a + .3) });
+      const sh = p(t, tc, tc + .8, E.outCubic);
+      T(id + 's', { s: 1 + .9 * sh, o: t > tc ? (1 - sh) : 0 });
+    }
+    T('wP0', { s: E.outBackS(p(t, 10.6, 11.0)) * (1 + .2 * p(t, T_LEAVE, T_LEAVE + .08) * (1 - p(t, T_LEAVE + .08, T_LEAVE + .4))) });
+    T('wP1', { s: E.outBackS(p(t, 10.7, 11.1)) * (1 + .25 * p(t, T_ARRIVE, T_ARRIVE + .08) * (1 - p(t, T_ARRIVE + .08, T_ARRIVE + .45))) });
+    T('wP0l', { x: (1 - p(t, 10.75, 11.1, E.outCubic)) * -20, o: p(t, 10.75, 11.1) });
+    T('wP1l', { x: (1 - p(t, 10.85, 11.2, E.outCubic)) * -20, o: p(t, 10.85, 11.2) });
+    for (const [id, tc, P, len] of [['ev0', T_LEAVE, dotPos(T_LEAVE), .8], ['ev1', T_ARRIVE, dotPos(T_ARRIVE), 9]]) {
+      const u = p(t, tc + .02, tc + .45, E.outBackS), o = p(t, tc + .02, tc + .15) * (1 - p(t, tc + len, tc + len + .3));
+      T(id, { x: P[0] - 60, y: P[1] + (id === 'ev0' ? 44 : -150) + (1 - u) * 30, s: .6 + .4 * u, o });
+    }
+  } else show(ww, false);
+
+  /* --- outro --- */
+  const ou = $('outro');
+  if (t >= 13.55) {
+    show(ou, true);
+    const LX = 960, LY = 372;
+    RIP.forEach((c, k) => {
+      const a = 13.72 + k * .12, u = p(t, a, a + 1.2, E.outCubic);
+      const el = $('or' + k); const r = 60 + u * 760; el.style.width = el.style.height = (2 * r).toFixed(1) + 'px';
+      el.style.transform = `translate(-50%,-50%) translate(${LX}px,${LY + 70}px) scale(1,.3)`;
+      el.style.opacity = ((t > a ? 1 : 0) * (1 - p(t, a + .15, a + 1.2, E.inOutSine)) * .9).toFixed(3);
+    });
+    // pins converge into an orbit around the logo, nearer ones larger (fake depth)
+    OPINS.forEach((_, k) => {
+      const a = 13.6 + k * .045, u = p(t, a, a + .65, E.outExpo);
+      const ang = (k / OPINS.length) * Math.PI * 2 + (t - 13.6) * .9;
+      const dist = lerp(4, 1, u); // fly in along the spoke
+      const x = LX + Math.cos(ang) * 330 * dist, y = LY + 34 + Math.sin(ang) * 108 * dist;
+      const depth = (Math.sin(ang) + 1) / 2; // 0 back · 1 front
+      const pinEl_ = $('op' + k); pinEl_.style.zIndex = depth > .5 ? 3 : 1;
+      T(pinEl_, { c: true, x, y, s: lerp(.62, 1.0, depth) * (.4 + .6 * u), o: u * lerp(.6, 1, depth) });
+      T('opr' + k, { c: true, x, y, s: lerp(.5, .9, depth) * E.outBack(p(t, a + .25, a + .8)), o: p(t, a + .25, a + .5) * lerp(.35, .8, depth) });
+    });
+    const lg = spr(t - 13.82, 1.3, 6);
+    $('oLogo').style.zIndex = 2;
+    T('oLogo', { x: LX, y: LY, s: lg, r: (1 - Math.min(1, lg)) * -25, o: p(t, 13.82, 13.95) });
+    caption('oT', t, 13.98, 99);
+    { const u = p(t, 14.2, 14.7, E.outCubic); T('oS', { y: (1 - u) * 24, o: u }); }
+    { const u = p(t, 14.38, 14.85, E.outCubic); T('oE', { o: u, y: (1 - u) * 10 }); }
+  } else show(ou, false);
+}
+
+/* ================= boot ================= */
+window.seek = seek;
+window.ready = document.fonts.ready.then(() => { measure(); const t = parseFloat(new URLSearchParams(location.search).get('t') || '7.5'); seek(t); return true; });
+</script>
+</body>
+</html>
