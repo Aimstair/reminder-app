@@ -23,6 +23,8 @@ import '../../ui/motion.dart';
 import '../actions/occurrence_actions.dart';
 import '../attachments/attachments.dart';
 import '../pickers/pickers.dart';
+import '../places/place_form.dart' show showPlaceForm;
+import '../places/place_picker_page.dart' show pickPlace;
 import '../setup/permission_flow.dart';
 import '../../ui/icons.dart';
 
@@ -65,6 +67,12 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
   final _focus = FocusNode();
   final _example = Random().nextInt(5);
   ParseResult? _parsed;
+
+  /// LOC-16: a place phrase ("when I get home") → suggestion card; [_placeTitle] / [_placeDate] prefill S-25.
+  ParsedPlace? _placeHit;
+  String _placeTitle = '';
+  DateTime? _placeDate;
+  bool _placeDismissed = false;
   final _notes = TextEditingController();
   bool _notesOpen = false;
   List<Attachment> _attachments = const [];
@@ -147,17 +155,25 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
     final text = _input.text.trim();
     if (text.isEmpty) return setState(() => _parsed = null);
     final prefs = ref.read(prefsProvider);
-    final parser = ReminderParser(
-      ParseContext(
-        now: _nowWall,
-        defaultTimeZone: prefs.defaultTimeZone,
-        locale: Localizations.localeOf(context).toLanguageTag(),
-        dayTimeHour: prefs.dayTime.hour,
-        dayTimeMinute: prefs.dayTime.minute,
-        currency: deviceCurrency(), // BIL-2
-      ),
+    ParseContext ctx({required bool places}) => ParseContext(
+      now: _nowWall,
+      defaultTimeZone: prefs.defaultTimeZone,
+      locale: Localizations.localeOf(context).toLanguageTag(),
+      dayTimeHour: prefs.dayTime.hour,
+      dayTimeMinute: prefs.dayTime.minute,
+      currency: deviceCurrency(), // BIL-2
+      savedPlaces: [for (final p in ref.read(servicesProvider).places.byId.values) p.name], // PRS-43
+      detectPlaces: places,
     );
-    var p = parser.parse(text);
+    // LOC-16: a place phrase becomes a suggestion; the reminder itself is parsed without it, so ignoring
+    // the card saves a normal reminder with the phrase kept in the title.
+    final withPlace = _placeDismissed ? null : ReminderParser(ctx(places: true)).parse(text);
+    _placeHit = withPlace?.place;
+    if (withPlace != null && _placeHit != null) {
+      _placeTitle = withPlace.title;
+      _placeDate = _placeHit!.dated && withPlace.timing != null ? dateOnly(parseWall(withPlace.timing!.start)) : null;
+    }
+    var p = _placeHit == null && withPlace != null ? withPlace : ReminderParser(ctx(places: false)).parse(text);
     if (_template case final t?) p = applyTemplate(t, p, input: text, now: _nowWall);
     setState(() => _parsed = p);
   }
@@ -253,6 +269,59 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
         null => defaultNag,
       },
     );
+  }
+
+  /// LOC-16 card under the input: "📍 Make this a place reminder at Home?".
+  Widget _placeSuggestion(ParsedPlace hit, AppLocalizations l10n, AppColors c, TextTheme text) => Padding(
+    padding: const EdgeInsets.only(top: Space.s),
+    child: Material(
+      color: c.memorial.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(Radii.row),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(Space.m, Space.s, Space.xs, Space.s),
+        child: Row(
+          children: [
+            Icon(AppIcons.place, color: c.memorial, size: 22),
+            const SizedBox(width: Space.s),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.captureSuggestPlace(hit.name), style: text.bodyMedium?.copyWith(color: c.textPrimary)),
+                  TextButton(
+                    style: TextButton.styleFrom(padding: EdgeInsets.zero, visualDensity: VisualDensity.compact),
+                    onPressed: () => _toPlace(hit),
+                    child: Text(l10n.captureSuggestButton),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: l10n.actionDismiss,
+              icon: Icon(AppIcons.close, size: 18, color: c.textSecondary),
+              onPressed: () {
+                setState(() => _placeDismissed = true);
+                _reparse();
+              },
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  /// LOC-16: close capture, then the Places form (a saved place) or the picker searching the words.
+  Future<void> _toPlace(ParsedPlace hit) async {
+    final navigator = Navigator.of(context);
+    final places = ref.read(servicesProvider).places.byId.values;
+    final saved = hit.saved ? places.where((p) => p.name.toLowerCase() == hit.name.toLowerCase()).firstOrNull : null;
+    final title = _placeTitle;
+    final date = _placeDate;
+    navigator.pop();
+    final ctx = navigator.context;
+    final place = saved ?? await pickPlace(ctx, query: hit.name);
+    if (place == null || !ctx.mounted) return;
+    await showPlaceForm(ctx, place: place, title: title, date: date, arrive: hit.arrive, leave: hit.leave);
   }
 
   Future<void> _save() async {
@@ -478,6 +547,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
                 ],
               ),
             ),
+            if (_placeHit case final hit?) _placeSuggestion(hit, l10n, c, text),
             if (_notesOpen && widget.text != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(Space.l, Space.s, Space.l, 0),
@@ -681,7 +751,7 @@ class _CaptureSheetState extends ConsumerState<CaptureSheet> {
             child: Column(
               children: [
                 SegmentedPills<Kind>(
-                  items: [for (final k in Kind.values) (value: k, label: f.kind(k), dot: c.kind(k))],
+                  items: [for (final k in captureKinds) (value: k, label: f.kind(k), dot: c.kind(k))],
                   selected: p.kind,
                   onChanged: (k) => setState(() => _lockKind = k),
                 ),

@@ -168,7 +168,7 @@ class AppServices {
       final now = DateTime.now().toUtc();
       final schedule = ScheduleView(prefs: prefs.current)
           .build([...await reminders.watchActive().first, ...calendar.reminders], await occurrences.byPlannerId(), now);
-      final items = schedule.where((i) => !i.overdue).take(3);
+      final items = schedule.where((i) => !i.overdue && i.reminder.kind != Kind.place).take(3); // LOC-10
       // "4 left": tasks and occasions still open today (incl. overdue), like the progress ring.
       final open = schedule
           .where((i) => i.reminder.completable && (i.group == ScheduleGroup.today || i.group == ScheduleGroup.overdue))

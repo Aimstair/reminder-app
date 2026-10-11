@@ -187,6 +187,7 @@ class DeviceEvent {
     this.timeZone,
     this.rrule,
     required this.otherAttendees,
+    this.location,
   });
 
   String calendarId;
@@ -208,6 +209,9 @@ class DeviceEvent {
   /// Attendees other than the calendar's owner (CAL-4 rule 3).
   int otherAttendees;
 
+  /// Where it happens, as typed in the calendar (LOC-11 "Remind me when I get there").
+  String? location;
+
   List<Object?> _toList() {
     return <Object?>[
       calendarId,
@@ -219,6 +223,7 @@ class DeviceEvent {
       timeZone,
       rrule,
       otherAttendees,
+      location,
     ];
   }
 
@@ -237,6 +242,7 @@ class DeviceEvent {
       timeZone: result[6] as String?,
       rrule: result[7] as String?,
       otherAttendees: result[8]! as int,
+      location: result[9] as String?,
     );
   }
 
@@ -249,7 +255,7 @@ class DeviceEvent {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(calendarId, other.calendarId) && _deepEquals(eventId, other.eventId) && _deepEquals(title, other.title) && _deepEquals(beginMs, other.beginMs) && _deepEquals(endMs, other.endMs) && _deepEquals(allDay, other.allDay) && _deepEquals(timeZone, other.timeZone) && _deepEquals(rrule, other.rrule) && _deepEquals(otherAttendees, other.otherAttendees);
+    return _deepEquals(calendarId, other.calendarId) && _deepEquals(eventId, other.eventId) && _deepEquals(title, other.title) && _deepEquals(beginMs, other.beginMs) && _deepEquals(endMs, other.endMs) && _deepEquals(allDay, other.allDay) && _deepEquals(timeZone, other.timeZone) && _deepEquals(rrule, other.rrule) && _deepEquals(otherAttendees, other.otherAttendees) && _deepEquals(location, other.location);
   }
 
   @override
@@ -258,7 +264,7 @@ class DeviceEvent {
 
   @override
   String toString() {
-    return 'DeviceEvent(calendarId: $calendarId, eventId: $eventId, title: $title, beginMs: $beginMs, endMs: $endMs, allDay: $allDay, timeZone: $timeZone, rrule: $rrule, otherAttendees: $otherAttendees)';
+    return 'DeviceEvent(calendarId: $calendarId, eventId: $eventId, title: $title, beginMs: $beginMs, endMs: $endMs, allDay: $allDay, timeZone: $timeZone, rrule: $rrule, otherAttendees: $otherAttendees, location: $location)';
   }
 }
 

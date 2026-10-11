@@ -107,7 +107,7 @@ Versions checked on pub.dev on 2026-10-06; **re-verify at setup** and pin exact 
 | Crash reporting | `sentry_flutter` | 9.30.1 | No reminder content in reports; DSN from git-ignored `config/release.json` |
 | Icons | **Phosphor font, vendored** (MIT) | — | Regular + Fill TTFs in `assets/fonts`, constants in `lib/ui/icons.dart`. Not the `phosphor_flutter` package: unmaintained since 2024 and doesn't build on current Flutter (`IconData` is final) |
 | Open mail app | `url_launcher` | 6.3.3 | Send feedback (S-58) → email to aimteralabs@gmail.com; app/OS version only, no reminder content |
-| Maps | `google_maps_flutter` | 2.x — **verify at setup** | Places screen (S-19), picker (S-24), detail snapshot. Maps SDK for Android is free with no usage cap (needs a Google Cloud project with billing on, API key restricted to the app's package + SHA-1, kept out of git like the Sentry DSN). Light/dark JSON map styles. LOC decision 2026-10-11 |
+| Maps | `google_maps_flutter` | 2.18.2 | Places screen (S-19), picker (S-24), detail snapshot. Maps SDK for Android is free with no usage cap (needs a Google Cloud project with billing on, API key restricted to the app's package + SHA-1, kept out of git like the Sentry DSN). Light/dark JSON map styles. LOC decision 2026-10-11 |
 | Location & geofencing | **Own Kotlin** with `com.google.android.gms:play-services-location` (Gradle) | 21.x — verify | `GeofencingClient` (LOC-13), current location for the picker, via Pigeon. Not `geolocator`/`geofence_service`: Dart must not be on the firing path |
 | Place search | **Android `Geocoder`** (own Kotlin, via Pigeon) | — | Free, no key. Address + name search, reverse lookup for dropped pins. Google Places autocomplete is the upgrade path if search quality isn't enough (paid after 5,000 picks/month) |
 | Analytics | `posthog_flutter` (or similar) | 5.50.15 | Counts and timings only (D4) |
@@ -123,8 +123,8 @@ Derived from `reminder-app-concept.md` and `behavior-spec.md`. Every app table h
 
 | Table | Key columns |
 |---|---|
-| `reminders` | title, notes, attachments (JSON list: kind link/file, uri, name, mime, size — `ATT-1`; schema v2), amount_minor + currency + bill_kind (`BIL-1`/`BIL-2`; schema v3, which also turns Bill due / Free trial template reminders into bills, `BIL-7`), raw_input, kind (task / meeting / event / occasion / bill), context, timing_type, start_local, end_local, tz (null for date), tz_set_manually, rrule, repeat_mode, alert_plan (JSON), nag_interval, completable, source (JSON: manual / device_calendar / contact), template_id, status · place reminders (`LOC-3`; schema v5): kind `place`, place_id, on_arrive, on_leave, active_mode (any / date / repeat — date and repeat reuse start_local + rrule), hours_from, hours_to, remind_mode (first / every), paused, linked_event (JSON: reminder id or calendar event id, `LOC-11`) |
-| `occurrences` | reminder_id, occurrence_key (original start), state, override_start/end, override_alert_plan, snoozed_until, resolved_at, alerts_sent (JSON of stage keys) |
+| `reminders` | title, notes, attachments (JSON list: kind link/file, uri, name, mime, size — `ATT-1`; schema v2), amount_minor + currency + bill_kind (`BIL-1`/`BIL-2`; schema v3, which also turns Bill due / Free trial template reminders into bills, `BIL-7`), raw_input, kind (task / meeting / event / occasion / bill), context, timing_type, start_local, end_local, tz (null for date), tz_set_manually, rrule, repeat_mode, alert_plan (JSON), nag_interval, completable, source (JSON: manual / device_calendar / contact), template_id, status · place reminders (`LOC-3`; schema v5): kind `place` + `place` (JSON PlaceTrigger: place_id, arrive, leave, active any / date / repeats — date and repeats reuse start_local + rrule, hours from/to, remind first / every, paused, linked event `LOC-11`) |
+| `occurrences` | reminder_id, occurrence_key (original start), state, override_start/end, override_alert_plan, snoozed_until, resolved_at, alerts_sent (JSON of stage keys), fired_at + fired_by (place reminders, `LOC-8`; schema v5) |
 | `calendar_overlays` | calendar_id, event_id, series_id, alert_plan, kind_override, context_override, scope (event/series), orphaned_at |
 | `places` | name, icon, color, lat, lng, address, radius_m (`LOC-1`; schema v5) |
 | `prefs` | key, value (JSON) — all `PRF-*` settings |
@@ -165,8 +165,9 @@ Derived from `reminder-app-concept.md` and `behavior-spec.md`. Every app table h
 | `syncGeofences(List<GeofenceSpec>)` | Replace the registered geofence set (diff by place id) — `LOC-13`, `LOC-14` |
 | `getLocationState()` / `requestLocation(foreground)` / `openLocationSettings(kind)` | Permission (while using / all the time / precise) and location services (`PRM-9`, `PRM-10`) |
 | `currentLocation()` · `searchPlaces(query, near)` · `reverseGeocode(lat, lng)` | Place picker (S-24) via fused location + `Geocoder` |
-| `readPlaceFires(since)` | Place triggers that fired while Flutter wasn't running → occurrences marked fired (`LOC-8`) |
 | `pickAttachment()` / `openAttachment(path, mime)` / `deleteAttachment(path)` | Files on reminders (`ATT-3`/`ATT-4`/`ATT-6`): system picker → copy to `files/attachments/<uuid>/`; open via a read-only `FileProvider` URI. Links open with `url_launcher`. |
+
+Place fires reach Dart through the same `action_journal` as notification buttons (`PLACE_ARRIVED` / `PLACE_LEFT` / `NEXT`), keyed `occurrence_id:place:<ms>`.
 
 **Native responsibilities**
 - Register alarms with `AlarmManager` exact APIs when allowed; fall back to inexact windows (`SCH-9`).

@@ -22,6 +22,8 @@ import '../actions/occurrence_actions.dart';
 import '../attachments/attachments.dart';
 import '../editor/editor_page.dart';
 import '../pickers/pickers.dart' show pickAlerts;
+import '../places/event_shortcut.dart';
+import '../places/place_detail.dart';
 
 /// One occurrence of one reminder, resolved for display.
 class DetailData {
@@ -74,6 +76,9 @@ class DetailPage extends ConsumerWidget {
       );
     }
     final r = d.reminder;
+    if (r.kind == Kind.place) {
+      return PlaceDetailPage(reminder: r, occurrenceKey: d.key, occurrence: d.occurrence); // S-30, mockup 14
+    }
     final c = AppColors.of(context);
     final f = Fmt.of(context);
     final prefs = ref.watch(prefsProvider);
@@ -176,6 +181,29 @@ class DetailPage extends ConsumerWidget {
                 text: l10n.zoneNote(f.time(d.occurrence?.overrideStart ?? d.key), Fmt.city(zone)), // TIM-6
               ),
             ),
+          if ((r.kind == Kind.meeting || r.kind == Kind.event) && !resolved)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: Space.m),
+                child: InsetGroup(
+                  children: [
+                    FormRow(
+                      icon: AppIcons.place,
+                      color: c.memorial,
+                      label: l10n.remindWhenThere,
+                      onTap: () => remindWhenThere( // LOC-11
+                        context,
+                        ref,
+                        r,
+                        start: startLocal,
+                        end: instantToWall(d.times.end, device),
+                        allDay: allDay,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           if ((r.notes ?? '').isNotEmpty)
             SliverToBoxAdapter(
               child: _InfoCard(icon: AppIcons.notes, text: r.notes!, links: true), // ATT-5
@@ -205,7 +233,7 @@ class DetailPage extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: Space.l),
                 child: SegmentedPills<Kind>(
                   items: [
-                    for (final k in Kind.values)
+                    for (final k in captureKinds)
                       if (k != Kind.bill) (value: k, label: f.kind(k), dot: c.kind(k)),
                   ],
                   selected: r.kind,

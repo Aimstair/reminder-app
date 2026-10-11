@@ -98,6 +98,7 @@ class PlatformHostApiImpl(private val activity: Activity) : PlatformHostApi {
             CalendarContract.Instances.ALL_DAY,
             CalendarContract.Instances.EVENT_TIMEZONE,
             CalendarContract.Instances.RRULE,
+            CalendarContract.Instances.EVENT_LOCATION, // LOC-11
         )
         val ids = calendarIds.mapNotNull { it.toLongOrNull() }
         if (ids.isEmpty()) return emptyList()
@@ -123,6 +124,7 @@ class PlatformHostApiImpl(private val activity: Activity) : PlatformHostApi {
                     timeZone = c.str(6),
                     rrule = c.str(7),
                     otherAttendees = others,
+                    location = c.str(8)?.takeIf { it.isNotBlank() },
                 )
             }
         }

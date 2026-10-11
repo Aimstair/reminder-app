@@ -5,6 +5,10 @@ library;
 /// instead of a time and live on their own screen (LOC-3); they're never offered as a capture type.
 enum Kind { task, meeting, event, occasion, bill, place }
 
+/// The types the capture sheet, editor, type filters and default alerts offer — not [Kind.place],
+/// which has its own screen (LOC-3, LOC-10).
+const captureKinds = [Kind.task, Kind.meeting, Kind.event, Kind.occasion, Kind.bill];
+
 /// BIL-1: what kind of bill (only meaningful when the type is [Kind.bill]).
 enum BillKind { payment, subscription, trial }
 

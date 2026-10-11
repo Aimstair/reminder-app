@@ -278,7 +278,7 @@ class AlertDefaultsPage extends ConsumerWidget {
         InsetGroup(
           indent: 56,
           children: [
-            for (final k in Kind.values)
+            for (final k in captureKinds)
               FormRow(
                 icon: kindIcon(k),
                 color: c.kind(k),
@@ -558,7 +558,10 @@ class _ReliabilityPageState extends ConsumerState<ReliabilityPage> with WidgetsB
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) ref.read(permissionsProvider.notifier).refresh();
+    if (state == AppLifecycleState.resumed) {
+      ref.read(permissionsProvider.notifier).refresh();
+      ref.invalidate(locationStatusProvider); // PRM-10
+    }
   }
 
   @override
@@ -604,6 +607,30 @@ class _ReliabilityPageState extends ConsumerState<ReliabilityPage> with WidgetsB
               AppIcons.battery,
               a.openBatteryOptimizationSettings,
             ),
+            // PRM-10: once a place reminder exists — location all the time, and precise.
+            if ((ref.watch(placeRemindersProvider) ?? const []).isNotEmpty)
+              if (ref.watch(locationStatusProvider).value case final loc?) ...[
+                status(
+                  l10n.reliabilityLocation,
+                  loc.background && loc.servicesOn,
+                  !loc.servicesOn || !loc.foreground
+                      ? l10n.locationOff
+                      : loc.background
+                      ? l10n.locationAlways
+                      : l10n.locationWhileUsing,
+                  AppIcons.place,
+                  loc.servicesOn
+                      ? ref.read(servicesProvider).places.gateway.openAppLocationSettings
+                      : ref.read(servicesProvider).places.gateway.openLocationSettings,
+                ),
+                status(
+                  l10n.reliabilityPrecise,
+                  loc.precise,
+                  loc.precise ? l10n.relOn : l10n.relOff,
+                  AppIcons.myLocation,
+                  ref.read(servicesProvider).places.gateway.openAppLocationSettings,
+                ),
+              ],
           ],
         ),
         const Padding(padding: EdgeInsets.all(Space.l), child: TestReminderPanel()),

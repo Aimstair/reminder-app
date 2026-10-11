@@ -231,7 +231,15 @@ class _Run {
       amount: amount,
       billKind: billKind,
       subKind: guessSubKind(kind, title), // SUB-2
-      place: place,
+      place: place == null
+          ? null
+          : ParsedPlace(
+              name: place!.name,
+              saved: place!.saved,
+              arrive: place!.arrive,
+              leave: place!.leave,
+              dated: date != null || relative != null,
+            ),
       flags: flags,
     );
   }
@@ -323,6 +331,7 @@ class _Run {
 
   /// PRS-43: "when I get home", "when I leave work", "at Trader Joe's" (saved places only).
   void _place() {
+    if (!ctx.detectPlaces) return;
     String? savedName(String x) {
       final k = _placeKey(x);
       for (final s in ctx.savedPlaces) {

@@ -879,16 +879,21 @@ class _SwipeRowState extends ConsumerState<_SwipeRow> with TickerProviderStateMi
     final r = item.reminder;
     final today = ref.watch(todayProvider);
     final actions = OccurrenceActions(context, ref);
+    // VW-17: a place reminder that rang shows where and when, with its place's icon and color.
+    final place = r.kind == Kind.place
+        ? (ref.watch(placesProvider).value ?? const <Place>[]).where((p) => p.id == r.place!.placeId).firstOrNull
+        : null;
     final row = Stack(
       children: [
         ReminderRow(
           reminder: r,
-          when: _when(item, l10n, f, today),
+          when: r.kind == Kind.place ? _placeWhen(item, place, l10n, f, today) : _when(item, l10n, f, today),
           overdue: item.overdue,
           done: _ticked,
           nagLabel: r.nagInterval == null ? null : l10n.nagEvery(_short(l10n, r.nagInterval!)), // ALR-9
           onTap: () => openDetail(context, r, item.occurrenceKey),
           onCheck: r.completable && !r.isCalendarEvent ? _tick : null,
+          trailing: place == null ? null : IconTile(icon: placeIcon(place.icon, solid: true), color: c.place(place.color)),
         ),
         // Centered on the checkbox: 4 row padding + 8 touch padding + 12 half circle.
         Positioned(
@@ -903,7 +908,12 @@ class _SwipeRowState extends ConsumerState<_SwipeRow> with TickerProviderStateMi
     if (r.isCalendarEvent) return row;
     final swipe = Dismissible(
       key: ValueKey(item.occurrenceId),
-      direction: r.completable ? DismissDirection.horizontal : DismissDirection.endToStart,
+      // Place reminders have no time to move (LOC-3): swipe right = Done only.
+      direction: r.kind == Kind.place
+          ? DismissDirection.startToEnd
+          : r.completable
+          ? DismissDirection.horizontal
+          : DismissDirection.endToStart,
       background: Container(
         color: c.success,
         alignment: Alignment.centerLeft,
@@ -953,6 +963,13 @@ class _SwipeRowState extends ConsumerState<_SwipeRow> with TickerProviderStateMi
       return allDay ? l10n.allDay : f.time(i.start);
     }
     return f.when(i.start, allDay: allDay, today: today);
+  }
+
+  /// VW-17: "Arrived at Trader Joe's · 5:42 PM" (another day: its weekday).
+  static String _placeWhen(ScheduleItem i, Place? place, AppLocalizations l10n, Fmt f, DateTime today) {
+    final at = dateOnly(i.start) == today ? f.time(i.start) : f.weekdayShort(i.start);
+    final name = place?.name ?? '';
+    return i.firedBy == PlaceEvent.leave ? l10n.placeLeftAt(name, at) : l10n.placeArrivedAt(name, at);
   }
 
   static String _short(AppLocalizations l10n, Duration d) =>

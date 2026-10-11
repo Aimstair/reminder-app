@@ -45,6 +45,7 @@ class DeviceEvent {
     required this.timeZone,
     required this.rrule,
     required this.otherAttendees,
+    this.location,
   });
 
   String calendarId;
@@ -58,6 +59,9 @@ class DeviceEvent {
 
   /// Attendees other than the calendar's owner (CAL-4 rule 3).
   int otherAttendees;
+
+  /// Where it happens, as typed in the calendar (LOC-11 "Remind me when I get there").
+  String? location;
 }
 
 /// ATT-3: a file the user picked, copied into app storage.

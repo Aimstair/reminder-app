@@ -275,7 +275,9 @@ data class DeviceEvent (
   val timeZone: String? = null,
   val rrule: String? = null,
   /** Attendees other than the calendar's owner (CAL-4 rule 3). */
-  val otherAttendees: Long
+  val otherAttendees: Long,
+  /** Where it happens, as typed in the calendar (LOC-11 "Remind me when I get there"). */
+  val location: String? = null
 )
  {
   companion object {
@@ -289,7 +291,8 @@ data class DeviceEvent (
       val timeZone = pigeonVar_list[6] as String?
       val rrule = pigeonVar_list[7] as String?
       val otherAttendees = pigeonVar_list[8] as Long
-      return DeviceEvent(calendarId, eventId, title, beginMs, endMs, allDay, timeZone, rrule, otherAttendees)
+      val location = pigeonVar_list[9] as String?
+      return DeviceEvent(calendarId, eventId, title, beginMs, endMs, allDay, timeZone, rrule, otherAttendees, location)
     }
   }
   fun toList(): List<Any?> {
@@ -303,6 +306,7 @@ data class DeviceEvent (
       timeZone,
       rrule,
       otherAttendees,
+      location,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -313,7 +317,7 @@ data class DeviceEvent (
       return true
     }
     val other = other as DeviceEvent
-    return PlatformApiPigeonUtils.deepEquals(this.calendarId, other.calendarId) && PlatformApiPigeonUtils.deepEquals(this.eventId, other.eventId) && PlatformApiPigeonUtils.deepEquals(this.title, other.title) && PlatformApiPigeonUtils.deepEquals(this.beginMs, other.beginMs) && PlatformApiPigeonUtils.deepEquals(this.endMs, other.endMs) && PlatformApiPigeonUtils.deepEquals(this.allDay, other.allDay) && PlatformApiPigeonUtils.deepEquals(this.timeZone, other.timeZone) && PlatformApiPigeonUtils.deepEquals(this.rrule, other.rrule) && PlatformApiPigeonUtils.deepEquals(this.otherAttendees, other.otherAttendees)
+    return PlatformApiPigeonUtils.deepEquals(this.calendarId, other.calendarId) && PlatformApiPigeonUtils.deepEquals(this.eventId, other.eventId) && PlatformApiPigeonUtils.deepEquals(this.title, other.title) && PlatformApiPigeonUtils.deepEquals(this.beginMs, other.beginMs) && PlatformApiPigeonUtils.deepEquals(this.endMs, other.endMs) && PlatformApiPigeonUtils.deepEquals(this.allDay, other.allDay) && PlatformApiPigeonUtils.deepEquals(this.timeZone, other.timeZone) && PlatformApiPigeonUtils.deepEquals(this.rrule, other.rrule) && PlatformApiPigeonUtils.deepEquals(this.otherAttendees, other.otherAttendees) && PlatformApiPigeonUtils.deepEquals(this.location, other.location)
   }
 
   override fun hashCode(): Int {
@@ -327,10 +331,11 @@ data class DeviceEvent (
     result = 31 * result + PlatformApiPigeonUtils.deepHash(this.timeZone)
     result = 31 * result + PlatformApiPigeonUtils.deepHash(this.rrule)
     result = 31 * result + PlatformApiPigeonUtils.deepHash(this.otherAttendees)
+    result = 31 * result + PlatformApiPigeonUtils.deepHash(this.location)
     return result
   }
   override fun toString(): String {
-    return "DeviceEvent(calendarId=$calendarId, eventId=$eventId, title=$title, beginMs=$beginMs, endMs=$endMs, allDay=$allDay, timeZone=$timeZone, rrule=$rrule, otherAttendees=$otherAttendees)"
+    return "DeviceEvent(calendarId=$calendarId, eventId=$eventId, title=$title, beginMs=$beginMs, endMs=$endMs, allDay=$allDay, timeZone=$timeZone, rrule=$rrule, otherAttendees=$otherAttendees, location=$location)"
   }
 }
 

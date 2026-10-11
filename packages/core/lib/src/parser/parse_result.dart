@@ -27,13 +27,22 @@ class ParsedTiming {
 
 /// PRS-43: a place phrase ("when I get home") — the capture sheet suggests a place reminder (LOC-16).
 class ParsedPlace {
-  const ParsedPlace({required this.name, required this.saved, required this.arrive, required this.leave});
+  const ParsedPlace({
+    required this.name,
+    required this.saved,
+    required this.arrive,
+    required this.leave,
+    this.dated = false,
+  });
 
   /// The saved place's name, or the words as typed ("the stadium").
   final String name;
   final bool saved;
   final bool arrive;
   final bool leave;
+
+  /// The text also said when ("saturday") → the place reminder is "On a date" (LOC-16).
+  final bool dated;
 
   @override
   String toString() => '$name${saved ? ' ✓' : ' ✗'} ${arrive ? 'A' : ''}${leave ? 'L' : ''}';
@@ -103,6 +112,7 @@ class ParseContext {
     this.dayTimeMinute = 0,
     this.currency = 'USD',
     this.savedPlaces = const [],
+    this.detectPlaces = true,
   });
 
   /// Current wall time in [defaultTimeZone]. Only the calendar fields are used.
@@ -123,4 +133,7 @@ class ParseContext {
 
   /// PRS-43: names of the user's saved places (LOC-1).
   final List<String> savedPlaces;
+
+  /// False = leave place phrases in the title (saving a normal reminder after ignoring LOC-16's card).
+  final bool detectPlaces;
 }

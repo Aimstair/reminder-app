@@ -140,10 +140,11 @@ class _ViewPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final c = AppColors.of(context);
-    return PopupMenuButton<HomeView>(
+    // null = Places (S-19): its own screen, listed under the views.
+    return PopupMenuButton<HomeView?>(
       tooltip: '',
       initialValue: view,
-      onSelected: onSelected,
+      onSelected: (v) => v == null ? context.push('/places') : onSelected(v),
       position: PopupMenuPosition.under,
       itemBuilder: (_) => [
         for (final v in HomeView.values)
@@ -157,6 +158,17 @@ class _ViewPill extends StatelessWidget {
               ],
             ),
           ),
+        const PopupMenuDivider(),
+        PopupMenuItem(
+          value: null,
+          child: Row(
+            children: [
+              Icon(AppIcons.place, size: 20, color: c.memorial),
+              const SizedBox(width: Space.m),
+              Text(l10n.drawerPlaces),
+            ],
+          ),
+        ),
       ],
       // The pill resizes smoothly and its icon + name cross-fade when the view changes.
       child: Container(
@@ -268,6 +280,8 @@ class _DrawerState extends ConsumerState<_Drawer> {
     final calendar = ref.read(servicesProvider).calendar;
     final selectedCals = calendar.calendars.where((cal) => calendar.selected.contains(cal.id)).toList();
     final hiddenCals = selectedCals.where((cal) => filters.hiddenCalendars.contains(cal.id)).length;
+    // S-11: count of place reminders that are still waiting (not paused)
+    final waitingPlaces = (ref.watch(placeRemindersProvider) ?? const []).where((r) => !r.place!.paused).length;
 
     Future<void> toggle(String key, Set<String> hidden, String value) async {
       final next = {...hidden};
@@ -312,12 +326,27 @@ class _DrawerState extends ConsumerState<_Drawer> {
                   ),
               ],
             ),
+            const SizedBox(height: Space.m),
+            InsetGroup(
+              margin: margin,
+              indent: 52,
+              children: [
+                _DrawerRow(
+                  icon: AppIcons.place,
+                  iconColor: c.memorial,
+                  label: l10n.drawerPlaces,
+                  trailing: waitingPlaces > 0 ? Text('$waitingPlaces', style: text.bodyMedium) : null,
+                  chevron: true,
+                  onTap: () => go('/places'), // S-19
+                ),
+              ],
+            ),
             GroupCaption(l10n.drawerTypes),
             InsetGroup(
               margin: margin,
               indent: 52,
               children: [
-                for (final k in Kind.values)
+                for (final k in captureKinds) // LOC-10: type filters don't cover place reminders
                   _DrawerRow(
                     icon: kindIcon(k),
                     iconColor: c.kind(k),

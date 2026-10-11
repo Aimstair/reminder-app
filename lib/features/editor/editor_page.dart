@@ -18,10 +18,12 @@ import '../../ui/motion.dart';
 import '../actions/occurrence_actions.dart';
 import '../attachments/attachments.dart';
 import '../pickers/pickers.dart';
+import '../places/place_form.dart' show showPlaceForm;
 import '../../ui/icons.dart';
 
 /// Opens the editor for occurrence [key] of [r] and saves the result.
 Future<void> openEditor(BuildContext context, WidgetRef ref, Reminder r, DateTime key) async {
+  if (r.kind == Kind.place) return showPlaceForm(context, editing: r); // S-25
   final edited = await Navigator.of(context).push<Reminder>(
     MaterialPageRoute(
       fullscreenDialog: true,
@@ -294,7 +296,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: Space.l),
               child: SegmentedPills<Kind>(
-                items: [for (final k in Kind.values) (value: k, label: f.kind(k), dot: c.kind(k))],
+                items: [for (final k in captureKinds) (value: k, label: f.kind(k), dot: c.kind(k))],
                 selected: _kind,
                 onChanged: (k) => setState(() {
                   _kind = k;

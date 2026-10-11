@@ -23,6 +23,7 @@ class CalendarEvent {
     this.yearly = false,
     this.otherAttendees = 0,
     this.fromBirthdayCalendar = false,
+    this.location,
   });
 
   final String calendarId;
@@ -39,6 +40,9 @@ class CalendarEvent {
 
   /// Attendees other than the user (CAL-4 rule 3).
   final int otherAttendees;
+
+  /// Where it happens, as typed in the calendar (LOC-11).
+  final String? location;
 
   /// The device "Birthdays"/contacts calendar (CAL-4 rule 1).
   final bool fromBirthdayCalendar;

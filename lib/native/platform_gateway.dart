@@ -26,6 +26,7 @@ CalendarEvent calendarEventFrom(DeviceEvent e, {required bool fromBirthdayCalend
     yearly: rrule != null && rrule.contains('FREQ=YEARLY'),
     otherAttendees: e.otherAttendees,
     fromBirthdayCalendar: fromBirthdayCalendar,
+    location: e.location,
   );
 }
 

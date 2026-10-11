@@ -8,6 +8,7 @@ import '../data/prefs_repository.dart';
 import '../features/completed/completed_page.dart';
 import '../features/detail/detail_page.dart';
 import '../features/onboarding/onboarding_page.dart';
+import '../features/places/places_page.dart';
 import '../features/search/search_page.dart';
 import '../features/settings/settings_pages.dart';
 import '../spike/alarm_spike_page.dart';
@@ -52,6 +53,7 @@ GoRouter buildRouter(PrefsRepository prefs) => GoRouter(
     ),
     GoRoute(path: '/search', builder: (_, _) => const SearchPage()),
     GoRoute(path: '/completed', builder: (_, _) => const CompletedPage()),
+    GoRoute(path: '/places', builder: (_, _) => const PlacesPage()), // S-19
     GoRoute(
       path: '/settings',
       builder: (_, _) => const SettingsPage(),

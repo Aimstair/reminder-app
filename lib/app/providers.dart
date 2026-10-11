@@ -8,6 +8,8 @@ import 'package:reminder_core/reminder_core.dart';
 
 import '../data/prefs_repository.dart';
 import '../native/alarm_gateway.dart';
+import '../native/place_gateway.dart';
+import '../services/place_service.dart';
 import 'app_services.dart';
 
 /// Overridden in main() with the started services.
@@ -243,3 +245,31 @@ class HomeNotifier extends Notifier<HomeState> {
 }
 
 final homeProvider = NotifierProvider<HomeNotifier, HomeState>(HomeNotifier.new);
+
+// ---- places (LOC-*) ----
+
+/// Saved places (LOC-1), live.
+final placesProvider = StreamProvider<List<Place>>((ref) => ref.watch(servicesProvider).places.places.watchAll());
+
+/// Every place reminder that isn't deleted (S-19 lists active ones; Completed/Search use the rest).
+final placeRemindersProvider = Provider<List<Reminder>?>((ref) {
+  final all = ref.watch(manualRemindersProvider).value;
+  return all?.where((r) => r.kind == Kind.place).toList();
+});
+
+/// Last geofence sync (LOC-14 banner, PRM-10).
+final geofenceStateProvider = StreamProvider<GeofenceState>((ref) async* {
+  final places = ref.watch(servicesProvider).places;
+  yield places.state;
+  yield* places.states;
+});
+
+/// PRM-10: location permission and services. Invalidate after returning from Settings.
+final locationStatusProvider = FutureProvider<LocationStatus>((ref) => ref.watch(servicesProvider).places.refreshStatus());
+
+/// Where the phone is, for distances on Places screens — only when location is already allowed (PRM-9).
+final hereProvider = FutureProvider<GeoPoint?>((ref) async {
+  final status = await ref.watch(locationStatusProvider.future);
+  if (!status.foreground) return null;
+  return ref.watch(servicesProvider).places.gateway.currentLocation();
+});
