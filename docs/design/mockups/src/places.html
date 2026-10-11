@@ -153,30 +153,37 @@ const trig = (kind) => {
 
 /* ---------- 11 / 15  Places (S-19) ---------- */
 function list() {
-  const mh = 452;
+  const mh = 392;
   let h = `<div class="map" style="height:${mh + 30}px">${mapSvg(390, mh + 30)}`
-    + ring(108, 300, 46, 'teal') + ring(286, 142, 40, 'indigo') + ring(262, 352, 56, 'green') + ring(52, 162, 34, 'orange', true)
-    + pin(108, 300, 'teal', 'house', { count: 2, live: true }) + pin(286, 142, 'indigo', 'briefcase')
-    + pin(262, 352, 'green', 'cart', { live: true }) + pin(52, 162, 'orange', 'barbell', { faded: true })
-    + `<div class="me" style="left:178px;top:262px"></div>`
+    + ring(108, 286, 46, 'teal') + ring(286, 142, 40, 'indigo') + ring(268, 318, 48, 'green') + ring(52, 162, 34, 'orange', true)
+    + pin(108, 286, 'teal', 'house', { count: 2, live: true }) + pin(286, 142, 'indigo', 'briefcase')
+    + pin(268, 318, 'green', 'cart') + pin(52, 162, 'orange', 'barbell', { faded: true })
+    + `<div class="me" style="left:178px;top:246px"></div>`
     + `<div class="fab-sm" style="right:16px;top:${mh - 62}px">${ic('nav')}</div></div>`;
   h += `<div class="abs" style="left:16px;top:14px">${'<div class="circle-btn">' + ic('back') + '</div>'}</div>`
      + `<div class="abs" style="left:0;right:0;top:14px;display:flex;justify-content:center"><div class="title-pill">${ic('pin', 'i', 'font-size:20px;color:var(--teal)')}Places</div></div>`
      + `<div class="abs" style="right:16px;top:14px"><div class="circle-btn">${ic('search')}</div></div>`
      + `<div class="abs chips" style="left:16px;top:70px"><div class="chip on">All&nbsp;<span style="opacity:.6">5</span></div>`
      + `<div class="chip"><span class="dot" style="background:var(--green)"></span>Active now</div><div class="chip">${ic('pause', 'i', 'font-size:15px;color:var(--text2)')}Paused</div></div>`;
-  const placeHead = (color, icon, name, meta) => `<div class="row" style="min-height:62px"><div class="tile soft" style="background:rgba(${RAW[color]},.16);color:${P[color]}">${ic(icon, 'f')}</div>`
-    + `<div class="grow"><div class="t17b ell">${name}</div><div class="t13 ell">${meta}</div></div><span class="i" style="font-size:22px;color:var(--text2)">&#x${I.dots};</span></div>`;
-  const rem = (title, kind, sub, live, paused) => `<div class="row" style="min-height:60px;padding-left:72px${paused ? ';opacity:.45' : ''}"><div class="grow">`
-    + `<div class="t17 ell">${title}</div><div style="display:flex;align-items:center;gap:7px;margin-top:3px">${trig(kind)}<span class="t13 ell">${sub}</span></div></div>`
-    + (live ? '<span class="live-dot"></span>' : paused ? '<span class="t13">Paused</span>' : '') + '</div>';
+  // Group header outside the card, like "Today 4 · 2 done" on Schedule (mockup 02)
+  const head = (color, icon, name, n, meta) => `<div style="display:flex;align-items:center;gap:10px;padding:16px 20px 8px">`
+    + `<div class="tile" style="width:28px;height:28px;border-radius:8px;font-size:16px;background:${P[color]}">${ic(icon, 'f')}</div>`
+    + `<span style="font:700 20px/25px Inter">${name}</span>`
+    + `<span style="min-width:24px;height:24px;border-radius:12px;background:var(--fill);font:600 14px Inter;display:flex;align-items:center;justify-content:center;padding:0 8px">${n}</span>`
+    + `<span style="flex:1"></span><span class="t15">${meta}</span></div>`;
+  // Row like a Schedule row: leading icon, title, icon + text subline, status on the right
+  const rem = (color, kind, title, sub, live) => `<div class="row" style="min-height:62px;gap:14px">`
+    + `<div style="width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:17px;background:rgba(${RAW[color]},.15);color:${P[color]}">${ic(kind === 'l' ? 'leave' : 'arrive')}</div>`
+    + `<div class="grow"><div class="t17 ell">${title}</div>`
+    + `<div class="t15 ell" style="display:flex;align-items:center;gap:5px;margin-top:2px">${ic('clock', 'i', 'font-size:15px;flex:none')}<span class="ell">${sub}</span></div></div>`
+    + (live ? `<span style="display:flex;align-items:center;gap:5px;font:600 13px Inter;color:var(--green);background:rgba(52,199,89,.14);height:24px;padding:0 9px;border-radius:12px;white-space:nowrap"><span class="live-dot"></span>Active</span>` : '')
+    + '</div>';
   h += `<div class="sheet" style="top:${mh}px"><div class="grab"></div>`
-    + `<div style="display:flex;align-items:baseline;gap:8px;padding:12px 20px 10px"><span style="font:700 22px Inter">Nearby</span><span class="t15">4 places · 5 reminders</span></div>`
-    + `<div class="group">` + placeHead('teal', 'house', 'Home', '200 m · 0.2 mi away')
-    + rem('Take out the bins', 'a', 'Every Tue · 6 – 10 PM', true) + rem('Keys, wallet, phone?', 'l', 'Any day · Any time', true) + '</div>'
-    + `<div class="group" style="margin-top:12px">` + placeHead('green', 'cart', "Trader Joe's", '300 m · 0.6 mi away')
-    + rem('Buy milk', 'a', 'Weekdays · 9 AM – 5 PM', true) + '</div>'
-    + `<div class="group" style="margin-top:12px">` + placeHead('indigo', 'briefcase', 'Work', '200 m · 1.4 mi away') + '</div>'
+    + `<div style="display:flex;align-items:baseline;justify-content:space-between;padding:10px 20px 0"><span style="font:700 28px/34px Inter;letter-spacing:-.4px">Nearby</span><span class="t15">5 reminders</span></div>`
+    + head('teal', 'house', 'Home', 2, '0.2 mi')
+    + `<div class="group">` + rem('teal', 'a', 'Take out the bins', 'Arrive · Tue, 6 – 10 PM', true) + rem('teal', 'l', 'Keys, wallet, phone?', 'Leave · Any time', true) + '</div>'
+    + head('green', 'cart', "Trader Joe's", 1, '0.6 mi')
+    + `<div class="group">` + rem('green', 'a', 'Buy milk', 'Arrive · Weekdays, 9 AM – 5 PM', false) + '</div>'
     + `</div><div class="fab">${ic('plus')}</div>`;
   return h;
 }

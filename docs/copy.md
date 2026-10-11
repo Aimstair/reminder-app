@@ -208,7 +208,7 @@ Calendars section is collapsed by default; when some are filtered out it shows "
 
 **Entry points:** drawer item *Places* (count of waiting reminders) · view menu *Places*.
 
-**Places screen (S-19):** title *Places* · filter chips *All · Active now · Paused* · place header "{radius} · {distance} away" · trigger chips *Arrive* · *Leave* · *Arrive or leave* · subline "{active} · {hours}" — active: *Any day* · *{date}* · {repeat summary}; hours: *Any time* · "{from} – {to}" · status *Active now* (green dot) · *Paused* · *Waiting for location access* · place menu *Edit place* · *Delete place* · count "{n} reminders".
+**Places screen (S-19):** title *Places* · filter chips *All · Active now · Paused* · sheet title *Nearby* + "{n} reminders" · place header distance "{distance}" (e.g. *0.2 mi*) · row subline "{Arrive · Leave · Arrive or leave} · {active}, {hours}" ("Arrive · Tue, 6 – 10 PM"; any day is left out: "Leave · Any time") · pill *Active* — active: *Any day* · *{date}* · {repeat summary}; hours: *Any time* · "{from} – {to}" · status *Active now* (green dot) · *Paused* · *Waiting for location access* · place menu *Edit place* · *Delete place* · count "{n} reminders".
 Empty state (bell + pin): **No places yet** · Pin a place and get reminded when you arrive or leave. · **Add a place**
 Banners: `PRM-10` *Place reminders need location set to "Allow all the time".* — **Fix** · *Turn on Precise location so arrivals are noticed.* — **Fix** · *Location is off — place reminders are paused.* — **Turn on** · `LOC-14` *Only the 100 nearest places are being watched.*
 Delete dialog: **Delete {place}?** · "Its {n} reminders will be deleted too." · **Delete** / **Cancel** · snackbar "Deleted {place} — Undo".
